@@ -1,0 +1,188 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+const slides = [
+  {
+    id: 1,
+    title: 'Günlük Rutininizi Yükseltin',
+    subtitle: 'Salon kalitesinde hacim. Zahmetsiz rutin.',
+    description: 'Modern güzellik için tasarlanmış premium saç bakım koleksiyonumuzu keşfedin.',
+    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&h=900&fit=crop',
+    cta: 'Çok Satanları İncele',
+    ctaLink: '/cok-satanlar',
+    secondaryCta: 'Saç Hacmi Keşfet',
+    secondaryCtaLink: '/kategori/sac-bakimi'
+  },
+  {
+    id: 2,
+    title: 'Kişisel Bakımda Yeni Dönem',
+    subtitle: 'Minimal. Etkili. Zamansız.',
+    description: 'Cildiniz için sade ama güçlü formüller. Günlük rutininize şıklık katın.',
+    image: 'https://images.unsplash.com/photo-1556228578-8b6b5be0b3ac?w=1600&h=900&fit=crop',
+    cta: 'Kişisel Bakım',
+    ctaLink: '/kategori/kisisel-bakim',
+    secondaryCta: 'Tüm Ürünler',
+    secondaryCtaLink: '/tum-urunler'
+  },
+  {
+    id: 3,
+    title: 'Makyajda Zarif Dokunuş',
+    subtitle: 'Doğal tonlar, güçlü etki.',
+    description: 'Gün boyu kalıcı ve modern bir görünüm için seçilmiş ürünler.',
+    image: 'https://images.unsplash.com/photo-1616394584738-fc6e6129138a?w=1600&h=900&fit=crop',
+    cta: 'Makyajı Keşfet',
+    ctaLink: '/kategori/makyaj',
+    secondaryCta: 'Yeni Gelenler',
+    secondaryCtaLink: '/tum-urunler'
+  }
+]
+
+export default function HeroSection() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    }, 5000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+  }
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index)
+  }
+
+  return (
+    <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
+      {/* Background images with simple crossfade */}
+      <div className="absolute inset-0 -z-10">
+        {slides.map((s, i) => (
+          <Image
+            key={s.id}
+            src={s.image}
+            alt="hero-bg"
+            fill
+            priority={i === 0}
+            className={`object-cover transition-opacity duration-700 ${i === currentSlide ? 'opacity-20' : 'opacity-0'}`}
+          />
+        ))}
+      </div>
+
+      {/* Decorative gradients */}
+      <div className="pointer-events-none absolute -top-24 -left-24 w-[36rem] h-[36rem] rounded-full bg-gradient-to-br from-black/10 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-gradient-to-tr from-gray-300/40 to-transparent blur-3xl" />
+
+      {/* Content */}
+      <div className="relative h-full flex items-center py-20">
+        <div className="container max-w-7xl">
+          <div className="relative min-h-[560px]">
+            {(() => {
+              const s = slides[currentSlide]
+              return (
+                <div key={currentSlide} className="absolute inset-0 animate-fade-in-up">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    {/* Text Content */}
+                    <div className="text-black space-y-8">
+                      {/* Title */}
+                      <h1 className="text-4xl sm:text-6xl md:text-7xl font-light leading-tight tracking-tight">{s.title}</h1>
+                      {/* Subtitle */}
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-light text-gray-600 max-w-lg">{s.subtitle}</h2>
+                      {/* Description */}
+                      <p className="text-lg sm:text-xl text-gray-600 max-w-xl leading-relaxed">{s.description}</p>
+                      {/* CTA Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 pt-6">
+                        <Link
+                          href={s.ctaLink}
+                          className="inline-flex items-center justify-center px-8 sm:px-12 py-4 sm:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-base sm:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                          {s.cta}
+                        </Link>
+                        <Link
+                          href={s.secondaryCtaLink}
+                          className="inline-flex items-center justify-center px-8 sm:px-12 py-4 sm:py-5 bg-transparent hover:bg-white/50 active:scale-95 text-black font-light text-base sm:text-lg tracking-wide transition-all duration-300 border border-black rounded-full transform hover:scale-105"
+                        >
+                          {s.secondaryCta}
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Product Showcase */}
+                    <div className="relative">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Hair Fibers Card */}
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
+                          <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-6 flex items-center justify-center">
+                            <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                          </div>
+                          <h3 className="text-lg sm:text-xl font-light mb-2">Saç Fiberi</h3>
+                          <p className="text-gray-600 text-sm mb-4">Doğal hacim ve kaplama</p>
+                          <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                            Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                          </button>
+                        </div>
+                        {/* Styling Powder Card */}
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
+                          <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-6 flex items-center justify-center">
+                            <div className="w-16 sm:w-20 h-16 sm:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
+                          </div>
+                          <h3 className="text-lg sm:text-xl font-light mb-2">Şekillendirme Pudrası</h3>
+                          <p className="text-gray-600 text-sm mb-4">Mat bitim ve güçlü tutuş</p>
+                          <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                            Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      </div>
+      {/* Slider controls */}
+      {slides.length > 1 && (
+        <>
+          <button
+            aria-label="Önceki"
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            aria-label="Sonraki"
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* Dots */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+            {slides.map((s, i) => (
+              <button
+                key={s.id}
+                aria-label={`Slide ${i+1}`}
+                onClick={() => goToSlide(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentSlide ? 'bg-black w-6' : 'bg-black/40 hover:bg-black/60'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
