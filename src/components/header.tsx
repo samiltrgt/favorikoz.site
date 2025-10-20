@@ -85,7 +85,7 @@ export default function Header() {
         <div className="container">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center space-x-4">
-              <span>📞 0537 647 07 27</span>
+              <span>📞 0537 647 07 17</span>
               <span>📧 mervesaat@gmail.com</span>
             </div>
             <div className="hidden md:flex items-center space-x-4">
