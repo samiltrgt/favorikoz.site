@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 1000
     const category = searchParams.get('category')
     const search = searchParams.get('search')
     const inStock = searchParams.get('inStock')

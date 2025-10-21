@@ -76,6 +76,7 @@ function transformProduct(p: OldProduct): Database['public']['Tables']['products
     is_new: !!p.isNew,
     is_best_seller: !!p.isBestSeller,
     in_stock: p.inStock ?? true,
+    stock_quantity: 300, // Default stock quantity
     category_slug: p.category || null,
     description: p.description || null,
     barcode: p.barcode || null,

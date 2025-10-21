@@ -57,6 +57,7 @@ export interface Database {
           is_new: boolean
           is_best_seller: boolean
           in_stock: boolean
+          stock_quantity: number
           category_slug: string | null
           description: string | null
           barcode: string | null
@@ -79,6 +80,7 @@ export interface Database {
           is_new?: boolean
           is_best_seller?: boolean
           in_stock?: boolean
+          stock_quantity?: number
           category_slug?: string | null
           description?: string | null
           barcode?: string | null
@@ -101,6 +103,7 @@ export interface Database {
           is_new?: boolean
           is_best_seller?: boolean
           in_stock?: boolean
+          stock_quantity?: number
           category_slug?: string | null
           description?: string | null
           barcode?: string | null

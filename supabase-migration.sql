@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   is_new BOOLEAN DEFAULT FALSE,
   is_best_seller BOOLEAN DEFAULT FALSE,
   in_stock BOOLEAN DEFAULT TRUE,
+  stock_quantity INT DEFAULT 0,
   category_slug TEXT REFERENCES public.categories(slug) ON DELETE SET NULL,
   description TEXT,
   barcode TEXT,
