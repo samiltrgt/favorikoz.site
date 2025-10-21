@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, User, Eye, EyeOff } from 'lucide-react'
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react'
 
 export default function AdminLogin() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -35,9 +35,10 @@ export default function AdminLogin() {
       })
       if (res.ok) {
         router.push('/admin')
+        router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
-        setError(data.message || 'Kullanıcı adı veya şifre hatalı')
+        setError(data.message || 'Email veya şifre hatalı')
       }
     } catch (err) {
       setError('Sunucuya bağlanılamadı')
@@ -64,22 +65,23 @@ export default function AdminLogin() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="username" className="sr-only">
-                Kullanıcı Adı
+              <label htmlFor="email" className="sr-only">
+                Email Adresi
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
                   required
-                  value={formData.username}
+                  value={formData.email}
                   onChange={handleInputChange}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Kullanıcı adı"
+                  placeholder="Email adresi"
                 />
               </div>
             </div>
@@ -144,14 +146,16 @@ export default function AdminLogin() {
           </div>
 
           <div className="text-center">
-            <div className="text-sm text-gray-600">
-              Demo Giriş Bilgileri:
-            </div>
-            <div className="text-sm text-gray-500 mt-1">
-              Kullanıcı Adı: <span className="font-mono">admin</span>
-            </div>
-            <div className="text-sm text-gray-500">
-              Şifre: <span className="font-mono">admin123</span>
+            <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-md">
+              <strong>⚠️ Önemli:</strong> Admin kullanıcısını Supabase Dashboard'dan oluşturun
+              <div className="mt-2 text-xs text-gray-500">
+                1. Supabase Dashboard → Authentication → Users<br/>
+                2. Create New User (email + password)<br/>
+                3. SQL Editor'da çalıştırın:<br/>
+                <code className="bg-gray-100 px-2 py-1 rounded">
+                  UPDATE profiles SET role='admin' WHERE email='[email]'
+                </code>
+              </div>
             </div>
           </div>
         </form>

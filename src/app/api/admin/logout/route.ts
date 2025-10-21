@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true })
-  res.cookies.set('adminAuthV2', '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
-    path: '/',
-    maxAge: 0,
-  })
-  return res
+  try {
+    const supabase = await createSupabaseServer()
+    
+    // Sign out from Supabase
+    await supabase.auth.signOut()
+    
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('Logout error:', error)
+    return NextResponse.json(
+      { ok: false, message: 'Logout failed' },
+      { status: 500 }
+    )
+  }
 }
 
 

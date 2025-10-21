@@ -24,12 +24,15 @@
   "scripts": {
     "dev": "next dev",
     "import:excel": "node scripts/import-excel.js",
+    "migrate:products": "tsx scripts/migrate-to-supabase.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.76.0",
     "cloudinary": "^2.7.0",
     "iyzipay": "^2.0.64",
     "lucide-react": "^0.294.0",
@@ -44,10 +47,12 @@
     "@types/react-dom": "^18",
     "@types/xlsx": "^0.0.35",
     "autoprefixer": "^10.0.1",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
     "eslint-config-next": "14.0.0",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "xlsx": "^0.18.5"
   }
