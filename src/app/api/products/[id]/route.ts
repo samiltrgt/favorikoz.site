@@ -79,13 +79,39 @@ export async function PUT(
     
     const body = await request.json()
     
-    // Convert price from TL to kuruş
-    const updateData: any = { ...body }
+    // Convert camelCase to snake_case and price from TL to kuruş
+    const updateData: any = {}
+    
+    // Map field names (camelCase → snake_case)
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.slug !== undefined) updateData.slug = body.slug
+    if (body.brand !== undefined) updateData.brand = body.brand
+    if (body.category !== undefined) updateData.category_slug = body.category
+    if (body.description !== undefined) updateData.description = body.description
+    if (body.barcode !== undefined) updateData.barcode = body.barcode
+    if (body.image !== undefined) updateData.image = body.image
+    if (body.images !== undefined) updateData.images = body.images
+    if (body.rating !== undefined) updateData.rating = body.rating
+    if (body.reviews !== undefined) updateData.reviews_count = body.reviews
+    if (body.discount !== undefined) updateData.discount = body.discount
+    
+    // Boolean flags (camelCase → snake_case)
+    if (body.isNew !== undefined) updateData.is_new = body.isNew
+    if (body.isBestSeller !== undefined) updateData.is_best_seller = body.isBestSeller
+    if (body.inStock !== undefined) updateData.in_stock = body.inStock
+    
+    // Stock quantity
+    if (body.stock_quantity !== undefined) updateData.stock_quantity = body.stock_quantity
+    
+    // Price conversion (TL → kuruş)
     if (body.price !== undefined) {
       updateData.price = Math.round(body.price * 100)
     }
     if (body.original_price !== undefined) {
       updateData.original_price = body.original_price ? Math.round(body.original_price * 100) : null
+    }
+    if (body.originalPrice !== undefined) {
+      updateData.original_price = body.originalPrice ? Math.round(body.originalPrice * 100) : null
     }
     
     const { data, error } = await supabase

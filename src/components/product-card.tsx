@@ -12,14 +12,14 @@ interface ProductCardProps {
     name: string
     brand: string
     price: number
-    originalPrice?: number
+    original_price?: number
     image: string
     rating: number
-    reviewCount: number
-    isNew?: boolean
-    isBestSeller?: boolean
+    reviews_count: number
+    is_new?: boolean
+    is_best_seller?: boolean
     discount?: number
-    inStock: boolean
+    in_stock: boolean
   }
 }
 
@@ -29,7 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleAddToCart = async () => {
-    if (!product.inStock) {
+    if (!product.in_stock) {
       return // Stokta yoksa sepete ekleme
     }
     
@@ -77,10 +77,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         
         {/* Badges - Minimal style */}
         <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.isNew && (
+          {product.is_new && (
             <span className="bg-black text-white text-xs px-2 py-1 uppercase tracking-wide">New</span>
           )}
-          {product.isBestSeller && (
+          {product.is_best_seller && (
             <span className="bg-orange-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
               Best Seller
             </span>
@@ -107,14 +107,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button 
             className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleAddToCart}
-            disabled={!product.inStock || isLoading}
+            disabled={!product.in_stock || isLoading}
           >
             <ShoppingCart className="w-4 h-4 text-black" />
           </button>
         </div>
 
         {/* Stock Status */}
-        {!product.inStock && (
+        {!product.in_stock && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
             <span className="text-black text-sm font-light uppercase tracking-wide">Out of Stock</span>
           </div>
@@ -142,14 +142,14 @@ export default function ProductCard({ product }: ProductCardProps) {
               }`}
             />
           ))}
-          <span className="text-xs text-gray-400 ml-1">({product.reviewCount})</span>
+          <span className="text-xs text-gray-400 ml-1">({product.reviews_count})</span>
         </div>
 
         {/* Price - Clean and minimal */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-light text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          {product.originalPrice && (
-            <span className="text-xs text-gray-400 line-through">₺{product.originalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          {product.original_price && (
+            <span className="text-xs text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </div>
       </div>

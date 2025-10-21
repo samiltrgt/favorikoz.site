@@ -81,7 +81,7 @@ export default function ProductsPage() {
       case 'brand':
         return a.brand.localeCompare(b.brand)
       case 'created':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       default:
         return 0
     }
@@ -199,7 +199,7 @@ export default function ProductsPage() {
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-200"
                     />
-                    {product.isNew && (
+                    {product.is_new && (
                       <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
                         Yeni
                       </div>
@@ -223,8 +223,8 @@ export default function ProductsPage() {
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-lg font-bold text-gray-900">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">₺{product.originalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      {product.original_price && (
+                        <span className="text-sm text-gray-500 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       )}
                     </div>
                     

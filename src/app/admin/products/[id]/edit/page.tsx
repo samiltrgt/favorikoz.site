@@ -19,7 +19,7 @@ interface Product {
   isNew: boolean
   isBestSeller: boolean
   inStock: boolean
-  stockQuantity: number
+  stock_quantity: number
   image: string
   images: string[]
   barcode: string
@@ -75,7 +75,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             isNew: foundProduct.isNew,
             isBestSeller: foundProduct.isBestSeller,
             inStock: foundProduct.inStock,
-            stockQuantity: '0', // Default stock quantity
+            stockQuantity: foundProduct.stock_quantity?.toString() || '300',
             image: foundProduct.image,
             images: foundProduct.images || [],
             barcode: foundProduct.barcode || '',
@@ -140,6 +140,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           isNew: formData.isNew,
           isBestSeller: formData.isBestSeller,
           inStock: formData.inStock,
+          stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 300,
           image: formData.image,
           images: formData.images,
           barcode: formData.barcode,

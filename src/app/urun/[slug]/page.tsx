@@ -186,8 +186,8 @@ export default function ProductDetailPage({ params }: { params: Params }) {
             <div className="rounded-xl border border-gray-200 p-6 bg-gray-50">
               <div className="flex items-end gap-4 mb-4">
                 <span className="text-4xl font-bold text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                {product.originalPrice && (
-                  <span className="text-xl text-gray-400 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                {product.original_price && (
+                  <span className="text-xl text-gray-400 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 )}
                 {product.discount && product.discount > 0 && (
                   <span className="text-sm bg-red-100 text-red-600 font-bold px-2 py-1 rounded-full">-%{product.discount}</span>
@@ -201,7 +201,7 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                   </div>
                   <span>·</span>
                   <span className="font-medium">{product.reviews} değerlendirme</span>
-                  {product.inStock === false && (
+                  {product.in_stock === false && (
                     <>
                       <span>·</span>
                       <span className="text-red-600 font-semibold">Stokta yok</span>
@@ -217,21 +217,21 @@ export default function ProductDetailPage({ params }: { params: Params }) {
               <div className="flex items-center gap-4">
                 <QuantitySelector onChange={(q:number)=>setQty(q)} />
                 <button
-                  disabled={!product.inStock}
+                  disabled={!product.in_stock}
                   onClick={() => {
-                    if (!product.inStock) return
+                    if (!product.in_stock) return
                     addToCart({ id: product.id, slug: product.slug, name: product.name, image: product.image, price: product.price, qty })
                     setAdded(true)
                     setTimeout(()=>setAdded(false), 1500)
                   }}
-                  className={`flex-1 h-14 rounded-xl transition-all duration-300 text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed ${added ? 'bg-green-600 text-white scale-105' : product.inStock ? 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95' : 'bg-gray-400 text-white'}`}
+                  className={`flex-1 h-14 rounded-xl transition-all duration-300 text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed ${added ? 'bg-green-600 text-white scale-105' : product.in_stock ? 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95' : 'bg-gray-400 text-white'}`}
                 >
                   {added ? (
                     <span className="inline-flex items-center gap-2">
                       <Check className="w-5 h-5" /> 
                       Eklendi!
                     </span>
-                  ) : product.inStock ? (
+                  ) : product.in_stock ? (
                     'Sepete Ekle'
                   ) : (
                     'Stokta Yok'

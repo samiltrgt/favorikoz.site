@@ -81,8 +81,8 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
               <div className="text-right">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-light text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  {product.originalPrice && (
-                    <span className="text-xs text-gray-400 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  {product.original_price && (
+                    <span className="text-xs text-gray-400 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   )}
                 </div>
                 {product.discount && product.discount > 0 && (
@@ -91,9 +91,9 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
               </div>
               <button 
                 className="bg-black text-white px-6 py-2 text-xs hover:bg-gray-800 transition-colors uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!product.inStock}
+                disabled={!product.in_stock}
               >
-                {product.inStock ? 'Add' : 'Out of Stock'}
+                {product.in_stock ? 'Add' : 'Out of Stock'}
               </button>
             </div>
           </div>
@@ -120,7 +120,7 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
         
         {/* Badges - Minimal style */}
         <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.isNew && (
+          {product.is_new && (
             <span className="bg-black text-white text-xs px-2 py-1 uppercase tracking-wide">New</span>
           )}
           {product.discount && product.discount > 0 && (
@@ -143,7 +143,7 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
         </div>
 
         {/* Out of stock overlay */}
-        {!product.inStock && (
+        {!product.in_stock && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
             <span className="text-black text-sm font-light uppercase tracking-wide">Out of Stock</span>
           </div>
@@ -173,8 +173,8 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
         {/* Price - Clean and minimal */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-light text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          {product.originalPrice && (
-            <span className="text-xs text-gray-400 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          {product.original_price && (
+            <span className="text-xs text-gray-400 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </div>
       </div>
@@ -211,10 +211,10 @@ export default function AllProductsPage() {
     // Sort
     switch (sortBy) {
       case 'newest':
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         break
       case 'oldest':
-        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         break
       case 'price-low':
         filtered.sort((a, b) => a.price - b.price)

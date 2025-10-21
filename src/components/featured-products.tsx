@@ -20,30 +20,54 @@ export default function FeaturedProducts({
   viewAllLink,
   section
 }: FeaturedProductsProps) {
-  const [customProducts, setCustomProducts] = useState<any[]>(products)
+  const [displayProducts, setDisplayProducts] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load custom featured products from localStorage
+  // Load products based on section
   useEffect(() => {
-    if (section) {
-      const saved = localStorage.getItem('featuredProducts')
-      if (saved) {
-        const featuredProducts = JSON.parse(saved)
-        const sectionProducts = featuredProducts
-          .filter((fp: any) => fp.section === section)
-          .sort((a: any, b: any) => a.order - b.order)
-          .map((fp: any) => {
-            return products.find(p => p.id === fp.productId)
-          })
-          .filter(Boolean)
-        
-        if (sectionProducts.length > 0) {
-          setCustomProducts(sectionProducts)
+    const loadProducts = async () => {
+      if (section === 'bestSellers') {
+        // Show is_best_seller products
+        const bestSellers = products.filter((p: any) => p.is_best_seller).slice(0, 8)
+        console.log('🔥 Best Sellers:', {
+          total: products.length,
+          bestSellersCount: bestSellers.length,
+          bestSellers: bestSellers.map(p => ({ name: p.name, is_best_seller: p.is_best_seller }))
+        })
+        setDisplayProducts(bestSellers)
+      } else if (section === 'newProducts') {
+        // Show is_new products
+        const newProducts = products.filter((p: any) => p.is_new).slice(0, 8)
+        console.log('⭐ New Products:', {
+          total: products.length,
+          newProductsCount: newProducts.length,
+          newProducts: newProducts.map(p => ({ name: p.name, is_new: p.is_new }))
+        })
+        setDisplayProducts(newProducts)
+      } else {
+        // Try to load from featured_products API
+        try {
+          const response = await fetch('/api/featured-products')
+          const result = await response.json()
+          if (result.success && result.data?.length > 0) {
+            const featured = result.data.map((fp: any) => fp.products).filter(Boolean)
+            setDisplayProducts(featured.slice(0, 8))
+          } else {
+            setDisplayProducts(products.slice(0, 8))
+          }
+        } catch {
+          setDisplayProducts(products.slice(0, 8))
         }
       }
+      setIsLoading(false)
     }
+
+    loadProducts()
   }, [section, products])
 
-  const displayProducts = section ? customProducts : products
+  if (isLoading) {
+    return null
+  }
   return (
     <section className="py-24 bg-white">
       <div className="container max-w-7xl">

@@ -49,12 +49,12 @@ export default function CategoryPage() {
 
   // Kategoriye göre filtrele
   useEffect(() => {
-    let filtered = allProducts.filter((product:any) => product.category === categorySlug)
+    let filtered = allProducts.filter((product:any) => product.category_slug === categorySlug)
     
     // Sıralama
     switch (sortBy) {
       case 'newest':
-        filtered = filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        filtered = filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         break
       case 'price-low':
         filtered = filtered.sort((a, b) => a.price - b.price)
@@ -179,7 +179,7 @@ export default function CategoryPage() {
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                       sizes={viewMode === 'list' ? '96px' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'}
                     />
-                    {product.isNew && (
+                    {product.is_new && (
                       <div className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-1 rounded">
                         YENİ
                       </div>
@@ -189,7 +189,7 @@ export default function CategoryPage() {
                         ÇOK SATAN
                       </div>
                     )}
-                    {!product.inStock && (
+                    {!product.in_stock && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <span className="text-white text-sm font-medium">Stokta Yok</span>
                       </div>
@@ -226,9 +226,9 @@ export default function CategoryPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {product.originalPrice && (
+                        {product.original_price && (
                           <span className="text-sm text-gray-400 line-through">
-                            ₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         )}
                         <span className="font-light text-black">

@@ -106,6 +106,7 @@ async function migrateProducts() {
 
       const { data, error } = await supabase
         .from('products')
+        // @ts-expect-error - Supabase type inference issue with TEXT id field
         .upsert(transformedBatch, {
           onConflict: 'id',
           ignoreDuplicates: false,

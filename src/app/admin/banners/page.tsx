@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Edit, Trash2, Eye, Upload, Save, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Edit, Trash2, ArrowLeft, Save, X } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 interface Banner {
   id: string
@@ -9,101 +11,120 @@ interface Banner {
   subtitle: string
   image: string
   link: string
-  isActive: boolean
-  position: 'hero' | 'featured' | 'category'
-  order: number
+  display_order: number
+  is_active: boolean
 }
 
 export default function BannersPage() {
-  const [banners, setBanners] = useState<Banner[]>([
-    {
-      id: '1',
-      title: 'Yeni Koleksiyon',
-      subtitle: 'Premium güzellik ürünleri',
-      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=400&fit=crop',
-      link: '/yeni-koleksiyon',
-      isActive: true,
-      position: 'hero',
-      order: 1
-    },
-    {
-      id: '2',
-      title: 'Çok Satanlar',
-      subtitle: 'En popüler ürünlerimiz',
-      image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=400&fit=crop',
-      link: '/cok-satanlar',
-      isActive: true,
-      position: 'featured',
-      order: 2
-    },
-    {
-      id: '3',
-      title: 'Protez Tırnak',
-      subtitle: 'Profesyonel ürünler',
-      image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&h=400&fit=crop',
-      link: '/kategori/protez-tirnak',
-      isActive: false,
-      position: 'category',
-      order: 3
-    }
-  ])
-
-  const [isEditing, setIsEditing] = useState<string | null>(null)
-  const [editingBanner, setEditingBanner] = useState<Partial<Banner>>({})
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [editingBanner, setEditingBanner] = useState<Partial<Banner> | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
 
-  const handleEdit = (banner: Banner) => {
-    setEditingBanner(banner)
-    setIsEditing(banner.id)
-  }
+  useEffect(() => {
+    loadBanners()
+  }, [])
 
-  const handleSave = () => {
-    if (isAddingNew) {
-      const newBanner: Banner = {
-        id: Date.now().toString(),
-        title: editingBanner.title || '',
-        subtitle: editingBanner.subtitle || '',
-        image: editingBanner.image || '',
-        link: editingBanner.link || '',
-        isActive: editingBanner.isActive || false,
-        position: editingBanner.position || 'hero',
-        order: editingBanner.order || banners.length + 1
+  const loadBanners = async () => {
+    try {
+      const response = await fetch('/api/banners')
+      const result = await response.json()
+      if (result.success) {
+        setBanners(result.data || [])
       }
-      setBanners([...banners, newBanner])
-      setIsAddingNew(false)
-    } else {
-      setBanners(banners.map(banner => 
-        banner.id === isEditing ? { ...banner, ...editingBanner } : banner
-      ))
-      setIsEditing(null)
-    }
-    setEditingBanner({})
-  }
-
-  const handleCancel = () => {
-    setIsEditing(null)
-    setIsAddingNew(false)
-    setEditingBanner({})
-  }
-
-  const handleDelete = (id: string) => {
-    if (confirm('Bu bannerı silmek istediğinizden emin misiniz?')) {
-      setBanners(banners.filter(banner => banner.id !== id))
+    } catch (error) {
+      console.error('Error loading banners:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleToggleActive = (id: string) => {
-    setBanners(banners.map(banner => 
-      banner.id === id ? { ...banner, isActive: !banner.isActive } : banner
-    ))
+  const handleSave = async () => {
+    try {
+      if (isAddingNew) {
+        // Create new banner
+        const response = await fetch('/api/banners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: editingBanner?.title || '',
+            subtitle: editingBanner?.subtitle || '',
+            image: editingBanner?.image || '',
+            link: editingBanner?.link || '',
+            display_order: editingBanner?.display_order || banners.length + 1,
+            is_active: editingBanner?.is_active ?? true,
+          }),
+        })
+        
+        if (response.ok) {
+          await loadBanners()
+          setIsAddingNew(false)
+          setEditingBanner(null)
+        }
+      } else if (editingBanner?.id) {
+        // Update existing banner
+        const response = await fetch(`/api/banners/${editingBanner.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editingBanner),
+        })
+        
+        if (response.ok) {
+          await loadBanners()
+          setEditingBanner(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error saving banner:', error)
+    }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const imageUrl = URL.createObjectURL(file)
-      setEditingBanner(prev => ({ ...prev, image: imageUrl }))
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu banner\'ı silmek istediğinizden emin misiniz?')) {
+      return
     }
+
+    try {
+      const response = await fetch(`/api/banners/${id}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setBanners(prev => prev.filter(b => b.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting banner:', error)
+    }
+  }
+
+  const handleToggleActive = async (banner: Banner) => {
+    try {
+      const response = await fetch(`/api/banners/${banner.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...banner,
+          is_active: !banner.is_active,
+        }),
+      })
+      
+      if (response.ok) {
+        await loadBanners()
+      }
+    } catch (error) {
+      console.error('Error toggling banner:', error)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -111,308 +132,172 @@ export default function BannersPage() {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            Banner Yönetimi
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Ana sayfa ve kategori bannerlarını yönetin
-          </p>
+          <div className="flex items-center">
+            <Link href="/admin" className="mr-4 p-2 text-gray-400 hover:text-gray-600">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Banner Yönetimi
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Ana sayfa banner'larını yönetin
+              </p>
+            </div>
+          </div>
         </div>
         <div className="mt-4 flex md:ml-4 md:mt-0">
           <button
+            type="button"
             onClick={() => {
               setIsAddingNew(true)
-              setEditingBanner({})
+              setEditingBanner({ is_active: true, display_order: banners.length + 1 })
             }}
-            className="inline-flex items-center rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+            className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             Yeni Banner
           </button>
         </div>
       </div>
 
+      {/* Edit/Add Form */}
+      {(editingBanner || isAddingNew) && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            {isAddingNew ? 'Yeni Banner' : 'Banner Düzenle'}
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Başlık</label>
+              <input
+                type="text"
+                value={editingBanner?.title || ''}
+                onChange={(e) => setEditingBanner({ ...editingBanner, title: e.target.value })}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Alt Başlık</label>
+              <input
+                type="text"
+                value={editingBanner?.subtitle || ''}
+                onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Görsel URL</label>
+              <input
+                type="text"
+                value={editingBanner?.image || ''}
+                onChange={(e) => setEditingBanner({ ...editingBanner, image: e.target.value })}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Link</label>
+              <input
+                type="text"
+                value={editingBanner?.link || ''}
+                onChange={(e) => setEditingBanner({ ...editingBanner, link: e.target.value })}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingBanner?.is_active ?? true}
+                  onChange={(e) => setEditingBanner({ ...editingBanner, is_active: e.target.checked })}
+                  className="rounded border-gray-300 text-black focus:ring-black"
+                />
+                <span className="text-sm font-medium text-gray-700">Aktif</span>
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                <Save className="h-4 w-4" />
+                Kaydet
+              </button>
+              <button
+                onClick={() => {
+                  setEditingBanner(null)
+                  setIsAddingNew(false)
+                }}
+                className="inline-flex items-center gap-2 rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+              >
+                <X className="h-4 w-4" />
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Banners List */}
       <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="space-y-6">
-            {banners.map((banner) => (
-              <div key={banner.id} className="border border-gray-200 rounded-lg p-6">
-                {isEditing === banner.id || (isAddingNew && banner.id === 'new') ? (
-                  // Edit Mode
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Başlık
-                        </label>
-                        <input
-                          type="text"
-                          value={editingBanner.title || ''}
-                          onChange={(e) => setEditingBanner(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                          placeholder="Banner başlığı"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Alt Başlık
-                        </label>
-                        <input
-                          type="text"
-                          value={editingBanner.subtitle || ''}
-                          onChange={(e) => setEditingBanner(prev => ({ ...prev, subtitle: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                          placeholder="Banner alt başlığı"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Link
-                        </label>
-                        <input
-                          type="text"
-                          value={editingBanner.link || ''}
-                          onChange={(e) => setEditingBanner(prev => ({ ...prev, link: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                          placeholder="/sayfa-adi"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Pozisyon
-                        </label>
-                        <select
-                          value={editingBanner.position || 'hero'}
-                          onChange={(e) => setEditingBanner(prev => ({ ...prev, position: e.target.value as any }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                        >
-                          <option value="hero">Ana Sayfa Hero</option>
-                          <option value="featured">Öne Çıkan</option>
-                          <option value="category">Kategori</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Görsel
-                      </label>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-                          />
-                        </div>
-                        {editingBanner.image && (
-                          <img
-                            src={editingBanner.image}
-                            alt="Preview"
-                            className="h-20 w-32 object-cover rounded"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={editingBanner.isActive || false}
-                        onChange={(e) => setEditingBanner(prev => ({ ...prev, isActive: e.target.checked }))}
-                        className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                      />
-                      <label className="ml-2 block text-sm text-gray-900">
-                        Aktif
-                      </label>
-                    </div>
-
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={handleCancel}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        İptal
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-700"
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Kaydet
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  // View Mode
-                  <div className="flex items-center space-x-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">
+            Banner'lar ({banners.length})
+          </h3>
+        </div>
+        <div className="divide-y divide-gray-200">
+          {banners.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              Henüz banner eklenmemiş.
+            </div>
+          ) : (
+            banners
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((banner) => (
+                <div key={banner.id} className="p-6 hover:bg-gray-50">
+                  <div className="flex items-center gap-6">
                     <div className="flex-shrink-0">
-                      <img
-                        src={banner.image}
+                      <Image
+                        src={banner.image || '/placeholder.png'}
                         alt={banner.title}
-                        className="h-20 w-32 object-cover rounded"
+                        width={120}
+                        height={60}
+                        className="rounded object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-medium text-gray-900 truncate">
-                          {banner.title}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {banner.isActive ? 'Aktif' : 'Pasif'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">{banner.subtitle}</p>
-                      <p className="text-xs text-gray-400">Pozisyon: {banner.position} • Link: {banner.link}</p>
+                      <p className="text-sm font-medium text-gray-900">{banner.title}</p>
+                      <p className="text-sm text-gray-500">{banner.subtitle}</p>
+                      <p className="text-xs text-gray-400 truncate">{banner.link}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleEdit(banner)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title="Düzenle"
+                        onClick={() => handleToggleActive(banner)}
+                        className={`px-3 py-1 rounded text-xs font-medium ${
+                          banner.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {banner.is_active ? 'Aktif' : 'Pasif'}
+                      </button>
+                      <button
+                        onClick={() => setEditingBanner(banner)}
+                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleToggleActive(banner.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title={banner.isActive ? 'Pasifleştir' : 'Aktifleştir'}
-                      >
-                        <Eye className={`h-4 w-4 ${banner.isActive ? 'text-green-500' : 'text-gray-400'}`} />
-                      </button>
-                      <button
                         onClick={() => handleDelete(banner.id)}
-                        className="p-2 text-gray-400 hover:text-red-600"
-                        title="Sil"
+                        className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
-
-            {isAddingNew && (
-              <div className="border border-gray-200 rounded-lg p-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Başlık
-                      </label>
-                      <input
-                        type="text"
-                        value={editingBanner.title || ''}
-                        onChange={(e) => setEditingBanner(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                        placeholder="Banner başlığı"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Alt Başlık
-                      </label>
-                      <input
-                        type="text"
-                        value={editingBanner.subtitle || ''}
-                        onChange={(e) => setEditingBanner(prev => ({ ...prev, subtitle: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                        placeholder="Banner alt başlığı"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Link
-                      </label>
-                      <input
-                        type="text"
-                        value={editingBanner.link || ''}
-                        onChange={(e) => setEditingBanner(prev => ({ ...prev, link: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                        placeholder="/sayfa-adi"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Pozisyon
-                      </label>
-                      <select
-                        value={editingBanner.position || 'hero'}
-                        onChange={(e) => setEditingBanner(prev => ({ ...prev, position: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                      >
-                        <option value="hero">Ana Sayfa Hero</option>
-                        <option value="featured">Öne Çıkan</option>
-                        <option value="category">Kategori</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Görsel
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-                        />
-                      </div>
-                      {editingBanner.image && (
-                        <img
-                          src={editingBanner.image}
-                          alt="Preview"
-                          className="h-20 w-32 object-cover rounded"
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={editingBanner.isActive || false}
-                      onChange={(e) => setEditingBanner(prev => ({ ...prev, isActive: e.target.checked }))}
-                      className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">
-                      Aktif
-                    </label>
-                  </div>
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      onClick={handleCancel}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      İptal
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-700"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Kaydet
-                    </button>
-                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              ))
+          )}
         </div>
       </div>
     </div>

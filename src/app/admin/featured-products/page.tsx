@@ -5,91 +5,119 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { 
   ArrowLeft, 
-  Save, 
   Plus, 
   Trash2, 
-  Edit, 
   Search,
   Package,
   Star
 } from 'lucide-react'
-import { products } from '@/lib/dummy-data'
+
+interface Product {
+  id: string
+  name: string
+  brand: string
+  price: number
+  image: string
+  is_best_seller: boolean
+  is_new: boolean
+}
 
 interface FeaturedProduct {
   id: string
-  productId: string
-  section: 'bestSellers' | 'newProducts'
-  order: number
+  product_id: string
+  display_order: number
+  is_active: boolean
+  products: Product
 }
 
 export default function FeaturedProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSection, setSelectedSection] = useState<'bestSellers' | 'newProducts'>('bestSellers')
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load featured products from localStorage
+  // Load products and featured products from API
   useEffect(() => {
-    const saved = localStorage.getItem('featuredProducts')
-    if (saved) {
-      setFeaturedProducts(JSON.parse(saved))
-    }
+    loadData()
   }, [])
 
-  // Save to localStorage
-  const saveFeaturedProducts = (newProducts: FeaturedProduct[]) => {
-    setFeaturedProducts(newProducts)
-    localStorage.setItem('featuredProducts', JSON.stringify(newProducts))
+  const loadData = async () => {
+    try {
+      // Load all products
+      const productsRes = await fetch('/api/products')
+      const productsData = await productsRes.json()
+      if (productsData.success) {
+        setAllProducts(productsData.data || [])
+      }
+
+      // Load featured products
+      const featuredRes = await fetch('/api/featured-products')
+      const featuredData = await featuredRes.json()
+      if (featuredData.success) {
+        setFeaturedProducts(featuredData.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Filter products based on search
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = allProducts.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.brand.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  // Get current featured products for selected section
-  const currentFeatured = featuredProducts.filter(fp => fp.section === selectedSection)
-  const currentProductIds = currentFeatured.map(fp => fp.productId)
+  // Get current featured product IDs
+  const currentProductIds = featuredProducts.map(fp => fp.product_id)
 
   // Add product to featured
-  const addToFeatured = (productId: string) => {
-    const newOrder = Math.max(...featuredProducts.filter(fp => fp.section === selectedSection).map(fp => fp.order), 0) + 1
-    const newFeatured: FeaturedProduct = {
-      id: `fp-${Date.now()}`,
-      productId,
-      section: selectedSection,
-      order: newOrder
+  const addToFeatured = async (productId: string) => {
+    try {
+      const newOrder = Math.max(...featuredProducts.map(fp => fp.display_order), 0) + 1
+      const response = await fetch('/api/featured-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          display_order: newOrder,
+          is_active: true,
+        }),
+      })
+      
+      if (response.ok) {
+        await loadData()
+      }
+    } catch (error) {
+      console.error('Error adding to featured:', error)
     }
-    
-    const updated = [...featuredProducts, newFeatured]
-    saveFeaturedProducts(updated)
   }
 
   // Remove product from featured
-  const removeFromFeatured = (featuredId: string) => {
-    const updated = featuredProducts.filter(fp => fp.id !== featuredId)
-    saveFeaturedProducts(updated)
+  const removeFromFeatured = async (featuredId: string) => {
+    try {
+      const response = await fetch(`/api/featured-products/${featuredId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setFeaturedProducts(prev => prev.filter(fp => fp.id !== featuredId))
+      }
+    } catch (error) {
+      console.error('Error removing from featured:', error)
+    }
   }
 
-  // Reorder products
-  const reorderProducts = (fromIndex: number, toIndex: number) => {
-    const sectionProducts = featuredProducts.filter(fp => fp.section === selectedSection)
-    const [moved] = sectionProducts.splice(fromIndex, 1)
-    sectionProducts.splice(toIndex, 0, moved)
-    
-    // Update order numbers
-    sectionProducts.forEach((fp, index) => {
-      fp.order = index + 1
-    })
-    
-    const updated = featuredProducts.filter(fp => fp.section !== selectedSection).concat(sectionProducts)
-    saveFeaturedProducts(updated)
-  }
-
-  // Get product details
-  const getProductDetails = (productId: string) => {
-    return products.find(p => p.id === productId)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -109,36 +137,10 @@ export default function FeaturedProductsPage() {
                 Öne Çıkan Ürünler
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Ana sayfadaki çok satanlar ve yeni ürünler bölümlerini yönetin
+                Ana sayfada gösterilecek öne çıkan ürünleri yönetin
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Section Tabs */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setSelectedSection('bestSellers')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              selectedSection === 'bestSellers'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Çok Satanlar
-          </button>
-          <button
-            onClick={() => setSelectedSection('newProducts')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              selectedSection === 'newProducts'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Yeni Ürünler
-          </button>
         </div>
       </div>
 
@@ -147,13 +149,12 @@ export default function FeaturedProductsPage() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              {selectedSection === 'bestSellers' ? 'Çok Satanlar' : 'Yeni Ürünler'} 
-              ({currentFeatured.length} ürün)
+              Öne Çıkan Ürünler ({featuredProducts.length})
             </h3>
           </div>
           
           <div className="p-6">
-            {currentFeatured.length === 0 ? (
+            {featuredProducts.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Henüz ürün eklenmemiş</h3>
@@ -163,61 +164,40 @@ export default function FeaturedProductsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {currentFeatured
-                  .sort((a, b) => a.order - b.order)
-                  .map((featured, index) => {
-                    const product = getProductDetails(featured.productId)
+                {featuredProducts
+                  .sort((a, b) => a.display_order - b.display_order)
+                  .map((featured) => {
+                    const product = featured.products
                     if (!product) return null
                     
                     return (
-                      <div key={featured.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                      <div key={featured.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                         <div className="flex-shrink-0">
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
-                            <Image
-                              src={product.image}
-                              alt={product.name}
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <Image
+                            src={product.image || '/placeholder.png'}
+                            alt={product.name}
+                            width={64}
+                            height={64}
+                            className="rounded-lg object-cover"
+                          />
                         </div>
-                        
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {product.name}
-                          </h4>
-                          <p className="text-sm text-gray-500">{product.brand}</p>
-                          <div className="flex items-center mt-1">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3 h-3 ${
-                                    i < Math.floor(product.rating || 0)
-                                      ? 'text-yellow-400 fill-current'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="ml-1 text-xs text-gray-500">
-                              {product.rating?.toFixed(1) || '0.0'}
-                            </span>
-                          </div>
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {product.brand}
+                          </p>
+                          <p className="text-sm text-gray-900 font-medium">
+                            ₺{product.price.toFixed(2)}
+                          </p>
                         </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            ₺{product.price.toLocaleString()}
-                          </span>
-                          <button
-                            onClick={() => removeFromFeatured(featured.id)}
-                            className="p-1 text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => removeFromFeatured(featured.id)}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     )
                   })}
@@ -226,101 +206,65 @@ export default function FeaturedProductsPage() {
           </div>
         </div>
 
-        {/* Product Selection */}
+        {/* Available Products */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Ürün Ekle</h3>
+            <h3 className="text-lg font-medium text-gray-900">Tüm Ürünler</h3>
+            <div className="mt-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Ürün ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
           
-          <div className="p-6">
-            {/* Search */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Ürün ara..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Products List */}
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredProducts.map((product) => {
-                const isAlreadyFeatured = currentProductIds.includes(product.id)
+          <div className="p-6 max-h-96 overflow-y-auto">
+            <div className="space-y-2">
+              {filteredProducts.map(product => {
+                const isFeatured = currentProductIds.includes(product.id)
                 
                 return (
-                  <div key={product.id} className="flex items-center space-x-4 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <div
+                    key={product.id}
+                    className={`flex items-center space-x-4 p-3 rounded-lg border ${
+                      isFeatured
+                        ? 'bg-gray-50 border-gray-200 opacity-50'
+                        : 'border-gray-200 hover:bg-gray-50 cursor-pointer'
+                    }`}
+                    onClick={() => !isFeatured && addToFeatured(product.id)}
+                  >
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <Image
+                        src={product.image || '/placeholder.png'}
+                        alt={product.name}
+                        width={48}
+                        height={48}
+                        className="rounded object-cover"
+                      />
                     </div>
-                    
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 truncate">
                         {product.name}
-                      </h4>
+                      </p>
                       <p className="text-xs text-gray-500">{product.brand}</p>
-                      <div className="flex items-center mt-1">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-3 h-3 ${
-                                i < Math.floor(product.rating || 0)
-                                  ? 'text-yellow-400 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="ml-1 text-xs text-gray-500">
-                          {product.rating?.toFixed(1) || '0.0'}
-                        </span>
-                      </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-900">
-                        ₺{product.price.toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => addToFeatured(product.id)}
-                        disabled={isAlreadyFeatured}
-                        className={`p-2 rounded-md text-sm font-medium transition-colors ${
-                          isAlreadyFeatured
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-900 text-white hover:bg-gray-700'
-                        }`}
-                      >
-                        {isAlreadyFeatured ? 'Eklendi' : 'Ekle'}
-                      </button>
-                    </div>
+                    {isFeatured ? (
+                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                    ) : (
+                      <Plus className="h-5 w-5 text-gray-400" />
+                    )}
                   </div>
                 )
               })}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-blue-900 mb-2">Nasıl Kullanılır?</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• Üst kısımdan "Çok Satanlar" veya "Yeni Ürünler" bölümünü seçin</li>
-          <li>• Sağ taraftan ürün arayıp istediğiniz ürünleri ekleyin</li>
-          <li>• Sol tarafta eklenen ürünleri görebilir ve silebilirsiniz</li>
-          <li>• Değişiklikler otomatik olarak kaydedilir</li>
-        </ul>
       </div>
     </div>
   )

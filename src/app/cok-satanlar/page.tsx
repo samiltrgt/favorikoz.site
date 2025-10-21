@@ -170,7 +170,7 @@ function TopThreeProducts() {
   }
 
   const bestSellers = products
-    .filter(product => product.isBestSeller)
+    .filter(product => product.is_best_seller)
     .map(product => ({
       ...product,
       salesCount: Math.floor(Math.random() * 500) + 100,
@@ -262,8 +262,8 @@ function TopThreeProducts() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-bold text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      {product.originalPrice && (
-                        <span className="text-lg text-gray-500 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      {product.original_price && (
+                        <span className="text-lg text-gray-500 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       )}
                     </div>
                     <div className="text-right">
@@ -398,8 +398,8 @@ function CategoryBestSellers() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                              {product.originalPrice && (
-                                <span className="text-sm text-gray-500 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              {product.original_price && (
+                                <span className="text-sm text-gray-500 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               )}
                             </div>
                             <div className="text-right">
@@ -466,7 +466,7 @@ function AllBestSellers() {
   }
 
   const bestSellers = products
-    .filter(product => product.isBestSeller)
+    .filter(product => product.is_best_seller)
     .map(product => ({
       ...product,
       salesCount: Math.floor(Math.random() * 500) + 100,
@@ -528,8 +528,8 @@ function AllBestSellers() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through">₺{(product.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    {product.original_price && (
+                      <span className="text-sm text-gray-500 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     )}
                   </div>
                 </div>

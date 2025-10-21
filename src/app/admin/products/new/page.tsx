@@ -81,6 +81,7 @@ export default function NewProductPage() {
           isNew: formData.isNew,
           isBestSeller: formData.isBestSeller,
           inStock: formData.inStock,
+          stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 300,
           image: formData.image,
           images: formData.images,
           barcode: formData.barcode || `FK${Date.now()}`,

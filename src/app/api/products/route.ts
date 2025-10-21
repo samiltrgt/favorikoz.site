@@ -90,11 +90,28 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json()
     
-    // Convert price from TL to kuruş
-    const productData = {
-      ...body,
+    // Convert camelCase to snake_case and price from TL to kuruş
+    const productData: any = {
+      id: body.id,
+      slug: body.slug,
+      name: body.name,
+      brand: body.brand || null,
+      category_slug: body.category || null,
+      description: body.description || null,
+      barcode: body.barcode || null,
+      image: body.image || null,
+      images: body.images || [],
+      rating: body.rating || 0,
+      reviews_count: body.reviews || 0,
+      discount: body.discount || null,
+      // Boolean flags (camelCase → snake_case)
+      is_new: body.isNew || false,
+      is_best_seller: body.isBestSeller || false,
+      in_stock: body.inStock !== undefined ? body.inStock : true,
+      stock_quantity: body.stock_quantity || 300,
+      // Price conversion (TL → kuruş)
       price: Math.round(body.price * 100),
-      original_price: body.original_price ? Math.round(body.original_price * 100) : null,
+      original_price: body.original_price ? Math.round(body.original_price * 100) : (body.originalPrice ? Math.round(body.originalPrice * 100) : null),
     }
     
     const { data, error } = await supabase

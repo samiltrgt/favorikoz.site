@@ -5,19 +5,33 @@ import FeaturesSection from '@/components/features-section'
 import HomeBanners from '@/components/home-banners'
 import FeaturedProducts from '@/components/featured-products'
 import ShadeGuideSection from '@/components/shade-guide-section'
-import { readProducts } from '@/lib/database'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
-export default function HomePage() {
-  const products = readProducts()
-  const newProducts = products.filter((product: any) => product.isNew).slice(0, 4)
-  const bestSellers = products.filter((product: any) => product.isBestSeller).slice(0, 4)
+export const revalidate = 10 // Revalidate every 10 seconds (for admin changes to show faster)
+
+export default async function HomePage() {
+  const supabase = await createSupabaseServer()
+  
+  // Fetch products from Supabase
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('*')
+    .is('deleted_at', null)
+    .limit(1000)
+  
+  // Convert price from kuruş to TL
+  const products = (allProducts || []).map(p => ({
+    ...p,
+    price: p.price / 100,
+    original_price: p.original_price ? p.original_price / 100 : null,
+  }))
   
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-             <main>
-                 {/* Hero Section */}
+      <main>
+        {/* Hero Section */}
         <HeroSection />
         
         {/* Features Section */}
@@ -26,7 +40,7 @@ export default function HomePage() {
         {/* Editorial Banners */}
         <HomeBanners />
         
-        {/* Featured Products */}
+        {/* Featured Products - Best Sellers */}
         <FeaturedProducts
           title="Çok Satanlar"
           subtitle="Müşterilerimizin favorisi olan ve olağanüstü sonuçlar veren ürünler"
@@ -38,7 +52,7 @@ export default function HomePage() {
         {/* Shade Guide Section */}
         <ShadeGuideSection />
         
-        {/* New Products */}
+        {/* Featured Products - New Products */}
         <FeaturedProducts
           title="Yeni Ürünler"
           subtitle="Güzellik rutininiz için taze gelenler"
