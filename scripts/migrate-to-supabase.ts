@@ -56,9 +56,14 @@ function slugify(text: string): string {
 }
 
 function transformProduct(p: OldProduct): Database['public']['Tables']['products']['Insert'] {
+  // Create unique slug by appending product ID suffix
+  const baseSlug = p.slug || slugify(p.name)
+  const idSuffix = p.id.split('-').pop() || Math.random().toString(36).substr(2, 6)
+  const uniqueSlug = `${baseSlug}-${idSuffix}`
+  
   return {
     id: p.id, // Keep existing ID (TEXT format)
-    slug: p.slug || slugify(p.name),
+    slug: uniqueSlug, // Unique slug with ID suffix
     name: p.name,
     brand: p.brand || null,
     price: Math.round(Number(p.price) * 100), // Convert to kuruş
