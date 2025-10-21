@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_categories_deleted ON public.categories (deleted_
 -- 2. PRODUCTS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   brand TEXT,
@@ -111,7 +111,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_number ON public.orders (order_number);
 CREATE TABLE IF NOT EXISTS public.favorites (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  product_id TEXT NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, product_id)
 );
@@ -124,7 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_favorites_product ON public.favorites (product_id
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  product_id TEXT NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   guest_name TEXT,
   rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
@@ -158,7 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_banners_active ON public.banners (is_active, disp
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.featured_products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  product_id TEXT NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   display_order INT NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

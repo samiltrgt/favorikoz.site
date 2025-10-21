@@ -57,7 +57,7 @@ function slugify(text: string): string {
 
 function transformProduct(p: OldProduct): Database['public']['Tables']['products']['Insert'] {
   return {
-    id: p.id,
+    id: p.id, // Keep existing ID (TEXT format)
     slug: p.slug || slugify(p.name),
     name: p.name,
     brand: p.brand || null,
