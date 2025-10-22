@@ -1,0 +1,170 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - generic [ref=e9]: 📞 0537 647 07 17
+          - generic [ref=e10]: 📧 mervesaat@gmail.com
+        - generic [ref=e11]:
+          - link "Hakkımızda" [ref=e12] [cursor=pointer]:
+            - /url: /hakkimizda
+          - link "İletişim" [ref=e13] [cursor=pointer]:
+            - /url: /iletisim
+          - link "Admin" [ref=e14] [cursor=pointer]:
+            - /url: /admin/login
+      - generic [ref=e16]:
+        - link "Favori Kozmetik" [ref=e17] [cursor=pointer]:
+          - /url: /
+          - heading "Favori Kozmetik" [level=1] [ref=e18]
+        - generic [ref=e20]:
+          - img [ref=e21]
+          - textbox "Ürün ara..." [ref=e24]
+        - generic [ref=e25]:
+          - button [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+          - link [ref=e30] [cursor=pointer]:
+            - /url: /giris
+            - img [ref=e31]
+          - button [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+          - link "Sepet" [ref=e37] [cursor=pointer]:
+            - /url: /sepet
+            - img [ref=e38]
+      - navigation [ref=e42]:
+        - generic [ref=e44]:
+          - link "Anasayfa" [ref=e46] [cursor=pointer]:
+            - /url: /
+          - link "Tüm Ürünler" [ref=e48] [cursor=pointer]:
+            - /url: /tum-urunler
+          - link "Çok Satanlar" [ref=e50] [cursor=pointer]:
+            - /url: /cok-satanlar
+          - button "Kategoriler" [ref=e52] [cursor=pointer]:
+            - text: Kategoriler
+            - img [ref=e53]
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - heading "Hesap Oluştur" [level=1] [ref=e59]
+        - paragraph [ref=e60]: Favori Kozmetik'e hoş geldiniz
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]: Ad Soyad
+          - generic [ref=e64]:
+            - img [ref=e65]
+            - textbox "Adınız Soyadınız" [ref=e68]
+        - generic [ref=e69]:
+          - generic [ref=e70]: E-posta
+          - generic [ref=e71]:
+            - img [ref=e72]
+            - textbox "ornek@email.com" [ref=e75]
+        - generic [ref=e76]:
+          - generic [ref=e77]: Telefon (Opsiyonel)
+          - generic [ref=e78]:
+            - img [ref=e79]
+            - textbox "05XX XXX XX XX" [ref=e81]
+        - generic [ref=e82]:
+          - generic [ref=e83]: Şifre
+          - generic [ref=e84]:
+            - img [ref=e85]
+            - textbox "En az 6 karakter" [ref=e88]
+            - button [ref=e89] [cursor=pointer]:
+              - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Şifre Tekrar
+          - generic [ref=e95]:
+            - img [ref=e96]
+            - textbox "Şifrenizi tekrar girin" [ref=e99]
+        - button "Hesap Oluştur" [ref=e100] [cursor=pointer]
+      - paragraph [ref=e102]:
+        - text: Zaten hesabınız var mı?
+        - link "Giriş Yap" [ref=e103] [cursor=pointer]:
+          - /url: /giris
+    - contentinfo [ref=e104]:
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e110]: F
+              - heading "FAVORI KOZMETIK" [level=3] [ref=e111]
+            - paragraph [ref=e112]: Premium kozmetik ürünleri ile güzelliğinizi keşfedin. Güvenilir, kaliteli ve uygun fiyatlı ürünler için doğru adres.
+            - generic [ref=e113]:
+              - link [ref=e114] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e115]
+              - link [ref=e117] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e118]
+              - link [ref=e122] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e123]
+          - generic [ref=e125]:
+            - heading "Hızlı Linkler" [level=4] [ref=e126]
+            - list [ref=e127]:
+              - listitem [ref=e128]:
+                - link "Hakkımızda" [ref=e129] [cursor=pointer]:
+                  - /url: /hakkimizda
+              - listitem [ref=e130]:
+                - link "İletişim" [ref=e131] [cursor=pointer]:
+                  - /url: /iletisim
+              - listitem [ref=e132]:
+                - link "Kargo & İade" [ref=e133] [cursor=pointer]:
+                  - /url: /kargo-iade
+              - listitem [ref=e134]:
+                - link "Sık Sorulan Sorular" [ref=e135] [cursor=pointer]:
+                  - /url: /sss
+              - listitem [ref=e136]:
+                - link "Blog" [ref=e137] [cursor=pointer]:
+                  - /url: /blog
+          - generic [ref=e138]:
+            - heading "Kategoriler" [level=4] [ref=e139]
+            - list [ref=e140]:
+              - listitem [ref=e141]:
+                - link "Protez Tırnak" [ref=e142] [cursor=pointer]:
+                  - /url: /kategori/protez-tirnak
+              - listitem [ref=e143]:
+                - link "Kalıcı Makyaj" [ref=e144] [cursor=pointer]:
+                  - /url: /kategori/kalici-makyaj
+              - listitem [ref=e145]:
+                - link "İpek Kirpik" [ref=e146] [cursor=pointer]:
+                  - /url: /kategori/ipek-kirpik
+              - listitem [ref=e147]:
+                - link "Kişisel Bakım" [ref=e148] [cursor=pointer]:
+                  - /url: /kategori/kisisel-bakim
+              - listitem [ref=e149]:
+                - link "Makyaj" [ref=e150] [cursor=pointer]:
+                  - /url: /kategori/makyaj
+          - generic [ref=e151]:
+            - heading "İletişim" [level=4] [ref=e152]
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - img [ref=e155]
+                - generic [ref=e157]: 0850 123 45 67
+              - generic [ref=e158]:
+                - img [ref=e159]
+                - generic [ref=e162]: info@favorikozmetik.com
+              - generic [ref=e163]:
+                - img [ref=e164]
+                - generic [ref=e167]:
+                  - text: Merkez Mahallesi, Kozmetik Sokak No:123
+                  - text: Kadıköy, İstanbul
+        - generic [ref=e169]:
+          - heading "Bültenimize Katılın" [level=4] [ref=e170]
+          - paragraph [ref=e171]: Yeni ürünler ve kampanyalardan haberdar olun.
+          - generic [ref=e172]:
+            - textbox "E-posta adresiniz" [ref=e173]
+            - button "Katıl" [ref=e174] [cursor=pointer]
+        - generic [ref=e176]:
+          - generic [ref=e177]: © 2024 Favori Kozmetik. Tüm hakları saklıdır.
+          - generic [ref=e178]:
+            - link "KVKK" [ref=e179] [cursor=pointer]:
+              - /url: /kvkk
+            - link "Gizlilik Politikası" [ref=e180] [cursor=pointer]:
+              - /url: /gizlilik
+            - link "Çerez Politikası" [ref=e181] [cursor=pointer]:
+              - /url: /cerez-politikasi
+            - link "Kullanım Koşulları" [ref=e182] [cursor=pointer]:
+              - /url: /kullanim-kosullari
+```

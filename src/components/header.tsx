@@ -20,8 +20,6 @@ const staticCategories = [
       { name: 'Makyaj', href: '/kategori/makyaj', key: 'makyaj' },
     ]
   },
-  { name: 'Hakkımızda', href: '/hakkimizda' },
-  { name: 'İletişim', href: '/iletisim' },
 ]
 
 export default function Header() {
@@ -30,6 +28,48 @@ export default function Header() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
+  const [user, setUser] = useState<any>(null)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  // Load user on mount (safe for unmount)
+  useEffect(() => {
+    let isMounted = true
+    const load = async () => {
+      try {
+        const response = await fetch('/api/auth/me')
+        const result = await response.json()
+        if (!isMounted) return
+        setUser(result.success ? result.user : null)
+      } catch {
+        if (!isMounted) return
+        setUser(null)
+      }
+    }
+
+    load()
+    
+    // Listen for auth changes
+    const handleAuthChange = () => {
+      load()
+    }
+    
+    window.addEventListener('authChanged', handleAuthChange)
+    return () => {
+      isMounted = false
+      window.removeEventListener('authChanged', handleAuthChange)
+    }
+  }, [])
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' })
+      setUser(null)
+      setShowUserMenu(false)
+      window.dispatchEvent(new Event('authChanged'))
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
 
   // Sepet sayısını güncelle
   useEffect(() => {
@@ -60,6 +100,7 @@ export default function Header() {
 
   // Load category counts dynamically from API so edits reflect in header
   useEffect(() => {
+    let isMounted = true
     const loadCounts = async () => {
       try {
         const res = await fetch('/api/products', { cache: 'no-store' })
@@ -71,11 +112,13 @@ export default function Header() {
             if (!key) continue
             counts[key] = (counts[key] || 0) + 1
           }
+          if (!isMounted) return
           setCategoryCounts(counts)
         }
       } catch {}
     }
     loadCounts()
+    return () => { isMounted = false }
   }, [])
 
   return (
@@ -119,33 +162,83 @@ export default function Header() {
              </div>
            </div>
 
-                     {/* Actions */}
-           <div className="flex items-center space-x-6">
-             <button className="text-gray-600 hover:text-gray-900">
-               <Search className="w-5 h-5" />
-             </button>
-             
-             <button className="text-gray-600 hover:text-gray-900">
-               <User className="w-5 h-5" />
-             </button>
-             
-             <button className="text-gray-600 hover:text-gray-900">
-               <Heart className="w-5 h-5" />
-             </button>
-             
-             <Link href="/sepet" className="text-gray-600 hover:text-gray-900 relative">
-               <ShoppingCart className="w-5 h-5" />
-               {cartCount > 0 && (
-                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-4 h-4 flex items-center justify-center px-1">
-                   {cartCount > 99 ? '99+' : cartCount}
-                 </span>
-               )}
-             </Link>
+          {/* Actions */}
+          <div className="flex items-center space-x-6">
+            <button className="text-gray-600 hover:text-gray-900">
+              <Search className="w-5 h-5" />
+            </button>
+            
+            {/* User Menu */}
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                >
+                  <User className="w-5 h-5" />
+                  <span className="hidden md:inline text-sm font-medium">
+                    {user.name?.split(' ')[0] || 'Hesabım'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 hidden md:inline" />
+                </button>
+                
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                    <Link
+                      href="/hesabim"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Hesabım
+                    </Link>
+                    <Link
+                      href="/siparislerim"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Siparişlerim
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                    >
+                      Çıkış Yap
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/giris" className="text-gray-600 hover:text-gray-900" data-testid="user-icon">
+                <User className="w-5 h-5" />
+              </Link>
+            )}
+            
+            <button className="text-gray-600 hover:text-gray-900">
+              <Heart className="w-5 h-5" />
+            </button>
+            
+            <Link
+              href="/sepet"
+              className="text-gray-600 hover:text-gray-900 relative"
+              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount} ürün)` : ''}`}
+              title="Sepet"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-4 h-4 flex items-center justify-center px-1">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </Link>
 
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
+              aria-label="Menüyü aç/kapat"
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
+              data-testid="mobile-menu-button"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -211,7 +304,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-200">
+        <div id="mobile-menu" className="lg:hidden bg-white border-t border-gray-200" data-testid="mobile-menu">
           <div className="container py-4">
             {/* Mobile search */}
             <div className="mb-4">
@@ -239,6 +332,21 @@ export default function Header() {
                   {category.name}
                 </Link>
               ))}
+              {/* Extra pages for mobile (not shown in desktop nav) */}
+              <Link
+                href="/hakkimizda"
+                className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Hakkımızda
+              </Link>
+              <Link
+                href="/iletisim"
+                className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                İletişim
+              </Link>
             </div>
 
             {/* Mobile actions */}

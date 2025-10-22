@@ -14,28 +14,17 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-// Mock data - gerçek uygulamada API'den gelecek
-const mockStats = {
-  totalProducts: 156,
-  totalOrders: 1247,
-  totalCustomers: 892,
-  totalRevenue: 45678,
-  recentOrders: [
-    { id: 'ORD-001', customer: 'Ayşe Yılmaz', amount: 299, status: 'Tamamlandı', date: '2024-01-15' },
-    { id: 'ORD-002', customer: 'Mehmet Demir', amount: 149, status: 'Kargoda', date: '2024-01-15' },
-    { id: 'ORD-003', customer: 'Fatma Kaya', amount: 399, status: 'Beklemede', date: '2024-01-14' },
-    { id: 'ORD-004', customer: 'Ali Özkan', amount: 199, status: 'Tamamlandı', date: '2024-01-14' },
-  ],
-  topProducts: [
-    { id: 1, name: 'Premium Saç Fiberi', sales: 45, revenue: 13455 },
-    { id: 2, name: 'Protez Tırnak Seti', sales: 38, revenue: 11400 },
-    { id: 3, name: 'İpek Kirpik Kit', sales: 32, revenue: 9600 },
-    { id: 4, name: 'Kalıcı Makyaj Kalemi', sales: 28, revenue: 8400 },
-  ]
-}
-
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(mockStats)
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalOrders: 0,
+    totalCustomers: 0,
+    totalRevenue: 0,
+    recentOrders: [],
+    topProducts: [],
+  })
+  const [isLoading, setIsLoading] = useState(true)
+
   useEffect(() => {
     // Client-side guard fallback
     fetch('/api/admin/me', { method: 'HEAD' }).then(res => {
@@ -45,7 +34,35 @@ export default function AdminDashboard() {
     }).catch(() => {
       location.href = '/admin/login'
     })
+
+    // Load stats from Supabase
+    const loadStats = async () => {
+      try {
+        const response = await fetch('/api/admin/stats')
+        const result = await response.json()
+        if (result.success) {
+          setStats(result.data)
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStats()
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Dashboard yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

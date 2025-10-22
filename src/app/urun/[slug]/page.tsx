@@ -9,6 +9,7 @@ import { addToCart } from '@/lib/cart'
 import { toggleFavorite, isFavorite } from '@/lib/favorites'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import ProductReviews from '@/components/product-reviews'
 
 type Params = { slug: string }
 
@@ -284,6 +285,11 @@ export default function ProductDetailPage({ params }: { params: Params }) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Product Reviews */}
+        <div className="container max-w-6xl mx-auto px-4">
+          <ProductReviews productId={product.id} productName={product.name} />
         </div>
       </div>
 

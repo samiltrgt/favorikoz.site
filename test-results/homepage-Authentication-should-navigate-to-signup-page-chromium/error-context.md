@@ -1,0 +1,155 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: 📞 0537 647 07 17
+          - generic [ref=e9]: 📧 mervesaat@gmail.com
+        - generic [ref=e10]:
+          - link "Hakkımızda" [ref=e11] [cursor=pointer]:
+            - /url: /hakkimizda
+          - link "İletişim" [ref=e12] [cursor=pointer]:
+            - /url: /iletisim
+          - link "Admin" [ref=e13] [cursor=pointer]:
+            - /url: /admin/login
+      - generic [ref=e15]:
+        - link "Favori Kozmetik" [ref=e16] [cursor=pointer]:
+          - /url: /
+          - heading "Favori Kozmetik" [level=1] [ref=e17]
+        - generic [ref=e19]:
+          - img [ref=e20]
+          - textbox "Ürün ara..." [ref=e23]
+        - generic [ref=e24]:
+          - button [ref=e25] [cursor=pointer]:
+            - img [ref=e26]
+          - link [ref=e29] [cursor=pointer]:
+            - /url: /giris
+            - img [ref=e30]
+          - button [ref=e33] [cursor=pointer]:
+            - img [ref=e34]
+          - link "Sepet" [ref=e36] [cursor=pointer]:
+            - /url: /sepet
+            - img [ref=e37]
+      - navigation [ref=e41]:
+        - generic [ref=e43]:
+          - link "Anasayfa" [ref=e45] [cursor=pointer]:
+            - /url: /
+          - link "Tüm Ürünler" [ref=e47] [cursor=pointer]:
+            - /url: /tum-urunler
+          - link "Çok Satanlar" [ref=e49] [cursor=pointer]:
+            - /url: /cok-satanlar
+          - button "Kategoriler" [ref=e51] [cursor=pointer]:
+            - text: Kategoriler
+            - img [ref=e52]
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - heading "Giriş Yap" [level=1] [ref=e58]
+        - paragraph [ref=e59]: Hesabınıza giriş yapın
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]: E-posta
+          - generic [ref=e63]:
+            - img [ref=e64]
+            - textbox "ornek@email.com" [ref=e67]
+        - generic [ref=e68]:
+          - generic [ref=e69]: Şifre
+          - generic [ref=e70]:
+            - img [ref=e71]
+            - textbox "Şifrenizi girin" [ref=e74]
+            - button [ref=e75] [cursor=pointer]:
+              - img [ref=e76]
+        - button "Giriş Yap" [ref=e79] [cursor=pointer]
+      - paragraph [ref=e81]:
+        - text: Hesabınız yok mu?
+        - link "Kayıt Ol" [active] [ref=e82] [cursor=pointer]:
+          - /url: /kayit
+    - contentinfo [ref=e83]:
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e89]: F
+              - heading "FAVORI KOZMETIK" [level=3] [ref=e90]
+            - paragraph [ref=e91]: Premium kozmetik ürünleri ile güzelliğinizi keşfedin. Güvenilir, kaliteli ve uygun fiyatlı ürünler için doğru adres.
+            - generic [ref=e92]:
+              - link [ref=e93] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e94]
+              - link [ref=e96] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e97]
+              - link [ref=e100] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e101]
+          - generic [ref=e103]:
+            - heading "Hızlı Linkler" [level=4] [ref=e104]
+            - list [ref=e105]:
+              - listitem [ref=e106]:
+                - link "Hakkımızda" [ref=e107] [cursor=pointer]:
+                  - /url: /hakkimizda
+              - listitem [ref=e108]:
+                - link "İletişim" [ref=e109] [cursor=pointer]:
+                  - /url: /iletisim
+              - listitem [ref=e110]:
+                - link "Kargo & İade" [ref=e111] [cursor=pointer]:
+                  - /url: /kargo-iade
+              - listitem [ref=e112]:
+                - link "Sık Sorulan Sorular" [ref=e113] [cursor=pointer]:
+                  - /url: /sss
+              - listitem [ref=e114]:
+                - link "Blog" [ref=e115] [cursor=pointer]:
+                  - /url: /blog
+          - generic [ref=e116]:
+            - heading "Kategoriler" [level=4] [ref=e117]
+            - list [ref=e118]:
+              - listitem [ref=e119]:
+                - link "Protez Tırnak" [ref=e120] [cursor=pointer]:
+                  - /url: /kategori/protez-tirnak
+              - listitem [ref=e121]:
+                - link "Kalıcı Makyaj" [ref=e122] [cursor=pointer]:
+                  - /url: /kategori/kalici-makyaj
+              - listitem [ref=e123]:
+                - link "İpek Kirpik" [ref=e124] [cursor=pointer]:
+                  - /url: /kategori/ipek-kirpik
+              - listitem [ref=e125]:
+                - link "Kişisel Bakım" [ref=e126] [cursor=pointer]:
+                  - /url: /kategori/kisisel-bakim
+              - listitem [ref=e127]:
+                - link "Makyaj" [ref=e128] [cursor=pointer]:
+                  - /url: /kategori/makyaj
+          - generic [ref=e129]:
+            - heading "İletişim" [level=4] [ref=e130]
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - img [ref=e133]
+                - generic [ref=e135]: 0850 123 45 67
+              - generic [ref=e136]:
+                - img [ref=e137]
+                - generic [ref=e140]: info@favorikozmetik.com
+              - generic [ref=e141]:
+                - img [ref=e142]
+                - generic [ref=e145]:
+                  - text: Merkez Mahallesi, Kozmetik Sokak No:123
+                  - text: Kadıköy, İstanbul
+        - generic [ref=e147]:
+          - heading "Bültenimize Katılın" [level=4] [ref=e148]
+          - paragraph [ref=e149]: Yeni ürünler ve kampanyalardan haberdar olun.
+          - generic [ref=e150]:
+            - textbox "E-posta adresiniz" [ref=e151]
+            - button "Katıl" [ref=e152] [cursor=pointer]
+        - generic [ref=e154]:
+          - generic [ref=e155]: © 2024 Favori Kozmetik. Tüm hakları saklıdır.
+          - generic [ref=e156]:
+            - link "KVKK" [ref=e157] [cursor=pointer]:
+              - /url: /kvkk
+            - link "Gizlilik Politikası" [ref=e158] [cursor=pointer]:
+              - /url: /gizlilik
+            - link "Çerez Politikası" [ref=e159] [cursor=pointer]:
+              - /url: /cerez-politikasi
+            - link "Kullanım Koşulları" [ref=e160] [cursor=pointer]:
+              - /url: /kullanim-kosullari
+  - alert [ref=e161]
+```

@@ -1,0 +1,313 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]: Favori Kozmetik - Premium Kozmetik Ürünleri
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - generic [ref=e9]: 📞 0537 647 07 17
+          - generic [ref=e10]: 📧 mervesaat@gmail.com
+        - generic [ref=e11]:
+          - link "Hakkımızda" [ref=e12]:
+            - /url: /hakkimizda
+          - link "İletişim" [ref=e13]:
+            - /url: /iletisim
+          - link "Admin" [ref=e14]:
+            - /url: /admin/login
+      - generic [ref=e16]:
+        - link "Favori Kozmetik" [ref=e17]:
+          - /url: /
+          - heading "Favori Kozmetik" [level=1] [ref=e18]
+        - generic [ref=e20]:
+          - img [ref=e21]
+          - textbox "Ürün ara..." [ref=e24]
+        - generic [ref=e25]:
+          - button [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+          - link [ref=e30]:
+            - /url: /giris
+            - img [ref=e31]
+          - button [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+          - link "Sepet" [ref=e37]:
+            - /url: /sepet
+            - img [ref=e38]
+      - navigation [ref=e42]:
+        - generic [ref=e44]:
+          - link "Anasayfa" [ref=e46]:
+            - /url: /
+          - link "Tüm Ürünler" [ref=e48]:
+            - /url: /tum-urunler
+          - link "Çok Satanlar" [ref=e50]:
+            - /url: /cok-satanlar
+          - button "Kategoriler" [ref=e52] [cursor=pointer]:
+            - text: Kategoriler
+            - img [ref=e53]
+    - main [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - img "hero-bg" [ref=e58]
+          - img "hero-bg" [ref=e59]
+          - img "hero-bg" [ref=e60]
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - heading "Günlük Rutininizi Yükseltin" [level=1] [ref=e67]
+            - heading "Salon kalitesinde hacim. Zahmetsiz rutin." [level=2] [ref=e68]
+            - paragraph [ref=e69]: Modern güzellik için tasarlanmış premium saç bakım koleksiyonumuzu keşfedin.
+            - generic [ref=e70]:
+              - link "Çok Satanları İncele" [ref=e71]:
+                - /url: /cok-satanlar
+              - link "Saç Hacmi Keşfet" [ref=e72]:
+                - /url: /kategori/sac-bakimi
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - heading "Saç Fiberi" [level=3] [ref=e78]
+              - paragraph [ref=e79]: Doğal hacim ve kaplama
+              - button "Şimdi Al →" [ref=e80] [cursor=pointer]:
+                - text: Şimdi Al
+                - generic [ref=e81]: →
+            - generic [ref=e82]:
+              - heading "Şekillendirme Pudrası" [level=3] [ref=e85]
+              - paragraph [ref=e86]: Mat bitim ve güçlü tutuş
+              - button "Şimdi Al →" [ref=e87] [cursor=pointer]:
+                - text: Şimdi Al
+                - generic [ref=e88]: →
+        - button "Önceki" [ref=e89] [cursor=pointer]:
+          - img [ref=e90]
+        - button "Sonraki" [ref=e92] [cursor=pointer]:
+          - img [ref=e93]
+        - generic [ref=e95]:
+          - button "Slide 1" [ref=e96] [cursor=pointer]
+          - button "Slide 2" [ref=e97] [cursor=pointer]
+          - button "Slide 3" [ref=e98] [cursor=pointer]
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e104]: 🚚
+          - generic [ref=e105]:
+            - heading "Ücretsiz Kargo" [level=3] [ref=e106]
+            - paragraph [ref=e107]: 1500 TL ve üzeri siparişlerde
+        - generic [ref=e108]:
+          - generic [ref=e110]: ✓
+          - generic [ref=e111]:
+            - heading "Dermatolojik Test" [level=3] [ref=e112]
+            - paragraph [ref=e113]: Güvenli ve test edilmiş ürünler
+        - generic [ref=e114]:
+          - generic [ref=e116]: ↻
+          - generic [ref=e117]:
+            - heading "14 Gün İade" [level=3] [ref=e118]
+            - paragraph [ref=e119]: Koşulsuz iade garantisi
+        - generic [ref=e120]:
+          - generic [ref=e122]: 🔒
+          - generic [ref=e123]:
+            - heading "Güvenli Ödeme" [level=3] [ref=e124]
+            - paragraph [ref=e125]: SSL korumalı ödeme sistemi
+      - generic [ref=e127]:
+        - link "minimal hair care Saç Bakımında Minimalizm Günlük rutininize modern bir dokunuş Şimdi keşfet →" [ref=e128]:
+          - /url: /kategori/sac-bakimi
+          - img "minimal hair care" [ref=e129]
+          - generic [ref=e130]:
+            - heading "Saç Bakımında Minimalizm" [level=3] [ref=e131]
+            - paragraph [ref=e132]: Günlük rutininize modern bir dokunuş
+          - generic [ref=e133]: Şimdi keşfet →
+        - generic [ref=e135]:
+          - link "minimal personal care Kişisel Bakım En çok tercih edilenler burada İncele →" [ref=e136]:
+            - /url: /kategori/kisisel-bakim
+            - img "minimal personal care" [ref=e137]
+            - generic [ref=e138]:
+              - heading "Kişisel Bakım" [level=3] [ref=e139]
+              - paragraph [ref=e140]: En çok tercih edilenler burada
+              - generic [ref=e141]: İncele →
+          - link "soft pattern Protez Tırnak Sezonun taze seçimleri Keşfet →" [ref=e143]:
+            - /url: /kategori/protez-tirnak
+            - img "soft pattern" [ref=e144]
+            - generic [ref=e145]:
+              - heading "Protez Tırnak" [level=3] [ref=e146]
+              - paragraph [ref=e147]: Sezonun taze seçimleri
+              - generic [ref=e148]: Keşfet →
+        - link "minimal waves Makyajda Zarafet Doğal tonlar, güçlü etki Alışverişe başla →" [ref=e150]:
+          - /url: /kategori/makyaj
+          - img "minimal waves" [ref=e151]
+          - generic [ref=e152]:
+            - heading "Makyajda Zarafet" [level=3] [ref=e153]
+            - paragraph [ref=e154]: Doğal tonlar, güçlü etki
+          - generic [ref=e155]: Alışverişe başla →
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - heading "Çok Satanlar" [level=2] [ref=e160]
+          - paragraph [ref=e161]: Müşterilerimizin favorisi olan ve olağanüstü sonuçlar veren ürünler
+        - generic [ref=e162]:
+          - generic [ref=e163] [cursor=pointer]:
+            - generic [ref=e164]:
+              - link "10'lu Profesyonel Makyaj Fırça Seti 1":
+                - /url: /urun/10lu-profesyonel-makyaj-firca-seti-1-800
+                - img "10'lu Profesyonel Makyaj Fırça Seti 1" [ref=e165]
+              - generic [ref=e166]:
+                - generic [ref=e167]: Best Seller
+                - generic [ref=e168]: "-16%"
+              - generic [ref=e169]:
+                - button [ref=e170]:
+                  - img [ref=e171]
+                - button [ref=e173]:
+                  - img [ref=e174]
+            - generic [ref=e178]:
+              - link "10'lu Profesyonel Makyaj Fırça Seti 1" [ref=e179]:
+                - /url: /urun/10lu-profesyonel-makyaj-firca-seti-1-800
+                - heading "10'lu Profesyonel Makyaj Fırça Seti 1" [level=3] [ref=e180]
+              - paragraph [ref=e181]: Fontenay
+              - generic [ref=e182]:
+                - img [ref=e183]
+                - img [ref=e185]
+                - img [ref=e187]
+                - img [ref=e189]
+                - img [ref=e191]
+                - generic [ref=e193]: (95)
+              - generic [ref=e194]:
+                - generic [ref=e195]: ₺2.499,00
+                - generic [ref=e196]: ₺2.990,00
+          - generic [ref=e197] [cursor=pointer]:
+            - generic [ref=e198]:
+              - link "10'lu Profesyonel Makyaj Fırça Seti Mavi":
+                - /url: /urun/10lu-profesyonel-makyaj-firca-seti-mavi-741
+                - img "10'lu Profesyonel Makyaj Fırça Seti Mavi" [ref=e199]
+              - generic [ref=e200]:
+                - generic [ref=e201]: Best Seller
+                - generic [ref=e202]: "-33%"
+              - generic [ref=e203]:
+                - button [ref=e204]:
+                  - img [ref=e205]
+                - button [ref=e207]:
+                  - img [ref=e208]
+            - generic [ref=e212]:
+              - link "10'lu Profesyonel Makyaj Fırça Seti Mavi" [ref=e213]:
+                - /url: /urun/10lu-profesyonel-makyaj-firca-seti-mavi-741
+                - heading "10'lu Profesyonel Makyaj Fırça Seti Mavi" [level=3] [ref=e214]
+              - paragraph [ref=e215]: Fontenay
+              - generic [ref=e216]:
+                - img [ref=e217]
+                - img [ref=e219]
+                - img [ref=e221]
+                - img [ref=e223]
+                - img [ref=e225]
+                - generic [ref=e227]: (120)
+              - generic [ref=e228]:
+                - generic [ref=e229]: ₺1.999,00
+                - generic [ref=e230]: ₺2.990,00
+        - link "TÜM ÜRÜNLERİ GÖRÜNTÜLE" [ref=e232]:
+          - /url: /tum-urunler
+          - text: TÜM ÜRÜNLERİ GÖRÜNTÜLE
+          - img [ref=e233]
+      - generic [ref=e236]:
+        - generic [ref=e237]:
+          - heading "Tonunuzu Nasıl Seçersiniz" [level=2] [ref=e238]
+          - paragraph [ref=e239]: Basit üç adımlı rehberimizle en doğal görünümlü sonuçları elde edin
+        - generic [ref=e240]:
+          - generic [ref=e241]:
+            - generic [ref=e244]: "01"
+            - heading "Saçınızı Değerlendirin" [level=3] [ref=e245]
+            - paragraph [ref=e246]: Mükemmel uyum için saç renginizi ve yoğunluk seviyenizi belirleyin
+          - generic [ref=e247]:
+            - generic [ref=e250]: "02"
+            - heading "Tonunuzu Seçin" [level=3] [ref=e251]
+            - paragraph [ref=e252]: Doğal görünümlü renk seçeneklerimizden birini tercih edin
+          - generic [ref=e253]:
+            - generic [ref=e256]: "03"
+            - heading "Uygulayın ve Şekillendirin" [level=3] [ref=e257]
+            - paragraph [ref=e258]: Fiberleri seyrekleşen bölgelere serpin ve istediğiniz gibi şekillendirin
+        - link "Tam Renk Rehberini Görün →" [ref=e260]:
+          - /url: /shade-guide
+      - generic [ref=e262]:
+        - generic [ref=e263]:
+          - heading "Yeni Ürünler" [level=2] [ref=e264]
+          - paragraph [ref=e265]: Güzellik rutininiz için taze gelenler
+        - link "TÜM ÜRÜNLERİ GÖRÜNTÜLE" [ref=e267]:
+          - /url: /tum-urunler
+          - text: TÜM ÜRÜNLERİ GÖRÜNTÜLE
+          - img [ref=e268]
+    - contentinfo [ref=e270]:
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - generic [ref=e273]:
+            - generic [ref=e274]:
+              - generic [ref=e276]: F
+              - heading "FAVORI KOZMETIK" [level=3] [ref=e277]
+            - paragraph [ref=e278]: Premium kozmetik ürünleri ile güzelliğinizi keşfedin. Güvenilir, kaliteli ve uygun fiyatlı ürünler için doğru adres.
+            - generic [ref=e279]:
+              - link [ref=e280]:
+                - /url: "#"
+                - img [ref=e281]
+              - link [ref=e283]:
+                - /url: "#"
+                - img [ref=e284]
+              - link [ref=e287]:
+                - /url: "#"
+                - img [ref=e288]
+          - generic [ref=e290]:
+            - heading "Hızlı Linkler" [level=4] [ref=e291]
+            - list [ref=e292]:
+              - listitem [ref=e293]:
+                - link "Hakkımızda" [ref=e294]:
+                  - /url: /hakkimizda
+              - listitem [ref=e295]:
+                - link "İletişim" [ref=e296]:
+                  - /url: /iletisim
+              - listitem [ref=e297]:
+                - link "Kargo & İade" [ref=e298]:
+                  - /url: /kargo-iade
+              - listitem [ref=e299]:
+                - link "Sık Sorulan Sorular" [ref=e300]:
+                  - /url: /sss
+              - listitem [ref=e301]:
+                - link "Blog" [ref=e302]:
+                  - /url: /blog
+          - generic [ref=e303]:
+            - heading "Kategoriler" [level=4] [ref=e304]
+            - list [ref=e305]:
+              - listitem [ref=e306]:
+                - link "Protez Tırnak" [ref=e307]:
+                  - /url: /kategori/protez-tirnak
+              - listitem [ref=e308]:
+                - link "Kalıcı Makyaj" [ref=e309]:
+                  - /url: /kategori/kalici-makyaj
+              - listitem [ref=e310]:
+                - link "İpek Kirpik" [ref=e311]:
+                  - /url: /kategori/ipek-kirpik
+              - listitem [ref=e312]:
+                - link "Kişisel Bakım" [ref=e313]:
+                  - /url: /kategori/kisisel-bakim
+              - listitem [ref=e314]:
+                - link "Makyaj" [ref=e315]:
+                  - /url: /kategori/makyaj
+          - generic [ref=e316]:
+            - heading "İletişim" [level=4] [ref=e317]
+            - generic [ref=e318]:
+              - generic [ref=e319]:
+                - img [ref=e320]
+                - generic [ref=e322]: 0850 123 45 67
+              - generic [ref=e323]:
+                - img [ref=e324]
+                - generic [ref=e327]: info@favorikozmetik.com
+              - generic [ref=e328]:
+                - img [ref=e329]
+                - generic [ref=e332]:
+                  - text: Merkez Mahallesi, Kozmetik Sokak No:123
+                  - text: Kadıköy, İstanbul
+        - generic [ref=e334]:
+          - heading "Bültenimize Katılın" [level=4] [ref=e335]
+          - paragraph [ref=e336]: Yeni ürünler ve kampanyalardan haberdar olun.
+          - generic [ref=e337]:
+            - textbox "E-posta adresiniz" [ref=e338]
+            - button "Katıl" [ref=e339] [cursor=pointer]
+        - generic [ref=e341]:
+          - generic [ref=e342]: © 2024 Favori Kozmetik. Tüm hakları saklıdır.
+          - generic [ref=e343]:
+            - link "KVKK" [ref=e344]:
+              - /url: /kvkk
+            - link "Gizlilik Politikası" [ref=e345]:
+              - /url: /gizlilik
+            - link "Çerez Politikası" [ref=e346]:
+              - /url: /cerez-politikasi
+            - link "Kullanım Koşulları" [ref=e347]:
+              - /url: /kullanim-kosullari
+```

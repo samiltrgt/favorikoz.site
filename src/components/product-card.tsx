@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart, Star, Truck, RotateCcw } from 'lucide-react'
@@ -27,6 +28,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const router = useRouter()
 
   const handleAddToCart = async () => {
     if (!product.in_stock) {
@@ -53,7 +55,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
     
     // Kartın tıklanması durumunda ürün sayfasına git
-    window.location.href = `/urun/${product.slug}`
+    router.push(`/urun/${product.slug}`)
   }
 
   return (
@@ -62,6 +64,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
+      data-testid="product-card"
     >
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden">

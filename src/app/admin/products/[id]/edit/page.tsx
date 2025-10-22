@@ -14,18 +14,25 @@ interface Product {
   brand: string
   price: number
   originalPrice?: number
+  original_price?: number
   description: string
-  category: string
-  isNew: boolean
-  isBestSeller: boolean
-  inStock: boolean
+  category?: string
+  category_slug?: string
+  isNew?: boolean
+  is_new?: boolean
+  isBestSeller?: boolean
+  is_best_seller?: boolean
+  inStock?: boolean
+  in_stock?: boolean
   stock_quantity: number
   image: string
   images: string[]
   barcode: string
   rating: number
-  reviews: number
-  createdAt: string
+  reviews?: number
+  reviews_count?: number
+  createdAt?: string
+  created_at?: string
 }
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
@@ -64,17 +71,27 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         
         if (result.success && result.data) {
           const foundProduct = result.data
+          console.log('📦 Loaded Product:', {
+            name: foundProduct.name,
+            is_new: foundProduct.is_new,
+            is_best_seller: foundProduct.is_best_seller,
+            in_stock: foundProduct.in_stock,
+            isNew: foundProduct.isNew,
+            isBestSeller: foundProduct.isBestSeller,
+            inStock: foundProduct.inStock,
+          })
           setProduct(foundProduct)
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
             price: foundProduct.price.toString(),
-            originalPrice: foundProduct.originalPrice?.toString() || '',
+            originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
             description: foundProduct.description || '',
-            category: foundProduct.category,
-            isNew: foundProduct.isNew,
-            isBestSeller: foundProduct.isBestSeller,
-            inStock: foundProduct.inStock,
+            category: foundProduct.category_slug || foundProduct.category,
+            // Convert snake_case to camelCase for checkboxes
+            isNew: foundProduct.is_new ?? foundProduct.isNew ?? false,
+            isBestSeller: foundProduct.is_best_seller ?? foundProduct.isBestSeller ?? false,
+            inStock: foundProduct.in_stock ?? foundProduct.inStock ?? true,
             stockQuantity: foundProduct.stock_quantity?.toString() || '300',
             image: foundProduct.image,
             images: foundProduct.images || [],
@@ -125,31 +142,38 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     setIsSubmitting(true)
     
     try {
+      const updatePayload = {
+        name: formData.name,
+        brand: formData.brand,
+        price: parseFloat(formData.price),
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+        description: formData.description,
+        category: formData.category,
+        isNew: formData.isNew,
+        isBestSeller: formData.isBestSeller,
+        inStock: formData.inStock,
+        stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 300,
+        image: formData.image,
+        images: formData.images,
+        barcode: formData.barcode,
+      }
+      
+      console.log('💾 Saving Product:', updatePayload)
+      
       const response = await fetch(`/api/products/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          brand: formData.brand,
-          price: parseFloat(formData.price),
-          originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-          description: formData.description,
-          category: formData.category,
-          isNew: formData.isNew,
-          isBestSeller: formData.isBestSeller,
-          inStock: formData.inStock,
-          stock_quantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 300,
-          image: formData.image,
-          images: formData.images,
-          barcode: formData.barcode,
-        }),
+        body: JSON.stringify(updatePayload),
       })
       
       const result = await response.json()
       
+      console.log('✅ Save Result:', result)
+      
       if (result.success) {
+        alert('Ürün başarıyla güncellendi!')
         router.push('/admin/products')
       } else {
         alert('Ürün güncellenirken hata oluştu: ' + result.error)
