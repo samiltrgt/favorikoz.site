@@ -4,9 +4,22 @@ import { createServerClient } from '@supabase/ssr'
 export async function createSupabaseServer() {
   const cookieStore = await cookies()
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      '⚠️ SUPABASE ENVIRONMENT VARIABLES EKSİK!\n\n' +
+      'Lütfen .env.local dosyasını düzenleyip şu değerleri ekle:\n' +
+      '- NEXT_PUBLIC_SUPABASE_URL\n' +
+      '- NEXT_PUBLIC_SUPABASE_ANON_KEY\n\n' +
+      'Detaylar için ENV_SETUP.md dosyasına bak.'
+    )
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -37,9 +50,22 @@ export async function createSupabaseServer() {
 
 // Service role client for admin operations (use with caution!)
 export function createSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error(
+      '⚠️ SUPABASE SERVICE ROLE KEY EKSİK!\n\n' +
+      'Lütfen .env.local dosyasını düzenleyip şu değerleri ekle:\n' +
+      '- NEXT_PUBLIC_SUPABASE_URL\n' +
+      '- SUPABASE_SERVICE_ROLE_KEY\n\n' +
+      'Detaylar için ENV_SETUP.md dosyasına bak.'
+    )
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    supabaseUrl,
+    supabaseServiceKey,
     {
       cookies: {
         get() { return undefined },
