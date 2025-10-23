@@ -78,8 +78,18 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
 -- ============================================
 -- 4. ORDERS TABLE
 -- ============================================
-CREATE TYPE order_status AS ENUM ('pending','paid','shipped','completed','cancelled');
-CREATE TYPE payment_status AS ENUM ('pending','completed','failed');
+-- Create enums if they don't exist
+DO $$ BEGIN
+    CREATE TYPE order_status AS ENUM ('pending','paid','shipped','completed','cancelled');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE payment_status AS ENUM ('pending','completed','failed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -193,9 +203,11 @@ $$;
 -- ============================================
 -- CATEGORIES POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "categories_public_read" ON public.categories;
 CREATE POLICY "categories_public_read" ON public.categories
   FOR SELECT USING (deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "categories_admin_all" ON public.categories;
 CREATE POLICY "categories_admin_all" ON public.categories
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -203,9 +215,11 @@ CREATE POLICY "categories_admin_all" ON public.categories
 -- ============================================
 -- PRODUCTS POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "products_public_read" ON public.products;
 CREATE POLICY "products_public_read" ON public.products
   FOR SELECT USING (deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "products_admin_all" ON public.products;
 CREATE POLICY "products_admin_all" ON public.products
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -213,9 +227,11 @@ CREATE POLICY "products_admin_all" ON public.products
 -- ============================================
 -- PROFILES POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "profiles_self_read" ON public.profiles;
 CREATE POLICY "profiles_self_read" ON public.profiles
   FOR SELECT USING (id = auth.uid() OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "profiles_self_update" ON public.profiles;
 CREATE POLICY "profiles_self_update" ON public.profiles
   FOR UPDATE USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
@@ -223,12 +239,15 @@ CREATE POLICY "profiles_self_update" ON public.profiles
 -- ============================================
 -- ORDERS POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "orders_owner_read" ON public.orders;
 CREATE POLICY "orders_owner_read" ON public.orders
   FOR SELECT USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "orders_owner_insert" ON public.orders;
 CREATE POLICY "orders_owner_insert" ON public.orders
   FOR INSERT WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
+DROP POLICY IF EXISTS "orders_admin_all" ON public.orders;
 CREATE POLICY "orders_admin_all" ON public.orders
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -236,6 +255,7 @@ CREATE POLICY "orders_admin_all" ON public.orders
 -- ============================================
 -- FAVORITES POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "favorites_owner_all" ON public.favorites;
 CREATE POLICY "favorites_owner_all" ON public.favorites
   FOR ALL USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
@@ -243,15 +263,19 @@ CREATE POLICY "favorites_owner_all" ON public.favorites
 -- ============================================
 -- REVIEWS POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "reviews_public_read" ON public.reviews;
 CREATE POLICY "reviews_public_read" ON public.reviews
   FOR SELECT USING (TRUE);
 
+DROP POLICY IF EXISTS "reviews_auth_insert" ON public.reviews;
 CREATE POLICY "reviews_auth_insert" ON public.reviews
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL OR guest_name IS NOT NULL);
 
+DROP POLICY IF EXISTS "reviews_owner_update" ON public.reviews;
 CREATE POLICY "reviews_owner_update" ON public.reviews
   FOR UPDATE USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "reviews_admin_all" ON public.reviews;
 CREATE POLICY "reviews_admin_all" ON public.reviews
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -259,9 +283,11 @@ CREATE POLICY "reviews_admin_all" ON public.reviews
 -- ============================================
 -- BANNERS POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "banners_public_read" ON public.banners;
 CREATE POLICY "banners_public_read" ON public.banners
   FOR SELECT USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "banners_admin_all" ON public.banners;
 CREATE POLICY "banners_admin_all" ON public.banners
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -269,9 +295,11 @@ CREATE POLICY "banners_admin_all" ON public.banners
 -- ============================================
 -- FEATURED PRODUCTS POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "featured_public_read" ON public.featured_products;
 CREATE POLICY "featured_public_read" ON public.featured_products
   FOR SELECT USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "featured_admin_all" ON public.featured_products;
 CREATE POLICY "featured_admin_all" ON public.featured_products
   FOR ALL USING (public.is_admin(auth.uid()))
   WITH CHECK (public.is_admin(auth.uid()));
@@ -300,22 +328,26 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 -- Public read for product-images and banners
+DROP POLICY IF EXISTS "public_read_product_images" ON storage.objects;
 CREATE POLICY "public_read_product_images" ON storage.objects
   FOR SELECT USING (bucket_id IN ('product-images', 'banners'));
 
 -- Admin can write to public buckets
+DROP POLICY IF EXISTS "admin_write_public_buckets" ON storage.objects;
 CREATE POLICY "admin_write_public_buckets" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id IN ('product-images', 'banners') AND public.is_admin(auth.uid())
   );
 
+DROP POLICY IF EXISTS "admin_update_public_buckets" ON storage.objects;
 CREATE POLICY "admin_update_public_buckets" ON storage.objects
   FOR UPDATE TO authenticated
   USING (
     bucket_id IN ('product-images', 'banners') AND public.is_admin(auth.uid())
   );
 
+DROP POLICY IF EXISTS "admin_delete_public_buckets" ON storage.objects;
 CREATE POLICY "admin_delete_public_buckets" ON storage.objects
   FOR DELETE TO authenticated
   USING (
@@ -323,12 +355,14 @@ CREATE POLICY "admin_delete_public_buckets" ON storage.objects
   );
 
 -- Private bucket: only owner/admin
+DROP POLICY IF EXISTS "private_owner_read" ON storage.objects;
 CREATE POLICY "private_owner_read" ON storage.objects
   FOR SELECT TO authenticated
   USING (
     bucket_id = 'private' AND (owner = auth.uid() OR public.is_admin(auth.uid()))
   );
 
+DROP POLICY IF EXISTS "private_owner_write" ON storage.objects;
 CREATE POLICY "private_owner_write" ON storage.objects
   FOR ALL TO authenticated
   USING (
@@ -358,6 +392,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
@@ -371,22 +406,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS set_updated_at_categories ON public.categories;
 CREATE TRIGGER set_updated_at_categories
   BEFORE UPDATE ON public.categories
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_products ON public.products;
 CREATE TRIGGER set_updated_at_products
   BEFORE UPDATE ON public.products
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_profiles ON public.profiles;
 CREATE TRIGGER set_updated_at_profiles
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_orders ON public.orders;
 CREATE TRIGGER set_updated_at_orders
   BEFORE UPDATE ON public.orders
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_banners ON public.banners;
 CREATE TRIGGER set_updated_at_banners
   BEFORE UPDATE ON public.banners
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
@@ -408,10 +448,52 @@ INSERT INTO public.categories (slug, name, description) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================
+-- STORAGE BUCKETS
+-- ============================================
+
+-- Create images bucket for product photos
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'images',
+  'images',
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies for images bucket
+DROP POLICY IF EXISTS "images_public_read" ON storage.objects;
+CREATE POLICY "images_public_read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'images');
+
+DROP POLICY IF EXISTS "images_admin_upload" ON storage.objects;
+CREATE POLICY "images_admin_upload" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'images' AND 
+    public.is_admin(auth.uid())
+  );
+
+DROP POLICY IF EXISTS "images_admin_update" ON storage.objects;
+CREATE POLICY "images_admin_update" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'images' AND 
+    public.is_admin(auth.uid())
+  );
+
+DROP POLICY IF EXISTS "images_admin_delete" ON storage.objects;
+CREATE POLICY "images_admin_delete" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'images' AND 
+    public.is_admin(auth.uid())
+  );
+
+-- ============================================
 -- DONE! Next steps:
 -- 1. Run this migration in Supabase SQL Editor
 -- 2. Update .env.local with Supabase credentials
 -- 3. Run product migration script: npm run migrate:products
 -- 4. Create admin user in Supabase Auth Dashboard
+-- 5. Test image upload functionality
 -- ============================================
 

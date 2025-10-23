@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
     
     // Convert camelCase to snake_case and price from TL to kuruş
     const productData: any = {
-      id: body.id,
-      slug: body.slug,
+      id: body.id || crypto.randomUUID(),
+      slug: body.slug || body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || crypto.randomUUID(),
       name: body.name,
       brand: body.brand || null,
       category_slug: body.category || null,

@@ -37,7 +37,7 @@ export default function ImageUpload({ onUpload, currentImage, folder = 'products
       reader.onload = async () => {
         const base64 = reader.result as string
 
-        // Upload to Cloudinary via API
+        // Upload to Supabase Storage
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
