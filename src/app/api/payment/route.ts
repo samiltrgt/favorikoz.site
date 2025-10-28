@@ -180,6 +180,11 @@ export async function POST(request: NextRequest) {
 
     // Real Iyzico payment integration
     try {
+      console.log('📤 Sending Iyzico payment request:', {
+        conversationId,
+        totalAmount: priceStr
+      })
+
       const response = await fetch(`${credentials!.baseUrl}/payment/auth`, {
         method: 'POST',
         headers: {
@@ -189,7 +194,18 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(iyzipayRequest)
       })
 
-      const paymentResult = await response.json()
+      const responseText = await response.text()
+      console.log('📥 Iyzico response:', response.status, responseText.substring(0, 200))
+      
+      let paymentResult
+      try {
+        paymentResult = JSON.parse(responseText)
+      } catch {
+        return NextResponse.json({
+          success: false,
+          error: `Iyzico API yanıt hatası: ${responseText.substring(0, 100)}`
+        }, { status: 400 })
+      }
 
       if (paymentResult.status === 'success') {
         return NextResponse.json({
@@ -199,14 +215,14 @@ export async function POST(request: NextRequest) {
           orderNumber
         })
       } else {
-        console.error('Iyzico payment error:', paymentResult.errorMessage)
+        console.error('❌ Iyzico payment error:', paymentResult.errorMessage || paymentResult)
         return NextResponse.json({
           success: false,
-          error: paymentResult.errorMessage || 'Ödeme işlemi başarısız'
+          error: paymentResult.errorMessage || JSON.stringify(paymentResult) || 'Ödeme işlemi başarısız'
         }, { status: 400 })
       }
     } catch (error: any) {
-      console.error('Iyzico API error:', error)
+      console.error('❌ Iyzico API error:', error)
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'
