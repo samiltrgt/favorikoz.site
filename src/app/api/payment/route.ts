@@ -129,21 +129,26 @@ export async function POST(request: NextRequest) {
           .insert({
             order_number: orderNumber,
             user_id: userId !== 'guest' ? userId : null,
+            customer_name: customer.name || '',
+            customer_email: customer.email || '',
+            customer_phone: customer.phone || '',
+            shipping_address: {
+              address: customer.address || '',
+              city: customer.city || '',
+              zipcode: customer.zipCode || ''
+            },
             items: items.map(item => ({
               product_id: item.id,
               name: item.name,
               price: item.price * 100, // Store in kuruş
               quantity: item.quantity || 1
             })),
-            total_amount: Math.round(totalPrice * 100), // Store in kuruş
+            subtotal: Math.round(totalPrice * 100), // Store in kuruş
+            shipping_cost: 0,
+            total: Math.round(totalPrice * 100), // Store in kuruş
             status: 'pending',
-            payment_status: 'pending',
-            customer_name: customer.name || '',
-            customer_email: customer.email || '',
-            customer_phone: customer.phone || '',
-            shipping_address: customer.address || '',
-            shipping_city: customer.city || '',
-            shipping_zipcode: customer.zipCode || ''
+            payment_method: 'iyzico',
+            payment_status: 'pending'
           })
 
         if (orderError) {
