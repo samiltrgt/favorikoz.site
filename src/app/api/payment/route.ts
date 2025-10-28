@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import getIyzipay from '@/lib/iyzico'
+import getIyzipay, { getIyzicoCredentials } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // For test mode, return mock response
-    const isProduction = process.env.NODE_ENV === 'production'
-    const hasIyzicoKeys = process.env.IYZICO_API_KEY && process.env.IYZICO_SECRET_KEY
+    // Check if real Iyzico credentials are available
+    const credentials = getIyzicoCredentials()
+    const hasIyzicoKeys = !!credentials
 
     // Create order in Supabase
     let supabase = null
@@ -136,19 +136,21 @@ export async function POST(request: NextRequest) {
               address: customer.address || '',
               city: customer.city || '',
               zipcode: customer.zipCode || ''
-            },
+            } as any,
+            billing_address: null,
             items: items.map(item => ({
               product_id: item.id,
               name: item.name,
               price: item.price * 100, // Store in kuruş
               quantity: item.quantity || 1
-            })),
+            })) as any,
             subtotal: Math.round(totalPrice * 100), // Store in kuruş
             shipping_cost: 0,
             total: Math.round(totalPrice * 100), // Store in kuruş
             status: 'pending',
             payment_method: 'iyzico',
-            payment_status: 'pending'
+            payment_status: 'pending',
+            payment_token: null
           })
 
         if (orderError) {
@@ -161,8 +163,9 @@ export async function POST(request: NextRequest) {
       console.error('Order creation error:', error)
     }
 
-    if (!hasIyzicoKeys || !isProduction) {
-      // Mock response for development/test
+    // If no Iyzico credentials, use mock payment for testing
+    if (!hasIyzicoKeys) {
+      console.log('⚠️ Using mock payment - Iyzico credentials not configured')
       return NextResponse.json({
         success: true,
         token: `test-token-${Date.now()}`,
@@ -171,13 +174,40 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Real iyzico integration would go here when implemented
-    // For now, just return mock success
-    return NextResponse.json({
-      success: true,
-      token: orderNumber,
-      paymentPageUrl: `${callbackUrl}?token=${orderNumber}&status=success&orderNumber=${orderNumber}`
-    })
+    // Real Iyzico payment integration
+    try {
+      const response = await fetch(`${credentials!.baseUrl}/payment/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(`${credentials!.apiKey}:${credentials!.secretKey}`).toString('base64')}`
+        },
+        body: JSON.stringify(iyzipayRequest)
+      })
+
+      const paymentResult = await response.json()
+
+      if (paymentResult.status === 'success') {
+        return NextResponse.json({
+          success: true,
+          token: paymentResult.conversationId,
+          paymentPageUrl: paymentResult.paymentPageUrl,
+          orderNumber
+        })
+      } else {
+        console.error('Iyzico payment error:', paymentResult.errorMessage)
+        return NextResponse.json({
+          success: false,
+          error: paymentResult.errorMessage || 'Ödeme işlemi başarısız'
+        }, { status: 400 })
+      }
+    } catch (error: any) {
+      console.error('Iyzico API error:', error)
+      return NextResponse.json({
+        success: false,
+        error: error.message || 'Ödeme başlatılamadı'
+      }, { status: 500 })
+    }
 
   } catch (error: any) {
     console.error('Payment initialization error:', error)
