@@ -43,13 +43,16 @@ export async function POST(request: NextRequest) {
     
     const callbackUrl = `${getBaseUrl()}/payment/callback`
 
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    // Generate order number and conversation ID (Iyzico requires unique random string)
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 15)
+    const orderNumber = `ORD-${timestamp}-${random.toUpperCase()}`
+    const conversationId = `${timestamp}${random}`.substring(0, 100) // Max 100 chars
 
     // Prepare iyzico payment request
     const iyzipayRequest = {
       locale: 'tr',
-      conversationId: orderNumber,
+      conversationId: conversationId, // Iyzico requires unique random string (max 100 chars)
       price: priceStr,
       paidPrice: priceStr,
       currency: 'TRY',
