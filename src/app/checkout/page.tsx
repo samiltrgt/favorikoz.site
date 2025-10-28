@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
+  const [cartItems, setCartItems] = useState<any[]>([])
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     surname: '',
@@ -21,25 +22,46 @@ export default function CheckoutPage() {
 
   const [error, setError] = useState<string | null>(null)
 
-  const getCartItems = () => {
+  useEffect(() => {
+    // Load cart items on client side only
     try {
       const raw = localStorage.getItem('cart')
-      if (!raw) return []
-      const parsed = JSON.parse(raw)
-      return parsed.map((i: any) => ({ id: i.id, name: i.name, category: i.category || 'Genel', price: i.price }))
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const items = parsed.map((i: any) => ({ 
+          id: i.id, 
+          name: i.name, 
+          category: i.category || 'Genel', 
+          price: i.price,
+          quantity: i.quantity || 1
+        }))
+        setCartItems(items)
+      }
     } catch {
-      return []
+      setCartItems([])
     }
-  }
+  }, [])
+
+  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
   const handlePayment = async () => {
+    if (cartItems.length === 0) {
+      setError('Sepetiniz boş')
+      return
+    }
+
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
+      setError('Lütfen tüm bilgileri doldurun')
+      return
+    }
+
     setLoading(true)
     setError(null)
     try {
       const response = await fetch('/api/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: getCartItems(), customerInfo })
+        body: JSON.stringify({ items: cartItems, customerInfo })
       })
       const result = await response.json()
       if (result.success && result.paymentPageUrl) {
@@ -86,9 +108,32 @@ export default function CheckoutPage() {
 
         <div>
           <h2 className="text-lg font-semibold mb-3">Özet</h2>
-          {error && <div className="mb-3 text-red-600 text-sm">{error}</div>}
-          <button onClick={handlePayment} disabled={loading} className="w-full bg-black text-white rounded px-4 py-3 disabled:opacity-50">
-            {loading ? 'Ödeme Başlatılıyor...' : 'Ödemeye Geç'}
+          
+          {/* Cart Items */}
+          <div className="space-y-2 mb-4">
+            {cartItems.length === 0 ? (
+              <p className="text-gray-500 text-sm">Sepetiniz boş</p>
+            ) : (
+              cartItems.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span>{item.name} x{item.quantity}</span>
+                  <span>₺{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Total */}
+          <div className="border-t pt-4 mb-4">
+            <div className="flex justify-between font-bold text-lg">
+              <span>Toplam</span>
+              <span>₺{totalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {error && <div className="mb-3 text-red-600 text-sm bg-red-50 p-2 rounded">{error}</div>}
+          <button onClick={handlePayment} disabled={loading || cartItems.length === 0} className="w-full bg-black text-white rounded px-4 py-3 disabled:opacity-50">
+            {loading ? 'Ödeme Başlatılıyor...' : cartItems.length === 0 ? 'Sepet Boş' : 'Ödemeye Geç'}
           </button>
         </div>
       </div>

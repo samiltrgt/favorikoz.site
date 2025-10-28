@@ -211,7 +211,9 @@ export default function ProductReviews({ productId, productName }: ProductReview
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-gray-900">{review.author}</span>
                     {review.verified && (
-                      <CheckCircle className="w-4 h-4 text-green-600" title="Doğrulanmış Alıcı" />
+                      <span title="Doğrulanmış Alıcı">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">

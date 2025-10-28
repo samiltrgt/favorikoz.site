@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
-import iyzipay from '@/lib/iyzico'
+import getIyzipay from '@/lib/iyzico'
 
 type BasketItem = {
   id: string
@@ -29,10 +28,6 @@ export async function POST(request: NextRequest) {
 
     const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:1700'}/payment/callback`
 
-    // Create order in Supabase
-    const supabase = await createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
-
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
@@ -54,7 +49,7 @@ export async function POST(request: NextRequest) {
         registerCard: '0'
       },
       buyer: {
-        id: user?.id || 'guest',
+        id: 'guest',
         name: customer.name || '',
         surname: customer.surname || '',
         gsmNumber: customer.phone || '',
@@ -110,6 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Real iyzico integration (production)
+    const iyzipay = getIyzipay()
     const paymentResult = await new Promise((resolve, reject) => {
       iyzipay.threedsInitialize.create(iyzipayRequest, (err: any, result: any) => {
         if (err) {

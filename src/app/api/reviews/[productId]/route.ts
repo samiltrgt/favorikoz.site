@@ -35,12 +35,12 @@ export async function GET(
     }
     
     // Format reviews
-    const reviews = data.map(review => ({
+    const reviews = data.map((review: any) => ({
       id: review.id,
       rating: review.rating,
       comment: review.comment,
       verified: review.verified,
-      author: review.profiles?.name || review.guest_name || 'Anonim',
+      author: (review.profiles && review.profiles.length > 0 && review.profiles[0]?.name) || review.guest_name || 'Anonim',
       date: new Date(review.created_at).toLocaleDateString('tr-TR'),
     }))
     

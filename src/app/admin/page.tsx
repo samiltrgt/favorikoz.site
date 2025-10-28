@@ -14,8 +14,31 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+interface Order {
+  id: string
+  customer: string
+  date: string
+  amount: string
+  status: string
+}
+
+interface Product {
+  id: string
+  name: string
+  orders: number
+  sales: number
+  revenue: number
+}
+
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalProducts: number
+    totalOrders: number
+    totalCustomers: number
+    totalRevenue: number
+    recentOrders: Order[]
+    topProducts: Product[]
+  }>({
     totalProducts: 0,
     totalOrders: 0,
     totalCustomers: 0,
