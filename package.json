@@ -41,7 +41,6 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.0",
-    "iyzipay": "^2.0.64",
     "lucide-react": "^0.294.0",
     "next": "14.0.0",
     "next-cloudinary": "^6.16.0",
