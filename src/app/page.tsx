@@ -10,21 +10,29 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 export const revalidate = 10 // Revalidate every 10 seconds (for admin changes to show faster)
 
 export default async function HomePage() {
-  const supabase = await createSupabaseServer()
+  let products: any[] = []
   
-  // Fetch products from Supabase
-  const { data: allProducts } = await supabase
-    .from('products')
-    .select('*')
-    .is('deleted_at', null)
-    .limit(1000)
-  
-  // Convert price from kuruş to TL
-  const products = (allProducts || []).map(p => ({
-    ...p,
-    price: p.price / 100,
-    original_price: p.original_price ? p.original_price / 100 : null,
-  }))
+  try {
+    const supabase = await createSupabaseServer()
+    
+    // Fetch products from Supabase
+    const { data: allProducts } = await supabase
+      .from('products')
+      .select('*')
+      .is('deleted_at', null)
+      .limit(1000)
+    
+    // Convert price from kuruş to TL
+    products = (allProducts || []).map(p => ({
+      ...p,
+      price: p.price / 100,
+      original_price: p.original_price ? p.original_price / 100 : null,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch products:', error)
+    // Fallback to empty array
+    products = []
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
