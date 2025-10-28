@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import getIyzipay from '@/lib/iyzico'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
   id: string
@@ -108,10 +109,57 @@ export async function POST(request: NextRequest) {
     const isProduction = process.env.NODE_ENV === 'production'
     const hasIyzicoKeys = process.env.IYZICO_API_KEY && process.env.IYZICO_SECRET_KEY
 
+    // Create order in Supabase
+    let supabase = null
+    let userId = 'guest'
+    
+    try {
+      supabase = await createSupabaseServer()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) userId = user.id
+    } catch (error) {
+      console.error('Supabase auth error:', error)
+    }
+
+    // Insert order into Supabase
+    try {
+      if (supabase) {
+        const { error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            order_number: orderNumber,
+            user_id: userId !== 'guest' ? userId : null,
+            items: items.map(item => ({
+              product_id: item.id,
+              name: item.name,
+              price: item.price * 100, // Store in kuruş
+              quantity: item.quantity || 1
+            })),
+            total_amount: Math.round(totalPrice * 100), // Store in kuruş
+            status: 'pending',
+            payment_status: 'pending',
+            customer_name: customer.name || '',
+            customer_email: customer.email || '',
+            customer_phone: customer.phone || '',
+            shipping_address: customer.address || '',
+            shipping_city: customer.city || '',
+            shipping_zipcode: customer.zipCode || ''
+          })
+
+        if (orderError) {
+          console.error('Supabase order creation error:', orderError)
+        } else {
+          console.log('✅ Order created in Supabase:', orderNumber)
+        }
+      }
+    } catch (error) {
+      console.error('Order creation error:', error)
+    }
+
     if (!hasIyzicoKeys || !isProduction) {
       // Mock response for development/test
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         token: `test-token-${Date.now()}`,
         paymentPageUrl: `${callbackUrl}?token=test-token-${Date.now()}&status=success&orderNumber=${orderNumber}`,
         orderNumber

@@ -40,6 +40,36 @@ export default function CheckoutPage() {
     } catch {
       setCartItems([])
     }
+
+    // Load user profile if logged in
+    const loadUserProfile = async () => {
+      try {
+        const response = await fetch('/api/auth/me')
+        const data = await response.json()
+        
+        console.log('API response:', data) // Debug log
+        
+        if (data.success && data.user) {
+          // Split full name into name and surname
+          const fullName = data.user.name || ''
+          const nameParts = fullName.split(' ')
+          const firstName = nameParts[0] || ''
+          const lastName = nameParts.slice(1).join(' ') || ''
+          
+          setCustomerInfo(prev => ({
+            ...prev,
+            name: firstName,
+            surname: lastName,
+            email: data.user.email || '',
+            phone: data.user.phone || ''
+          }))
+        }
+      } catch (error) {
+        console.log('User not logged in or profile not loaded:', error)
+      }
+    }
+    
+    loadUserProfile()
   }, [])
 
   const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
