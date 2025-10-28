@@ -91,9 +91,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Convert camelCase to snake_case and price from TL to kuruş
+    // Generate slug from name if not provided
+    const generatedSlug = body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || crypto.randomUUID()
+    
     const productData: any = {
       id: body.id || crypto.randomUUID(),
-      slug: body.slug || body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || crypto.randomUUID(),
+      slug: body.slug || generatedSlug,
       name: body.name,
       brand: body.brand || null,
       category_slug: body.category || null,

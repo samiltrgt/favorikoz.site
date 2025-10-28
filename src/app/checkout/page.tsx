@@ -12,7 +12,11 @@ export default function CheckoutPage() {
     tc: '',
     address: '',
     city: '',
-    zipCode: ''
+    zipCode: '',
+    cardNumber: '',
+    expireMonth: '',
+    expireYear: '',
+    cvc: ''
   })
 
   const [error, setError] = useState<string | null>(null)
@@ -67,6 +71,16 @@ export default function CheckoutPage() {
           <div className="grid grid-cols-2 gap-3">
             <input className="border rounded px-3 py-2" placeholder="Şehir" value={customerInfo.city} onChange={(e) => setCustomerInfo({ ...customerInfo, city: e.target.value })} />
             <input className="border rounded px-3 py-2" placeholder="Posta Kodu" value={customerInfo.zipCode} onChange={(e) => setCustomerInfo({ ...customerInfo, zipCode: e.target.value })} />
+          </div>
+          
+          <div className="mt-6 space-y-3">
+            <h2 className="text-lg font-semibold">Kart Bilgileri</h2>
+            <input className="border rounded px-3 py-2 w-full" placeholder="Kart Numarası" value={customerInfo.cardNumber} onChange={(e) => setCustomerInfo({ ...customerInfo, cardNumber: e.target.value })} />
+            <div className="grid grid-cols-3 gap-3">
+              <input className="border rounded px-3 py-2" placeholder="Ay" value={customerInfo.expireMonth} onChange={(e) => setCustomerInfo({ ...customerInfo, expireMonth: e.target.value })} />
+              <input className="border rounded px-3 py-2" placeholder="Yıl" value={customerInfo.expireYear} onChange={(e) => setCustomerInfo({ ...customerInfo, expireYear: e.target.value })} />
+              <input className="border rounded px-3 py-2" placeholder="CVC" value={customerInfo.cvc} onChange={(e) => setCustomerInfo({ ...customerInfo, cvc: e.target.value })} />
+            </div>
           </div>
         </div>
 
