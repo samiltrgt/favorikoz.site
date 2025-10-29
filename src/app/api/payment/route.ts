@@ -56,6 +56,12 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORD-${timestamp}-${random1.toUpperCase()}`
     // conversationId must be truly random and start with a letter (Iyzico requirement)
     const conversationId = `${firstLetter}${random1}${random2}${random3}${timestamp}`.substring(0, 100)
+    // basketId must also be random (Iyzico requirement)
+    const basketIdFirstLetter = String.fromCharCode(97 + Math.floor(Math.random() * 26)) // a-z
+    const basketId = `${basketIdFirstLetter}${random2}${random3}${random1}${timestamp}`.substring(0, 100)
+    // buyer.id must be random (Iyzico requirement - not "guest")
+    const buyerIdFirstLetter = String.fromCharCode(97 + Math.floor(Math.random() * 26)) // a-z
+    const buyerId = `${buyerIdFirstLetter}${random1}${random3}${timestamp}`.substring(0, 64)
 
     // Prepare iyzico payment request
     const iyzipayRequest = {
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
       paidPrice: priceStr,
       currency: 'TRY',
       installment: '1',
-      basketId: orderNumber,
+      basketId: basketId, // Must be random string (Iyzico requirement)
       paymentCard: {
         cardHolderName: `${customer.name} ${customer.surname}`,
         cardNumber: customer.cardNumber?.replace(/\s/g, '') || '',
@@ -75,7 +81,7 @@ export async function POST(request: NextRequest) {
         registerCard: '0'
       },
       buyer: {
-        id: 'guest',
+        id: buyerId, // Must be random string (Iyzico requirement, not "guest")
         name: customer.name || '',
         surname: customer.surname || '',
         gsmNumber: customer.phone || '',
