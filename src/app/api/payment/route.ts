@@ -44,11 +44,18 @@ export async function POST(request: NextRequest) {
     const callbackUrl = `${getBaseUrl()}/payment/callback`
 
     // Generate order number and conversation ID (Iyzico requires unique random string starting with letter)
-    const random = Math.random().toString(36).substring(2, 15) // Generate random alphanumeric string
     const timestamp = Date.now()
-    const orderNumber = `ORD-${timestamp}-${random.toUpperCase()}`
-    // conversationId must start with a letter (Iyzico requirement)
-    const conversationId = `conv${timestamp}${random}`.substring(0, 100) // Max 100 chars, starts with letter
+    // Generate multiple random strings for truly unique conversationId
+    const random1 = Math.random().toString(36).substring(2, 15)
+    const random2 = Math.random().toString(36).substring(2, 15)
+    const random3 = Math.random().toString(36).substring(2, 11)
+    
+    // Get random alphabet character for first letter
+    const firstLetter = String.fromCharCode(97 + Math.floor(Math.random() * 26)) // a-z
+    
+    const orderNumber = `ORD-${timestamp}-${random1.toUpperCase()}`
+    // conversationId must be truly random and start with a letter (Iyzico requirement)
+    const conversationId = `${firstLetter}${random1}${random2}${random3}${timestamp}`.substring(0, 100)
 
     // Prepare iyzico payment request
     const iyzipayRequest = {
