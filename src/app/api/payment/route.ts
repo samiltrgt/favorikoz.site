@@ -193,16 +193,23 @@ export async function POST(request: NextRequest) {
 
     // Real Iyzico payment integration
     try {
+      // Iyzico requires x-iyzi-rnd header with random string for each request
+      const iyziRnd = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
+      
       console.log('📤 Sending Iyzico payment request:', {
         conversationId,
-        totalAmount: priceStr
+        basketId,
+        buyerId,
+        totalAmount: priceStr,
+        iyziRnd
       })
 
       const response = await fetch(`${credentials!.baseUrl}/payment/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${credentials!.apiKey}:${credentials!.secretKey}`).toString('base64')}`
+          'Authorization': `Basic ${Buffer.from(`${credentials!.apiKey}:${credentials!.secretKey}`).toString('base64')}`,
+          'x-iyzi-rnd': iyziRnd // Required random string header for Iyzico
         },
         body: JSON.stringify(iyzipayRequest)
       })
