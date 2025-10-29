@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
       // Use SDK's payment.create method
       // SDK automatically handles hash signature, headers, and authentication
-      return new Promise((resolve) => {
+      return new Promise<NextResponse>((resolve) => {
         iyzipay.payment.create(iyzipayRequest, (err: any, result: any) => {
           if (err) {
             console.error('❌ Iyzico SDK error:', err)
