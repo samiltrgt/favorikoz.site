@@ -191,58 +191,64 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Real Iyzico payment integration
+    // Real Iyzico payment integration using SDK
     try {
-      // Iyzico requires x-iyzi-rnd header with random string for each request
-      const iyziRnd = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
+      // Get Iyzico SDK instance
+      const iyzipay = getIyzipay()
       
-      console.log('📤 Sending Iyzico payment request:', {
+      if (!iyzipay) {
+        console.error('❌ Iyzico SDK could not be initialized')
+        return NextResponse.json({
+          success: false,
+          error: 'Ödeme sistemi başlatılamadı'
+        }, { status: 500 })
+      }
+
+      console.log('📤 Sending Iyzico payment request via SDK:', {
         conversationId,
         basketId,
         buyerId,
-        totalAmount: priceStr,
-        iyziRnd
+        totalAmount: priceStr
       })
 
-      const response = await fetch(`${credentials!.baseUrl}/payment/auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${credentials!.apiKey}:${credentials!.secretKey}`).toString('base64')}`,
-          'x-iyzi-rnd': iyziRnd // Required random string header for Iyzico
-        },
-        body: JSON.stringify(iyzipayRequest)
-      })
+      // Use SDK's payment.create method
+      // SDK automatically handles hash signature, headers, and authentication
+      return new Promise((resolve) => {
+        iyzipay.payment.create(iyzipayRequest, (err: any, result: any) => {
+          if (err) {
+            console.error('❌ Iyzico SDK error:', err)
+            resolve(NextResponse.json({
+              success: false,
+              error: err.message || 'Ödeme başlatılamadı'
+            }, { status: 500 }))
+            return
+          }
 
-      const responseText = await response.text()
-      console.log('📥 Iyzico response:', response.status, responseText.substring(0, 200))
-      
-      let paymentResult
-      try {
-        paymentResult = JSON.parse(responseText)
-      } catch {
-        return NextResponse.json({
-          success: false,
-          error: `Iyzico API yanıt hatası: ${responseText.substring(0, 100)}`
-        }, { status: 400 })
-      }
+          console.log('📥 Iyzico SDK response:', {
+            status: result.status,
+            errorMessage: result.errorMessage,
+            paymentPageUrl: result.paymentPageUrl
+          })
 
-      if (paymentResult.status === 'success') {
-        return NextResponse.json({
-          success: true,
-          token: paymentResult.conversationId,
-          paymentPageUrl: paymentResult.paymentPageUrl,
-          orderNumber
+          if (result.status === 'success') {
+            resolve(NextResponse.json({
+              success: true,
+              token: result.conversationId || conversationId,
+              paymentPageUrl: result.paymentPageUrl,
+              orderNumber
+            }))
+          } else {
+            console.error('❌ Iyzico payment error:', result.errorMessage || result)
+            resolve(NextResponse.json({
+              success: false,
+              error: result.errorMessage || JSON.stringify(result) || 'Ödeme işlemi başarısız'
+            }, { status: 400 }))
+          }
         })
-      } else {
-        console.error('❌ Iyzico payment error:', paymentResult.errorMessage || paymentResult)
-        return NextResponse.json({
-          success: false,
-          error: paymentResult.errorMessage || JSON.stringify(paymentResult) || 'Ödeme işlemi başarısız'
-        }, { status: 400 })
-      }
+      })
+
     } catch (error: any) {
-      console.error('❌ Iyzico API error:', error)
+      console.error('❌ Iyzico SDK error:', error)
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'
