@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import getIyzipay, { getIyzicoCredentials } from '@/lib/iyzico'
+import { getIyzicoCredentials, callIyzicoAPI } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
@@ -191,64 +191,45 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Real Iyzico payment integration using SDK
+    // Real Iyzico payment integration using REST API (no SDK)
     try {
-      // Get Iyzico SDK instance
-      const iyzipay = getIyzipay()
-      
-      if (!iyzipay) {
-        console.error('❌ Iyzico SDK could not be initialized')
-        return NextResponse.json({
-          success: false,
-          error: 'Ödeme sistemi başlatılamadı'
-        }, { status: 500 })
+      if (!credentials) {
+        throw new Error('Iyzico credentials not available')
       }
 
-      console.log('📤 Sending Iyzico payment request via SDK:', {
+      console.log('📤 Sending Iyzico payment request via REST API:', {
         conversationId,
         basketId,
         buyerId,
         totalAmount: priceStr
       })
 
-      // Use SDK's payment.create method
-      // SDK automatically handles hash signature, headers, and authentication
-      return new Promise<NextResponse>((resolve) => {
-        iyzipay.payment.create(iyzipayRequest, (err: any, result: any) => {
-          if (err) {
-            console.error('❌ Iyzico SDK error:', err)
-            resolve(NextResponse.json({
-              success: false,
-              error: err.message || 'Ödeme başlatılamadı'
-            }, { status: 500 }))
-            return
-          }
+      // Call Iyzico REST API
+      const result = await callIyzicoAPI('/payment/auth', iyzipayRequest, credentials)
 
-          console.log('📥 Iyzico SDK response:', {
-            status: result.status,
-            errorMessage: result.errorMessage,
-            paymentPageUrl: result.paymentPageUrl
-          })
-
-          if (result.status === 'success') {
-            resolve(NextResponse.json({
-              success: true,
-              token: result.conversationId || conversationId,
-              paymentPageUrl: result.paymentPageUrl,
-              orderNumber
-            }))
-          } else {
-            console.error('❌ Iyzico payment error:', result.errorMessage || result)
-            resolve(NextResponse.json({
-              success: false,
-              error: result.errorMessage || JSON.stringify(result) || 'Ödeme işlemi başarısız'
-            }, { status: 400 }))
-          }
-        })
+      console.log('📥 Iyzico REST API response:', {
+        status: result.status,
+        errorMessage: result.errorMessage,
+        paymentPageUrl: result.paymentPageUrl
       })
 
+      if (result.status === 'success') {
+        return NextResponse.json({
+          success: true,
+          token: result.conversationId || conversationId,
+          paymentPageUrl: result.paymentPageUrl,
+          orderNumber
+        })
+      } else {
+        console.error('❌ Iyzico payment error:', result.errorMessage || result)
+        return NextResponse.json({
+          success: false,
+          error: result.errorMessage || JSON.stringify(result) || 'Ödeme işlemi başarısız'
+        }, { status: 400 })
+      }
+
     } catch (error: any) {
-      console.error('❌ Iyzico SDK error:', error)
+      console.error('❌ Iyzico REST API error:', error)
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'
