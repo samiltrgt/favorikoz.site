@@ -12,7 +12,15 @@ export function getIyzicoCredentials() {
     return null
   }
   
-  const baseUrl = process.env.IYZICO_BASE_URL?.trim() || 'https://sandbox-api.iyzipay.com'
+  // Debug: Log raw environment variable value
+  const rawBaseUrl = process.env.IYZICO_BASE_URL
+  console.log(`🔍 Environment Variable Debug:`, {
+    'IYZICO_BASE_URL (raw)': rawBaseUrl || '(not set)',
+    'IYZICO_BASE_URL (trimmed)': rawBaseUrl?.trim() || '(not set)',
+    'Will use': rawBaseUrl?.trim() || 'https://sandbox-api.iyzipay.com (default)'
+  })
+  
+  const baseUrl = rawBaseUrl?.trim() || 'https://sandbox-api.iyzipay.com'
   const isSandbox = baseUrl.includes('sandbox')
   
   // Log which environment is being used
