@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getIyzicoCredentials, callIyzicoAPI } from '@/lib/iyzico'
+import { getIyzicoInstance, createPayment } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
@@ -122,9 +122,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if real Iyzico credentials are available
-    const credentials = getIyzicoCredentials()
-    const hasIyzicoKeys = !!credentials
+    // Check if Iyzico SDK is available
+    const iyzipay = getIyzicoInstance()
+    const hasIyzicoKeys = !!iyzipay
 
     // Create order in Supabase
     let supabase = null
@@ -191,45 +191,59 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Real Iyzico payment integration using REST API (no SDK)
+    // Real Iyzico payment integration using official SDK
     try {
-      if (!credentials) {
-        throw new Error('Iyzico credentials not available')
+      if (!iyzipay) {
+        throw new Error('Iyzico SDK not initialized')
       }
 
-      console.log('📤 Sending Iyzico payment request via REST API:', {
+      console.log('📤 Sending Iyzico payment request via SDK:', {
         conversationId,
         basketId,
         buyerId,
         totalAmount: priceStr
       })
 
-      // Call Iyzico REST API
-      const result = await callIyzicoAPI('/payment/auth', iyzipayRequest, credentials)
+      // Call Iyzico SDK
+      const result = await createPayment(iyzipayRequest)
 
-      console.log('📥 Iyzico REST API response:', {
+      console.log('📥 Iyzico SDK response:', {
         status: result.status,
         errorMessage: result.errorMessage,
-        paymentPageUrl: result.paymentPageUrl
+        paymentId: result.paymentId
       })
 
       if (result.status === 'success') {
-        return NextResponse.json({
-          success: true,
-          token: result.conversationId || conversationId,
-          paymentPageUrl: result.paymentPageUrl,
-          orderNumber
-        })
+        // Handle 3DS authentication
+        if (result.threeDSHtmlContent) {
+          // Return 3DS HTML content for authentication
+          return NextResponse.json({
+            success: true,
+            requires3DS: true,
+            threeDSHtmlContent: result.threeDSHtmlContent,
+            conversationId: result.conversationId || conversationId,
+            orderNumber
+          })
+        } else {
+          // Direct payment success (no 3DS)
+          return NextResponse.json({
+            success: true,
+            token: result.conversationId || conversationId,
+            paymentId: result.paymentId,
+            orderNumber
+          })
+        }
       } else {
         console.error('❌ Iyzico payment error:', result.errorMessage || result)
         return NextResponse.json({
           success: false,
-          error: result.errorMessage || JSON.stringify(result) || 'Ödeme işlemi başarısız'
+          error: result.errorMessage || 'Ödeme işlemi başarısız',
+          errorCode: result.errorCode
         }, { status: 400 })
       }
 
     } catch (error: any) {
-      console.error('❌ Iyzico REST API error:', error)
+      console.error('❌ Iyzico SDK error:', error)
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'
