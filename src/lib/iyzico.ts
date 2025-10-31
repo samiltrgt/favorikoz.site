@@ -37,8 +37,9 @@ export async function callIyzicoAPI(
   const randomString = generateRandomString(16)
   
   // Create hash signature according to Iyzico documentation
-  // Format: base64(sha256(apiKey + randomString + secretKey))
-  const dataToHash = `${apiKey}${randomString}${secretKey}`
+  // Format: base64(sha256(apiKey + randomString + secretKey + requestBody))
+  // IMPORTANT: The request body must be included in the hash!
+  const dataToHash = `${apiKey}${randomString}${secretKey}${bodyString}`
   const hashBuffer = crypto.createHash('sha256').update(dataToHash).digest()
   const hash = hashBuffer.toString('base64')
   
