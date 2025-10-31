@@ -12,10 +12,17 @@ export function getIyzicoCredentials() {
     return null
   }
   
+  const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com'
+  const isSandbox = baseUrl.includes('sandbox')
+  
+  // Log which environment is being used
+  console.log(`🔧 Iyzico environment: ${isSandbox ? 'SANDBOX 🧪' : 'PRODUCTION 🚀'}`)
+  console.log(`   Base URL: ${baseUrl}`)
+  
   return {
     apiKey,
     secretKey,
-    baseUrl: process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com'
+    baseUrl
   }
 }
 
@@ -52,6 +59,14 @@ export async function callIyzicoAPI(
   const url = `${baseUrl}${endpoint}`
   
   try {
+    console.log(`📤 Iyzico API Request:`, {
+      endpoint,
+      url,
+      method: 'POST',
+      hasBody: !!bodyString,
+      bodyLength: bodyString.length
+    })
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -64,9 +79,28 @@ export async function callIyzicoAPI(
     })
     
     const result = await response.json()
+    
+    console.log(`📥 Iyzico API Response:`, {
+      status: response.status,
+      statusText: response.statusText,
+      resultStatus: result.status,
+      errorMessage: result.errorMessage,
+      errorCode: result.errorCode
+    })
+    
+    if (result.status === 'failure' || response.status !== 200) {
+      console.error('❌ Iyzico API Error Details:', {
+        status: result.status,
+        errorMessage: result.errorMessage,
+        errorCode: result.errorCode,
+        errorGroup: result.errorGroup,
+        httpStatus: response.status
+      })
+    }
+    
     return result
   } catch (error: any) {
-    console.error('Iyzico API call error:', error)
+    console.error('❌ Iyzico API call error:', error)
     throw new Error(`Iyzico API call failed: ${error.message}`)
   }
 }
