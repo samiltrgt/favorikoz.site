@@ -14,6 +14,12 @@ function toPriceString(value: number): string {
   return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2)
 }
 
+function toIyzicoDate(date: Date): string {
+  // Iyzico format: YYYY-MM-DD HH:mm:ss
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -87,8 +93,8 @@ export async function POST(request: NextRequest) {
         gsmNumber: customer.phone || '',
         email: customer.email || '',
         identityNumber: customer.tc || '',
-        lastLoginDate: new Date().toISOString(),
-        registrationDate: new Date().toISOString(),
+        lastLoginDate: toIyzicoDate(new Date()),
+        registrationDate: toIyzicoDate(new Date()),
         registrationAddress: customer.address || '',
         ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1',
         city: customer.city || '',
