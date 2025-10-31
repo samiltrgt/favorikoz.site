@@ -26,7 +26,16 @@ export function getIyzicoCredentials() {
   // Log which environment is being used
   console.log(`🔧 Iyzico environment: ${isSandbox ? 'SANDBOX 🧪' : 'PRODUCTION 🚀'}`)
   console.log(`   Base URL: ${baseUrl}`)
-  console.log(`   API Key length: ${apiKey.length} (first 8 chars: ${apiKey.substring(0, 8)}...)`)
+  console.log(`   API Key length: ${apiKey.length} (first 15 chars: ${apiKey.substring(0, 15)}...)`)
+  console.log(`   Secret Key length: ${secretKey.length} (first 15 chars: ${secretKey.substring(0, 15)}...)`)
+  
+  // Warn if keys look suspicious
+  if (isSandbox && apiKey.length < 20) {
+    console.warn('⚠️ WARNING: Sandbox API Key seems too short. Expected length: 20-40 chars')
+  }
+  if (!isSandbox && apiKey.length < 20) {
+    console.warn('⚠️ WARNING: Production API Key seems too short. Expected length: 20-40 chars')
+  }
   
   return {
     apiKey,
@@ -66,30 +75,41 @@ export async function callIyzicoAPI(
 ): Promise<any> {
   const { apiKey, secretKey, baseUrl } = credentials
   
-  // Normalize request body: sort keys alphabetically for consistent hashing
-  // This ensures the JSON string is always the same for the same data
-  const normalizedBody = sortKeys(requestBody)
-  const bodyString = JSON.stringify(normalizedBody)
-  
+  // Generate random string FIRST (must be generated before body stringification)
   const randomString = generateRandomString(16)
+  
+  // IMPORTANT: Iyzico expects the exact body string that will be sent
+  // Don't modify the body structure - use it as-is for hash calculation
+  // JSON.stringify without spaces for consistent hashing
+  const bodyString = JSON.stringify(requestBody)
   
   // Create hash signature according to Iyzico documentation
   // Format: base64(sha256(apiKey + randomString + secretKey + requestBody))
   // IMPORTANT: The request body must be included in the hash!
-  // CRITICAL: All parts must be concatenated without any separators or encoding
-  const dataToHash = `${apiKey}${randomString}${secretKey}${bodyString}`
+  // CRITICAL: All parts must be concatenated without any separators
+  // The order is: apiKey + randomString + secretKey + bodyString
+  const dataToHash = apiKey + randomString + secretKey + bodyString
   
-  console.log(`🔐 Hash calculation:`, {
+  console.log(`🔐 Hash calculation debug:`, {
     apiKeyLength: apiKey.length,
+    apiKeyPreview: apiKey.substring(0, 10) + '...',
+    randomString: randomString,
     randomStringLength: randomString.length,
     secretKeyLength: secretKey.length,
     bodyStringLength: bodyString.length,
+    bodyStringPreview: bodyString.substring(0, 100) + '...',
     totalHashDataLength: dataToHash.length,
-    randomStringPrefix: randomString.substring(0, 8)
+    dataToHashPreview: dataToHash.substring(0, 50) + '...' + dataToHash.substring(dataToHash.length - 50)
   })
   
+  // Calculate SHA256 hash and encode as base64
   const hashBuffer = crypto.createHash('sha256').update(dataToHash, 'utf8').digest()
   const hash = hashBuffer.toString('base64')
+  
+  console.log(`🔐 Hash result:`, {
+    hashLength: hash.length,
+    hashPreview: hash.substring(0, 20) + '...'
+  })
   
   // Authorization header format: Iyzipay base64(apiKey:hash)
   // This matches Iyzico SDK implementation
@@ -141,8 +161,22 @@ export async function callIyzicoAPI(
         errorMessage: result.errorMessage,
         errorCode: result.errorCode,
         errorGroup: result.errorGroup,
-        httpStatus: response.status
+        httpStatus: response.status,
+        fullResponse: JSON.stringify(result, null, 2)
       })
+      
+      // Specific guidance for error code 1003 (Authorization error)
+      if (result.errorCode === '1003') {
+        console.error('⚠️ AUTHORIZATION ERROR (1003) - Possible causes:')
+        console.error('   1. Wrong API Key or Secret Key')
+        console.error('   2. Using Production keys with Sandbox URL (or vice versa)')
+        console.error('   3. Keys have extra spaces or special characters')
+        console.error('   4. Hash calculation mismatch')
+        console.error(`   Current Base URL: ${baseUrl}`)
+        console.error(`   Is Sandbox: ${baseUrl.includes('sandbox')}`)
+        console.error(`   API Key starts with: ${apiKey.substring(0, 15)}...`)
+        console.error('   💡 Check: API keys must match the environment (sandbox keys → sandbox URL)')
+      }
     }
     
     return result
