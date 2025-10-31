@@ -83,23 +83,26 @@ export async function callIyzicoAPI(
   // JSON.stringify without spaces for consistent hashing
   const bodyString = JSON.stringify(requestBody)
   
-  // Create hash signature according to Iyzico documentation
-  // Format: base64(sha256(apiKey + randomString + secretKey + requestBody))
-  // IMPORTANT: The request body must be included in the hash!
-  // CRITICAL: All parts must be concatenated without any separators
-  // The order is: apiKey + randomString + secretKey + bodyString
-  const dataToHash = apiKey + randomString + secretKey + bodyString
+  // ATTEMPT 1: Hash WITHOUT body (apiKey + randomString + secretKey only)
+  // Some versions of Iyzico API don't include body in hash
+  const dataToHashWithoutBody = apiKey + randomString + secretKey
   
-  console.log(`🔐 Hash calculation debug:`, {
+  // ATTEMPT 2: Hash WITH body (apiKey + randomString + secretKey + body)
+  const dataToHashWithBody = apiKey + randomString + secretKey + bodyString
+  
+  // Try WITHOUT body first
+  const dataToHash = dataToHashWithoutBody
+  
+  console.log(`🔐 Hash calculation debug (trying WITHOUT body):`, {
     apiKeyLength: apiKey.length,
     apiKeyPreview: apiKey.substring(0, 10) + '...',
     randomString: randomString,
     randomStringLength: randomString.length,
     secretKeyLength: secretKey.length,
     bodyStringLength: bodyString.length,
-    bodyStringPreview: bodyString.substring(0, 100) + '...',
     totalHashDataLength: dataToHash.length,
-    dataToHashPreview: dataToHash.substring(0, 50) + '...' + dataToHash.substring(dataToHash.length - 50)
+    hashMethod: 'WITHOUT body',
+    dataToHashPreview: dataToHash.substring(0, 50) + '...'
   })
   
   // Calculate SHA256 hash and encode as base64
