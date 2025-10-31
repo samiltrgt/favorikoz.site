@@ -94,8 +94,21 @@ export default function CheckoutPage() {
         body: JSON.stringify({ items: cartItems, customerInfo })
       })
       const result = await response.json()
-      if (result.success && result.paymentPageUrl) {
-        window.location.href = result.paymentPageUrl
+      
+      if (result.success) {
+        if (result.requires3DS && result.threeDSHtmlContent) {
+          // 3DS authentication required - show in iframe or new window
+          const newWindow = window.open('', '_blank')
+          if (newWindow) {
+            newWindow.document.write(result.threeDSHtmlContent)
+            newWindow.document.close()
+          }
+        } else if (result.paymentPageUrl) {
+          // Direct success or payment page redirect
+          window.location.href = result.paymentPageUrl
+        } else {
+          setError('Ödeme yanıtı hatalı')
+        }
       } else {
         setError(result.error || 'Ödeme başlatılamadı')
       }

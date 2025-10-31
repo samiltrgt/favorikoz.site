@@ -217,8 +217,10 @@ export async function POST(request: NextRequest) {
             orderNumber
           })
         } else {
+          // Direct success - redirect to callback
           return NextResponse.json({
             success: true,
+            paymentPageUrl: `${callbackUrl}?token=${result.conversationId || conversationId}&status=success&orderNumber=${orderNumber}`,
             token: result.conversationId || conversationId,
             paymentId: result.paymentId,
             orderNumber
