@@ -1,39 +1,41 @@
-// Iyzico implementation using official SDK for proper authentication
+// Iyzico SDK implementation with Vercel compatibility
 
 import Iyzipay from 'iyzipay'
 
-// Helper to get Iyzico SDK instance
-export function getIyzicoInstance() {
+let iyzipayInstance: Iyzipay | null = null
+
+export function getIyzicoInstance(): Iyzipay | null {
+  if (iyzipayInstance) {
+    return iyzipayInstance
+  }
+
   const apiKey = process.env.IYZICO_API_KEY?.trim()
   const secretKey = process.env.IYZICO_SECRET_KEY?.trim()
   
-  // Return null if keys are missing
   if (!apiKey || !secretKey) {
     console.error('❌ Iyzico credentials missing')
     return null
   }
   
-  const rawBaseUrl = process.env.IYZICO_BASE_URL?.trim()
-  const baseUrl = rawBaseUrl || 'https://sandbox-api.iyzipay.com'
+  const baseUrl = process.env.IYZICO_BASE_URL?.trim() || 'https://sandbox-api.iyzipay.com'
   const isSandbox = baseUrl.includes('sandbox')
   
-  // Log environment
-  console.log(`🔧 Iyzico SDK Initialized:`)
-  console.log(`   Environment: ${isSandbox ? 'SANDBOX 🧪' : 'PRODUCTION 🚀'}`)
+  console.log(`🔧 Iyzico SDK: ${isSandbox ? 'SANDBOX 🧪' : 'PRODUCTION 🚀'}`)
   console.log(`   Base URL: ${baseUrl}`)
-  console.log(`   API Key: ${apiKey.substring(0, 15)}...`)
   
-  // Create Iyzico instance with official SDK
-  const iyzipay = new Iyzipay({
-    apiKey: apiKey,
-    secretKey: secretKey,
-    uri: baseUrl
-  })
-  
-  return iyzipay
+  try {
+    iyzipayInstance = new Iyzipay({
+      apiKey: apiKey,
+      secretKey: secretKey,
+      uri: baseUrl
+    })
+    return iyzipayInstance
+  } catch (error) {
+    console.error('❌ Failed to initialize Iyzico SDK:', error)
+    return null
+  }
 }
 
-// Legacy function for backward compatibility
 export function getIyzicoCredentials() {
   const apiKey = process.env.IYZICO_API_KEY?.trim()
   const secretKey = process.env.IYZICO_SECRET_KEY?.trim()
@@ -44,46 +46,33 @@ export function getIyzicoCredentials() {
   
   const baseUrl = process.env.IYZICO_BASE_URL?.trim() || 'https://sandbox-api.iyzipay.com'
   
-  return {
-    apiKey,
-    secretKey,
-    baseUrl
-  }
+  return { apiKey, secretKey, baseUrl }
 }
 
-// Create payment using Iyzico SDK (replaces manual REST API calls)
+// Create payment using Iyzico SDK
 export async function createPayment(paymentRequest: any): Promise<any> {
   const iyzipay = getIyzicoInstance()
   
   if (!iyzipay) {
-    throw new Error('Iyzico SDK not initialized - check credentials')
+    throw new Error('Iyzico SDK not initialized')
   }
   
-  console.log('📤 Sending payment request via Iyzico SDK')
+  console.log('📤 Sending payment via Iyzico SDK')
   
   return new Promise((resolve, reject) => {
     iyzipay.payment.create(paymentRequest, (err: any, result: any) => {
       if (err) {
-        console.error('❌ Iyzico SDK Error:', err)
+        console.error('❌ SDK Error:', err)
         reject(err)
         return
       }
       
-      console.log('📥 Iyzico SDK Response:', {
+      console.log('📥 Response:', {
         status: result.status,
-        errorMessage: result.errorMessage,
         errorCode: result.errorCode,
-        paymentId: result.paymentId,
-        threeDSHtmlContent: result.threeDSHtmlContent ? 'present' : 'not present'
+        errorMessage: result.errorMessage,
+        paymentId: result.paymentId
       })
-      
-      if (result.status === 'failure') {
-        console.error('❌ Payment Error:', {
-          errorCode: result.errorCode,
-          errorMessage: result.errorMessage,
-          errorGroup: result.errorGroup
-        })
-      }
       
       resolve(result)
     })

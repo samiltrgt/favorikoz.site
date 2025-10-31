@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getIyzicoInstance, createPayment } from '@/lib/iyzico'
+import { getIyzicoCredentials, createPayment } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
@@ -122,9 +122,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if Iyzico SDK is available
-    const iyzipay = getIyzicoInstance()
-    const hasIyzicoKeys = !!iyzipay
+    // Check if Iyzico SDK available
+    const credentials = getIyzicoCredentials()
+    const hasIyzicoKeys = !!credentials
 
     // Create order in Supabase
     let supabase = null
@@ -191,32 +191,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Real Iyzico payment integration using official SDK
+    // Real Iyzico payment integration
     try {
-      if (!iyzipay) {
-        throw new Error('Iyzico SDK not initialized')
+      if (!credentials) {
+        throw new Error('Iyzico credentials not available')
       }
 
-      console.log('📤 Sending Iyzico payment request via SDK:', {
-        conversationId,
-        basketId,
-        buyerId,
-        totalAmount: priceStr
-      })
-
-      // Call Iyzico SDK
+      // Call Iyzico REST API
       const result = await createPayment(iyzipayRequest)
-
-      console.log('📥 Iyzico SDK response:', {
-        status: result.status,
-        errorMessage: result.errorMessage,
-        paymentId: result.paymentId
-      })
 
       if (result.status === 'success') {
         // Handle 3DS authentication
         if (result.threeDSHtmlContent) {
-          // Return 3DS HTML content for authentication
           return NextResponse.json({
             success: true,
             requires3DS: true,
@@ -225,7 +211,6 @@ export async function POST(request: NextRequest) {
             orderNumber
           })
         } else {
-          // Direct payment success (no 3DS)
           return NextResponse.json({
             success: true,
             token: result.conversationId || conversationId,
@@ -234,7 +219,6 @@ export async function POST(request: NextRequest) {
           })
         }
       } else {
-        console.error('❌ Iyzico payment error:', result.errorMessage || result)
         return NextResponse.json({
           success: false,
           error: result.errorMessage || 'Ödeme işlemi başarısız',
@@ -243,7 +227,7 @@ export async function POST(request: NextRequest) {
       }
 
     } catch (error: any) {
-      console.error('❌ Iyzico SDK error:', error)
+      console.error('❌ Iyzico error:', error)
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'

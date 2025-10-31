@@ -33,4 +33,8 @@ module.exports = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },
+  // Serverless: bundle iyzipay properly
+  experimental: {
+    serverComponentsExternalPackages: ['iyzipay'],
+  },
 };

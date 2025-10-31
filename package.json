@@ -41,6 +41,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.0",
+    "@types/iyzipay": "^2.0.3",
     "iyzipay": "^2.0.64",
     "lucide-react": "^0.294.0",
     "next": "14.0.0",
@@ -53,7 +54,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/iyzipay": "^2.0.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
