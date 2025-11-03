@@ -74,14 +74,14 @@ async function checkImageSources() {
 
   console.log('📊 SONUÇLAR:')
   console.log(`   Toplam ürün: ${products.length}`)
-  console.log(`   Cloudinary URL'leri: ${cloudinaryCount} ⚠️`)
-  console.log(`   Supabase Storage URL'leri: ${supabaseCount} ✅`)
+  console.log(`   Cloudinary URL\'leri: ${cloudinaryCount} ⚠️`)
+  console.log(`   Supabase Storage URL\'leri: ${supabaseCount} ✅`)
   console.log(`   Diğer kaynaklar: ${otherCount}`)
   console.log('')
 
   if (cloudinaryCount > 0) {
-    console.log('⚠️  Cloudinary URL'leri bulundu!')
-    console.log(`   ${cloudinaryUrls.length} ürünün ana görseli Cloudinary'den`)
+    console.log('⚠️  Cloudinary URL\'leri bulundu!')
+    console.log(`   ${cloudinaryUrls.length} ürünün ana görseli Cloudinary\'den`)
     console.log('')
     console.log('📝 Örnek Cloudinary URL\'leri:')
     cloudinaryUrls.slice(0, 5).forEach((item) => {

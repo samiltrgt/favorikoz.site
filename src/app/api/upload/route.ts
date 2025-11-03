@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
     if (uploadError) {
       console.error('❌ Supabase upload error:', {
         message: uploadError.message,
-        statusCode: uploadError.statusCode,
-        error: uploadError.error
+        error: uploadError
       })
       
       // Daha detaylı hata mesajı
