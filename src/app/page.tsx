@@ -4,7 +4,6 @@ import HeroSection from '@/components/hero-section'
 import FeaturesSection from '@/components/features-section'
 import HomeBanners from '@/components/home-banners'
 import FeaturedProducts from '@/components/featured-products'
-import ShadeGuideSection from '@/components/shade-guide-section'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 export const revalidate = 10 // Revalidate every 10 seconds (for admin changes to show faster)
@@ -55,18 +54,6 @@ export default async function HomePage() {
           products={products}
           viewAllLink="/tum-urunler"
           section="bestSellers"
-        />
-        
-        {/* Shade Guide Section */}
-        <ShadeGuideSection />
-        
-        {/* Featured Products - New Products */}
-        <FeaturedProducts
-          title="Yeni Ürünler"
-          subtitle="Güzellik rutininiz için taze gelenler"
-          products={products}
-          viewAllLink="/tum-urunler"
-          section="newProducts"
         />
       </main>
       
