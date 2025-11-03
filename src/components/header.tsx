@@ -8,7 +8,6 @@ import { getCart } from '@/lib/cart'
 const staticCategories = [
   { name: 'Anasayfa', href: '/' },
   { name: 'Tüm Ürünler', href: '/tum-urunler' },
-  { name: 'Çok Satanlar', href: '/cok-satanlar' },
   { 
     name: 'Kategoriler', 
     href: '#',
