@@ -5,6 +5,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+interface HeroProduct {
+  id: string
+  name: string
+  description: string
+  image: string
+  link: string
+  display_order: number
+}
+
 const slides = [
   {
     id: 1,
@@ -43,6 +52,23 @@ const slides = [
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [heroProducts, setHeroProducts] = useState<HeroProduct[]>([])
+
+  useEffect(() => {
+    // Load hero products from database
+    const loadHeroProducts = async () => {
+      try {
+        const response = await fetch('/api/hero-products')
+        const result = await response.json()
+        if (result.success && result.data) {
+          setHeroProducts(result.data.slice(0, 2)) // Max 2 products
+        }
+      } catch (error) {
+        console.error('Error loading hero products:', error)
+      }
+    }
+    loadHeroProducts()
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -121,28 +147,60 @@ export default function HeroSection() {
                     {/* Product Showcase */}
                     <div className="relative">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {/* Hair Fibers Card */}
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
-                          <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-6 flex items-center justify-center">
-                            <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
-                          </div>
-                          <h3 className="text-lg sm:text-xl font-light mb-2">Saç Fiberi</h3>
-                          <p className="text-gray-600 text-sm mb-4">Doğal hacim ve kaplama</p>
-                          <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
-                            Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
-                          </button>
-                        </div>
-                        {/* Styling Powder Card */}
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
-                          <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-6 flex items-center justify-center">
-                            <div className="w-16 sm:w-20 h-16 sm:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
-                          </div>
-                          <h3 className="text-lg sm:text-xl font-light mb-2">Şekillendirme Pudrası</h3>
-                          <p className="text-gray-600 text-sm mb-4">Mat bitim ve güçlü tutuş</p>
-                          <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
-                            Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
-                          </button>
-                        </div>
+                        {heroProducts.length > 0 ? (
+                          heroProducts.map((product, index) => (
+                            <Link
+                              key={product.id}
+                              href={product.link || '#'}
+                              className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
+                              style={{ animationDelay: `${(index + 1) * 200}ms` }}
+                            >
+                              <div className="aspect-square rounded-2xl mb-6 overflow-hidden bg-gray-100 relative">
+                                {product.image ? (
+                                  <Image
+                                    src={product.image}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                                    <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                                  </div>
+                                )}
+                              </div>
+                              <h3 className="text-lg sm:text-xl font-light mb-2">{product.name}</h3>
+                              <p className="text-gray-600 text-sm mb-4">{product.description}</p>
+                              <span className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                                Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                              </span>
+                            </Link>
+                          ))
+                        ) : (
+                          // Fallback: Default products if no data
+                          <>
+                            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
+                              <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-6 flex items-center justify-center">
+                                <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                              </div>
+                              <h3 className="text-lg sm:text-xl font-light mb-2">Saç Fiberi</h3>
+                              <p className="text-gray-600 text-sm mb-4">Doğal hacim ve kaplama</p>
+                              <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                                Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                              </button>
+                            </div>
+                            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
+                              <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-6 flex items-center justify-center">
+                                <div className="w-16 sm:w-20 h-16 sm:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
+                              </div>
+                              <h3 className="text-lg sm:text-xl font-light mb-2">Şekillendirme Pudrası</h3>
+                              <p className="text-gray-600 text-sm mb-4">Mat bitim ve güçlü tutuş</p>
+                              <button className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                                Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

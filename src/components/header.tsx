@@ -29,6 +29,7 @@ export default function Header() {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false)
 
   // Load user on mount (safe for unmount)
   useEffect(() => {
@@ -321,16 +322,51 @@ export default function Header() {
 
             {/* Mobile categories */}
             <div className="space-y-2">
-              {staticCategories.map((category) => (
-                <Link
-                  key={category.href}
-                  href={category.href}
-                  className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {category.name}
-                </Link>
-              ))}
+              {staticCategories.map((category) => {
+                if ((category as any).hasDropdown) {
+                  return (
+                    <div key={category.name}>
+                      <button
+                        onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
+                        className="flex items-center justify-between w-full py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                      >
+                        <span>{category.name}</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${mobileCategoriesOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {mobileCategoriesOpen && (category as any).subcategories && (
+                        <div className="pl-4 space-y-1 mt-2">
+                          {(category as any).subcategories.map((subcategory: any) => (
+                            <Link
+                              key={subcategory.href}
+                              href={subcategory.href}
+                              className="flex items-center justify-between py-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
+                              onClick={() => {
+                                setIsMenuOpen(false)
+                                setMobileCategoriesOpen(false)
+                              }}
+                            >
+                              <span>{subcategory.name}</span>
+                              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                                {categoryCounts[subcategory.key] || 0}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                return (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {category.name}
+                  </Link>
+                )
+              })}
               {/* Extra pages for mobile (not shown in desktop nav) */}
               <Link
                 href="/hakkimizda"
