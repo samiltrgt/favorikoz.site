@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, ArrowLeft, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import ImageUpload from '@/components/image-upload'
 
 interface Banner {
   id: string
@@ -452,14 +453,15 @@ export default function BannersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Görsel URL</label>
-                <input
-                  type="text"
-                  value={editingHeroProduct?.image || ''}
-                  onChange={(e) => setEditingHeroProduct({ ...editingHeroProduct, image: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:ring-black"
-                  placeholder="https://..."
+                <label className="block text-sm font-medium text-gray-700 mb-2">Görsel</label>
+                <ImageUpload
+                  onUpload={(url) => setEditingHeroProduct({ ...editingHeroProduct, image: url })}
+                  currentImage={editingHeroProduct?.image}
+                  folder="hero-products"
                 />
+                <p className="mt-2 text-xs text-gray-500">
+                  Fotoğraf seçtiğinizde otomatik olarak Supabase Storage'a yüklenecektir.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Link (Opsiyonel)</label>
