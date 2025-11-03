@@ -65,7 +65,7 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
+    <section className="relative min-h-[100vh] sm:min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
       {/* Background images with simple crossfade */}
       <div className="absolute inset-0 -z-10">
         {slides.map((s, i) => (
@@ -85,24 +85,24 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-gradient-to-tr from-gray-300/40 to-transparent blur-3xl" />
 
       {/* Content */}
-      <div className="relative h-full flex items-center py-20">
+      <div className="relative h-full flex items-center py-12 sm:py-20">
         <div className="container max-w-7xl">
-          <div className="relative min-h-[560px]">
+          <div className="relative min-h-[400px] sm:min-h-[560px]">
             {(() => {
               const s = slides[currentSlide]
               return (
                 <div key={currentSlide} className="absolute inset-0 animate-fade-in-up">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
                     {/* Text Content */}
-                    <div className="text-black space-y-8">
+                    <div className="text-black space-y-4 sm:space-y-8">
                       {/* Title */}
-                      <h1 className="text-4xl sm:text-6xl md:text-7xl font-light leading-tight tracking-tight">{s.title}</h1>
+                      <h1 className="text-3xl sm:text-6xl md:text-7xl font-light leading-tight tracking-tight">{s.title}</h1>
                       {/* Subtitle */}
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-light text-gray-600 max-w-lg">{s.subtitle}</h2>
+                      <h2 className="text-lg sm:text-2xl md:text-3xl font-light text-gray-600 max-w-lg">{s.subtitle}</h2>
                       {/* Description */}
-                      <p className="text-lg sm:text-xl text-gray-600 max-w-xl leading-relaxed">{s.description}</p>
+                      <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-xl leading-relaxed">{s.description}</p>
                       {/* CTA Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 pt-6">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 pt-4 sm:pt-6">
                         <Link
                           href={s.ctaLink}
                           className="inline-flex items-center justify-center px-8 sm:px-12 py-4 sm:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-base sm:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
