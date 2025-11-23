@@ -29,7 +29,7 @@ export default function NewProductPage() {
     { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
     { value: 'sac-bakimi', label: 'Saç Bakımı' },
     { value: 'protez-tirnak', label: 'Protez Tırnak' },
-    { value: 'makyaj', label: 'Makyaj' },
+    { value: 'ipek-kirpik', label: 'İpek Kirpik' },
   ]
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

@@ -88,7 +88,7 @@ const baseDummyProducts = [
     reviews: 78,
     isBestSeller: true,
     inStock: true,
-    category: 'makyaj',
+    category: 'ipek-kirpik',
     createdAt: '2024-01-12'
   },
   {
@@ -146,7 +146,7 @@ const baseDummyProducts = [
     reviews: 156,
     isBestSeller: true,
     inStock: true,
-    category: 'makyaj',
+    category: 'ipek-kirpik',
     createdAt: '2024-01-14'
   },
   {
@@ -261,7 +261,7 @@ const baseDummyProducts = [
     discount: 29,
     isBestSeller: true,
     inStock: true,
-    category: 'makyaj',
+    category: 'ipek-kirpik',
     createdAt: '2024-01-19'
   },
   {
@@ -320,7 +320,7 @@ export const bestSellers = products
 export const categoryBestSellers = {
   'protez-tirnak': bestSellers.filter(p => p.category === 'protez-tirnak').slice(0, 3),
   'kisisel-bakim': bestSellers.filter(p => p.category === 'kisisel-bakim').slice(0, 3),
-  'makyaj': bestSellers.filter(p => p.category === 'makyaj').slice(0, 3),
+  'ipek-kirpik': bestSellers.filter(p => p.category === 'ipek-kirpik').slice(0, 3),
   'sac-bakimi': bestSellers.filter(p => p.category === 'sac-bakimi').slice(0, 3),
   'ipek-kirpik': bestSellers.filter(p => p.category === 'ipek-kirpik').slice(0, 3),
   'kalici-makyaj': bestSellers.filter(p => p.category === 'kalici-makyaj').slice(0, 3),
@@ -346,14 +346,6 @@ export const categories = [
     productCount: 32
   },
   {
-    id: 'ipek-kirpik',
-    name: 'İpek Kirpik',
-    slug: 'ipek-kirpik',
-    description: 'Doğal görünümlü ipek kirpik ürünleri',
-    image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop',
-    productCount: 28
-  },
-  {
     id: 'kisisel-bakim',
     name: 'Kişisel Bakım',
     slug: 'kisisel-bakim',
@@ -362,10 +354,10 @@ export const categories = [
     productCount: 67
   },
   {
-    id: 'makyaj',
-    name: 'Makyaj',
-    slug: 'makyaj',
-    description: 'Profesyonel makyaj ürünleri ve ekipmanları',
+    id: 'ipek-kirpik',
+    name: 'İpek Kirpik',
+    slug: 'ipek-kirpik',
+    description: 'Doğal görünümlü ipek kirpik ürünleri',
     image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop',
     productCount: 89
   },

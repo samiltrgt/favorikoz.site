@@ -48,7 +48,7 @@ function normalizeCategory(cat) {
     'kalici-makyaj': 'kalici-makyaj',
     'ipek-kirpik': 'ipek-kirpik',
     'kisisel-bakim': 'kisisel-bakim',
-    'makyaj': 'makyaj',
+    'makyaj': 'ipek-kirpik',
     'sac-bakimi': 'sac-bakimi',
     'erkek-bakim': 'erkek-bakim',
     'kuafor-guzellik': 'kuafor-guzellik',

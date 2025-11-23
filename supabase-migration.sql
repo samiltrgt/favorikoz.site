@@ -441,7 +441,7 @@ INSERT INTO public.categories (slug, name, description) VALUES
 ('kalici-makyaj', 'Kalıcı Makyaj & Microblading', 'Kalıcı makyaj ve microblading profesyonel ürünleri'),
 ('ipek-kirpik', 'İpek Kirpik', 'Doğal görünümlü ipek kirpik ürünleri'),
 ('kisisel-bakim', 'Kişisel Bakım', 'Cilt bakımı ve kişisel bakım ürünleri'),
-('makyaj', 'Makyaj', 'Profesyonel makyaj ürünleri ve ekipmanları'),
+('ipek-kirpik', 'İpek Kirpik', 'Doğal görünümlü ipek kirpik ürünleri'),
 ('sac-bakimi', 'Saç Bakımı', 'Saç bakımı ve şekillendirme ürünleri'),
 ('erkek-bakim', 'Erkek Bakım', 'Erkek bakım ve tıraş ürünleri'),
 ('kuafor-guzellik', 'Kuaför & Güzellik Merkezleri', 'Profesyonel kuaför ve güzellik merkezi ekipmanları')

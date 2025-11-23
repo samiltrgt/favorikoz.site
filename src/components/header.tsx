@@ -16,7 +16,7 @@ const staticCategories = [
       { name: 'Kişisel Bakım', href: '/kategori/kisisel-bakim', key: 'kisisel-bakim' },
       { name: 'Saç Bakımı', href: '/kategori/sac-bakimi', key: 'sac-bakimi' },
       { name: 'Protez Tırnak', href: '/kategori/protez-tirnak', key: 'protez-tirnak' },
-      { name: 'Makyaj', href: '/kategori/makyaj', key: 'makyaj' },
+      { name: 'İpek Kirpik', href: '/kategori/ipek-kirpik', key: 'ipek-kirpik' },
     ]
   },
 ]

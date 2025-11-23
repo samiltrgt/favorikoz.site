@@ -39,12 +39,12 @@ const slides = [
   },
   {
     id: 3,
-    title: 'Makyajda Zarif Dokunuş',
+    title: 'İpek Kirpikte Zarif Dokunuş',
     subtitle: 'Doğal tonlar, güçlü etki.',
     description: 'Gün boyu kalıcı ve modern bir görünüm için seçilmiş ürünler.',
     image: 'https://images.unsplash.com/photo-1616394584738-fc6e6129138a?w=1600&h=900&fit=crop',
-    cta: 'Makyajı Keşfet',
-    ctaLink: '/kategori/makyaj',
+    cta: 'İpek Kirpik Keşfet',
+    ctaLink: '/kategori/ipek-kirpik',
     secondaryCta: 'Yeni Gelenler',
     secondaryCtaLink: '/tum-urunler'
   }

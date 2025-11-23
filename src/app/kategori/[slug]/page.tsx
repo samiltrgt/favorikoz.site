@@ -13,7 +13,7 @@ const categoryNames: { [key: string]: string } = {
   'kisisel-bakim': 'Kişisel Bakım',
   'sac-bakimi': 'Saç Bakımı', 
   'protez-tirnak': 'Protez Tırnak',
-  'makyaj': 'Makyaj'
+  'ipek-kirpik': 'İpek Kirpik'
 }
 
 const sortOptions = [
