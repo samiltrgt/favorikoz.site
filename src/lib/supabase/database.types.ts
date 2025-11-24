@@ -313,6 +313,47 @@ export interface Database {
           created_at?: string
         }
       }
+      hero_products: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          image: string
+          link: string | null
+          slide_index: number
+          slot_index: number
+          display_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          image: string
+          link?: string | null
+          slide_index?: number
+          slot_index?: number
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          image?: string
+          link?: string | null
+          slide_index?: number
+          slot_index?: number
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

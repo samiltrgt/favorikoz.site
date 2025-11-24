@@ -37,9 +37,22 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
     
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('❌ Supabase error:', {
+        message: error.message,
+        details: error,
+        code: error.code,
+        hint: error.hint
+      })
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch products' },
+        { 
+          success: false, 
+          error: error.message || 'Failed to fetch products',
+          details: process.env.NODE_ENV === 'development' ? {
+            code: error.code,
+            hint: error.hint,
+            details: error.details
+          } : undefined
+        },
         { status: 500 }
       )
     }

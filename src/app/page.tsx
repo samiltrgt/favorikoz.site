@@ -15,20 +15,35 @@ export default async function HomePage() {
     const supabase = await createSupabaseServer()
     
     // Fetch products from Supabase
-    const { data: allProducts } = await supabase
+    const { data: allProducts, error: supabaseError } = await supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
       .limit(1000)
     
-    // Convert price from kuruş to TL
-    products = (allProducts || []).map(p => ({
-      ...p,
-      price: p.price / 100,
-      original_price: p.original_price ? p.original_price / 100 : null,
-    }))
-  } catch (error) {
-    console.error('Failed to fetch products:', error)
+    if (supabaseError) {
+      console.error('❌ Supabase error:', {
+        message: supabaseError.message,
+        details: supabaseError,
+        code: supabaseError.code,
+        hint: supabaseError.hint
+      })
+      // Fallback to empty array
+      products = []
+    } else {
+      // Convert price from kuruş to TL
+      products = (allProducts || []).map(p => ({
+        ...p,
+        price: p.price / 100,
+        original_price: p.original_price ? p.original_price / 100 : null,
+      }))
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to fetch products:', {
+      message: error?.message,
+      error: error,
+      stack: error?.stack
+    })
     // Fallback to empty array
     products = []
   }

@@ -11,7 +11,9 @@ interface HeroProduct {
   description: string
   image: string
   link: string
-  display_order: number
+  slide_index: number
+  slot_index: number
+  is_active: boolean
 }
 
 const slides = [
@@ -52,7 +54,7 @@ const slides = [
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [heroProducts, setHeroProducts] = useState<HeroProduct[]>([])
+  const [heroProducts, setHeroProducts] = useState<Record<number, HeroProduct[]>>({})
 
   useEffect(() => {
     // Load hero products from database
@@ -61,7 +63,19 @@ export default function HeroSection() {
         const response = await fetch('/api/hero-products')
         const result = await response.json()
         if (result.success && result.data) {
-          setHeroProducts(result.data.slice(0, 2)) // Max 2 products
+          const grouped: Record<number, HeroProduct[]> = {}
+          ;(result.data as HeroProduct[]).forEach((product) => {
+            if (!product || !product.is_active) return
+            const slideIdx = product.slide_index ?? 0
+            if (!grouped[slideIdx]) grouped[slideIdx] = []
+            grouped[slideIdx].push(product)
+          })
+          Object.keys(grouped).forEach((key) => {
+            grouped[Number(key)] = grouped[Number(key)].sort(
+              (a, b) => (a.slot_index ?? 0) - (b.slot_index ?? 0)
+            )
+          })
+          setHeroProducts(grouped)
         }
       } catch (error) {
         console.error('Error loading hero products:', error)
@@ -147,10 +161,10 @@ export default function HeroSection() {
                     {/* Product Showcase */}
                     <div className="relative">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {heroProducts.length > 0 ? (
-                          heroProducts.map((product, index) => (
+                        { (heroProducts[currentSlide]?.length ?? 0) > 0 ? (
+                          heroProducts[currentSlide].slice(0, 2).map((product, index) => (
                             <Link
-                              key={product.id}
+                              key={product.id ?? `${product.slide_index}-${product.slot_index}`}
                               href={product.link || '#'}
                               className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
                               style={{ animationDelay: `${(index + 1) * 200}ms` }}

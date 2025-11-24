@@ -14,7 +14,8 @@ import {
   ShoppingCart,
   Users,
   BarChart3,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -42,6 +43,7 @@ export default function AdminLayout({
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Ürün Yönetimi', href: '/admin/products', icon: Package },
     { name: 'Öne Çıkan Ürünler', href: '/admin/featured-products', icon: Star },
+    { name: 'Hero Ürünleri', href: '/admin/hero-products', icon: Sparkles },
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
     { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Müşteriler', href: '/admin/customers', icon: Users },

@@ -42,17 +42,28 @@ export async function PUT(
     
     const body = await request.json()
     
+    const slideIndex = typeof body.slide_index === 'number' ? body.slide_index : undefined
+    const slotIndex = typeof body.slot_index === 'number' ? body.slot_index : undefined
+    const computedOrder = body.display_order ?? (slideIndex !== undefined && slotIndex !== undefined
+      ? slideIndex * 10 + slotIndex
+      : undefined)
+    
+    const updatePayload: Record<string, any> = {
+      name: body.name,
+      description: body.description,
+      image: body.image,
+      link: body.link,
+      is_active: body.is_active,
+      updated_at: new Date().toISOString(),
+    }
+    
+    if (slideIndex !== undefined) updatePayload.slide_index = slideIndex
+    if (slotIndex !== undefined) updatePayload.slot_index = slotIndex
+    if (computedOrder !== undefined) updatePayload.display_order = computedOrder
+    
     const { data, error } = await supabase
       .from('hero_products')
-      .update({
-        name: body.name,
-        description: body.description,
-        image: body.image,
-        link: body.link,
-        display_order: body.display_order,
-        is_active: body.is_active,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', params.id)
       .select()
       .single()

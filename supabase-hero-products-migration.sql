@@ -5,13 +5,22 @@ CREATE TABLE IF NOT EXISTS public.hero_products (
   description TEXT,
   image TEXT NOT NULL,
   link TEXT,
+  slide_index INT NOT NULL DEFAULT 0,
+  slot_index INT NOT NULL DEFAULT 0,
   display_order INT NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_hero_products_active ON public.hero_products (is_active, display_order);
+ALTER TABLE public.hero_products
+  ADD COLUMN IF NOT EXISTS slide_index INT NOT NULL DEFAULT 0;
+
+ALTER TABLE public.hero_products
+  ADD COLUMN IF NOT EXISTS slot_index INT NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_hero_products_active ON public.hero_products (is_active, slide_index, slot_index);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hero_products_slot ON public.hero_products (slide_index, slot_index);
 
 -- Enable RLS
 ALTER TABLE public.hero_products ENABLE ROW LEVEL SECURITY;
