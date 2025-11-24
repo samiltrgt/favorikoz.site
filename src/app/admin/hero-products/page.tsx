@@ -156,10 +156,17 @@ export default function HeroProductsAdminPage() {
       )
 
       if (!response.ok) {
-        throw new Error('Kaydedilemedi')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Kaydedilemedi')
       }
 
+      const savedData = await response.json()
+      console.log('✅ Hero product saved:', savedData)
+      
       await loadSlots()
+      
+      // Show success message
+      alert('Kart başarıyla kaydedildi! Ana sayfada görmek için sayfayı yenileyin.')
     } catch (error) {
       console.error('Failed to save hero product', error)
     } finally {

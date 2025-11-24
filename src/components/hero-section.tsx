@@ -60,28 +60,50 @@ export default function HeroSection() {
     // Load hero products from database
     const loadHeroProducts = async () => {
       try {
-        const response = await fetch('/api/hero-products')
+        const response = await fetch('/api/hero-products', { 
+          cache: 'no-store',
+          next: { revalidate: 0 }
+        })
         const result = await response.json()
-        if (result.success && result.data) {
+        
+        console.log('🔥 Hero Products API Response:', {
+          success: result.success,
+          dataLength: result.data?.length,
+          data: result.data
+        })
+        
+        if (result.success && result.data && Array.isArray(result.data)) {
           const grouped: Record<number, HeroProduct[]> = {}
           ;(result.data as HeroProduct[]).forEach((product) => {
-            if (!product || !product.is_active) return
+            if (!product) return
+            // Only filter by is_active if it's explicitly false
+            if (product.is_active === false) return
+            
             const slideIdx = product.slide_index ?? 0
             if (!grouped[slideIdx]) grouped[slideIdx] = []
             grouped[slideIdx].push(product)
           })
+          
           Object.keys(grouped).forEach((key) => {
             grouped[Number(key)] = grouped[Number(key)].sort(
               (a, b) => (a.slot_index ?? 0) - (b.slot_index ?? 0)
             )
           })
+          
+          console.log('🔥 Grouped Hero Products:', grouped)
           setHeroProducts(grouped)
+        } else {
+          console.warn('⚠️ No hero products data or invalid format')
         }
       } catch (error) {
-        console.error('Error loading hero products:', error)
+        console.error('❌ Error loading hero products:', error)
       }
     }
     loadHeroProducts()
+    
+    // Reload every 5 seconds to catch updates
+    const interval = setInterval(loadHeroProducts, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -161,7 +183,7 @@ export default function HeroSection() {
                     {/* Product Showcase */}
                     <div className="relative">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        { (heroProducts[currentSlide]?.length ?? 0) > 0 ? (
+                        {heroProducts[currentSlide] && heroProducts[currentSlide].length > 0 ? (
                           heroProducts[currentSlide].slice(0, 2).map((product, index) => (
                             <Link
                               key={product.id ?? `${product.slide_index}-${product.slot_index}`}
