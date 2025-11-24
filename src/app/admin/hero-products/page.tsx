@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Save, Trash2, RefreshCw, Sparkles } from 'lucide-react'
+import { Save, Trash2, RefreshCw, Sparkles, Search, X, Package } from 'lucide-react'
 
 interface HeroProductSlot {
   id?: string
@@ -36,10 +36,22 @@ const defaultSlot = (slideIndex: number, slotIndex: number): HeroProductSlot => 
   slot_index: slotIndex,
 })
 
+interface Product {
+  id: string
+  name: string
+  slug: string
+  image: string
+  description?: string
+  brand?: string
+}
+
 export default function HeroProductsAdminPage() {
   const [slots, setSlots] = useState<SlotState>({})
   const [isLoading, setIsLoading] = useState(true)
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [productSearchTerm, setProductSearchTerm] = useState<Record<string, string>>({})
+  const [showProductSelector, setShowProductSelector] = useState<string | null>(null)
 
   const slotKeys = useMemo(() => {
     const keys: string[] = []
@@ -53,7 +65,20 @@ export default function HeroProductsAdminPage() {
 
   useEffect(() => {
     loadSlots()
+    loadProducts()
   }, [])
+
+  const loadProducts = async () => {
+    try {
+      const response = await fetch('/api/products')
+      const result = await response.json()
+      if (result.success) {
+        setAllProducts(result.data || [])
+      }
+    } catch (error) {
+      console.error('Failed to load products', error)
+    }
+  }
 
   const loadSlots = async () => {
     try {
@@ -162,6 +187,31 @@ export default function HeroProductsAdminPage() {
     }
   }
 
+  const handleSelectProduct = (key: string, product: Product) => {
+    setSlots((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        name: product.name,
+        image: product.image,
+        link: `/urun/${product.slug}`,
+        description: product.description || product.brand || '',
+      },
+    }))
+    setShowProductSelector(null)
+    setProductSearchTerm((prev) => ({ ...prev, [key]: '' }))
+  }
+
+  const filteredProducts = (key: string) => {
+    const search = productSearchTerm[key] || ''
+    if (!search) return allProducts.slice(0, 10)
+    return allProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.brand && p.brand.toLowerCase().includes(search.toLowerCase()))
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -253,6 +303,88 @@ export default function HeroProductsAdminPage() {
                     </div>
 
                     <div className="space-y-3">
+                      {/* Ürün Seç Butonu */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowProductSelector(showProductSelector === key ? null : key)}
+                          className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                        >
+                          <Package className="w-4 h-4" />
+                          Ürün Seç
+                        </button>
+                      </div>
+
+                      {/* Ürün Seçici Modal */}
+                      {showProductSelector === key && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                              <h3 className="text-lg font-semibold text-gray-900">Ürün Seç</h3>
+                              <button
+                                onClick={() => {
+                                  setShowProductSelector(null)
+                                  setProductSearchTerm((prev) => ({ ...prev, [key]: '' }))
+                                }}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                            </div>
+                            <div className="p-4 border-b border-gray-200">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <input
+                                  type="text"
+                                  value={productSearchTerm[key] || ''}
+                                  onChange={(e) =>
+                                    setProductSearchTerm((prev) => ({ ...prev, [key]: e.target.value }))
+                                  }
+                                  placeholder="Ürün ara..."
+                                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                                  autoFocus
+                                />
+                              </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4">
+                              <div className="grid grid-cols-1 gap-2">
+                                {filteredProducts(key).map((product) => (
+                                  <button
+                                    key={product.id}
+                                    onClick={() => handleSelectProduct(key, product)}
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 text-left transition-colors"
+                                  >
+                                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                      {product.image && (
+                                        <Image
+                                          src={product.image}
+                                          alt={product.name}
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {product.name}
+                                      </p>
+                                      {product.brand && (
+                                        <p className="text-xs text-gray-500">{product.brand}</p>
+                                      )}
+                                    </div>
+                                  </button>
+                                ))}
+                                {filteredProducts(key).length === 0 && (
+                                  <div className="text-center py-8 text-gray-500 text-sm">
+                                    Ürün bulunamadı
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div>
                         <label className="text-xs font-medium text-gray-500">Görsel URL</label>
                         <input
