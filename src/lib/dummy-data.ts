@@ -322,7 +322,6 @@ export const categoryBestSellers = {
   'kisisel-bakim': bestSellers.filter(p => p.category === 'kisisel-bakim').slice(0, 3),
   'ipek-kirpik': bestSellers.filter(p => p.category === 'ipek-kirpik').slice(0, 3),
   'sac-bakimi': bestSellers.filter(p => p.category === 'sac-bakimi').slice(0, 3),
-  'ipek-kirpik': bestSellers.filter(p => p.category === 'ipek-kirpik').slice(0, 3),
   'kalici-makyaj': bestSellers.filter(p => p.category === 'kalici-makyaj').slice(0, 3),
   'erkek-bakim': bestSellers.filter(p => p.category === 'erkek-bakim').slice(0, 3),
   'kuafor-guzellik': bestSellers.filter(p => p.category === 'kuafor-guzellik').slice(0, 3),
