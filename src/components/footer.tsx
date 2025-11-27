@@ -101,17 +101,17 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300">0850 123 45 67</span>
+                <span className="text-gray-300">0537 647 07 10</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300">info@favorikozmetik.com</span>
+                <span className="text-gray-300">mervesaat@gmail.com</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                 <span className="text-gray-300">
-                  Merkez Mahallesi, Kozmetik Sokak No:123<br />
-                  Kadıköy, İstanbul
+                  Tahtakale Mahallesi, Tahtakale Caddesi Çavuşoğlu Han No:24/4<br />
+                  Fatih/İstanbul
                 </span>
               </div>
             </div>
