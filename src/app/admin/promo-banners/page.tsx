@@ -99,11 +99,12 @@ export default function PromoBannersPage() {
 
     setSavingPosition(position)
     try {
+      const defaultLink = position === 'bottom' ? '/kategori/protez-tirnak' : '/tum-urunler'
       const body = {
         title: banner.title,
         description: banner.description || '',
         image: banner.image,
-        link: banner.link || '/tum-urunler',
+        link: banner.link || defaultLink,
         button_text: banner.button_text || 'Tüm Ürünleri Keşfet',
         position: banner.position,
         is_active: banner.is_active,
@@ -175,15 +176,16 @@ export default function PromoBannersPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {positions.map((pos) => {
-                const banner = banners[pos.value as 'top' | 'bottom' | 'footer'] || {
+          const defaultLink = pos.value === 'bottom' ? '/kategori/protez-tirnak' : '/tum-urunler'
+          const banner = banners[pos.value as 'top' | 'bottom' | 'footer'] || {
             title: '',
             description: '',
             image: '',
-            link: '/tum-urunler',
+            link: defaultLink,
             button_text: 'Tüm Ürünleri Keşfet',
-            position: pos.value as 'top' | 'bottom',
+            position: pos.value as 'top' | 'bottom' | 'footer',
             is_active: true,
-            display_order: pos.value === 'top' ? 1 : 2,
+            display_order: pos.value === 'top' ? 1 : pos.value === 'bottom' ? 2 : 3,
           }
           const isSaving = savingPosition === (pos.value as 'top' | 'bottom' | 'footer')
 
