@@ -2,6 +2,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import HeroSection from '@/components/hero-section'
 import FeaturesSection from '@/components/features-section'
+import PromoBanner from '@/components/promo-banner'
 import HomeBanners from '@/components/home-banners'
 import FeaturedProducts from '@/components/featured-products'
 import { createSupabaseServer } from '@/lib/supabase/server'
@@ -59,8 +60,14 @@ export default async function HomePage() {
         {/* Features Section */}
         <FeaturesSection />
 
+        {/* Promo Banner - Top */}
+        <PromoBanner position="top" />
+
         {/* Editorial Banners */}
         <HomeBanners />
+
+        {/* Promo Banner - Bottom */}
+        <PromoBanner position="bottom" />
         
         {/* Featured Products - Best Sellers */}
         <FeaturedProducts
