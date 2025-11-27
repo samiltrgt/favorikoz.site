@@ -31,7 +31,7 @@ export default function PromoBannersPage() {
     footer: null,
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [savingPosition, setSavingPosition] = useState<'top' | 'bottom' | null>(null)
+  const [savingPosition, setSavingPosition] = useState<'top' | 'bottom' | 'footer' | null>(null)
 
   useEffect(() => {
     loadBanners()
