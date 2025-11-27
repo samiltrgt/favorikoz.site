@@ -11,12 +11,12 @@ interface PromoBannerData {
   image: string
   link: string
   button_text: string
-  position: 'top' | 'bottom'
+  position: 'top' | 'bottom' | 'footer'
   is_active: boolean
 }
 
 interface PromoBannerProps {
-  position: 'top' | 'bottom'
+  position: 'top' | 'bottom' | 'footer'
 }
 
 export default function PromoBanner({ position }: PromoBannerProps) {
@@ -32,11 +32,21 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         })
         const result = await response.json()
 
+        console.log(`🎯 Promo Banner [${position}] API Response:`, {
+          success: result.success,
+          dataLength: result.data?.length,
+          data: result.data
+        })
+
         if (result.success && result.data && result.data.length > 0) {
-          setBanner(result.data[0])
+          const bannerData = result.data[0]
+          console.log(`✅ Promo Banner [${position}] loaded:`, bannerData)
+          setBanner(bannerData)
+        } else {
+          console.warn(`⚠️ No promo banner found for position: ${position}`)
         }
       } catch (error) {
-        console.error('Error loading promo banner:', error)
+        console.error(`❌ Error loading promo banner [${position}]:`, error)
       } finally {
         setIsLoading(false)
       }
@@ -49,7 +59,12 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return () => clearInterval(interval)
   }, [position])
 
-  if (isLoading || !banner) {
+  if (isLoading) {
+    return null
+  }
+
+  if (!banner) {
+    console.log(`ℹ️ Promo Banner [${position}] not found or not active`)
     return null
   }
 

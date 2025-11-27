@@ -77,6 +77,9 @@ export default async function HomePage() {
           viewAllLink="/tum-urunler"
           section="bestSellers"
         />
+
+        {/* Promo Banner - Footer */}
+        <PromoBanner position="footer" />
       </main>
       
       <Footer />

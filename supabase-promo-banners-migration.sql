@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.promo_banners (
   image TEXT NOT NULL,
   link TEXT NOT NULL DEFAULT '/tum-urunler',
   button_text TEXT NOT NULL DEFAULT 'Tüm Ürünleri Keşfet',
-  position TEXT NOT NULL DEFAULT 'top' CHECK (position IN ('top', 'bottom')),
+  position TEXT NOT NULL DEFAULT 'top' CHECK (position IN ('top', 'bottom', 'footer')),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   display_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -24,7 +24,7 @@ BEGIN
     AND table_name = 'promo_banners' 
     AND column_name = 'position'
   ) THEN
-    ALTER TABLE public.promo_banners ADD COLUMN position TEXT NOT NULL DEFAULT 'top' CHECK (position IN ('top', 'bottom'));
+    ALTER TABLE public.promo_banners ADD COLUMN position TEXT NOT NULL DEFAULT 'top' CHECK (position IN ('top', 'bottom', 'footer'));
   END IF;
 END $$;
 

@@ -13,7 +13,7 @@ interface PromoBanner {
   image: string
   link: string
   button_text: string
-  position: 'top' | 'bottom'
+  position: 'top' | 'bottom' | 'footer'
   is_active: boolean
   display_order: number
 }
@@ -21,12 +21,14 @@ interface PromoBanner {
 const positions = [
   { value: 'top', label: 'Üst Banner (Features Section\'dan sonra)' },
   { value: 'bottom', label: 'Alt Banner (HomeBanners\'dan sonra)' },
+  { value: 'footer', label: 'Footer Üstü Banner (Footer\'dan önce)' },
 ]
 
 export default function PromoBannersPage() {
-  const [banners, setBanners] = useState<Record<'top' | 'bottom', PromoBanner | null>>({
+  const [banners, setBanners] = useState<Record<'top' | 'bottom' | 'footer', PromoBanner | null>>({
     top: null,
     bottom: null,
+    footer: null,
   })
   const [isLoading, setIsLoading] = useState(true)
   const [savingPosition, setSavingPosition] = useState<'top' | 'bottom' | null>(null)
@@ -44,13 +46,14 @@ export default function PromoBannersPage() {
       const result = await response.json()
 
       if (result.success) {
-        const loaded: Record<'top' | 'bottom', PromoBanner | null> = {
+        const loaded: Record<'top' | 'bottom' | 'footer', PromoBanner | null> = {
           top: null,
           bottom: null,
+          footer: null,
         }
 
         ;(result.data as PromoBanner[]).forEach((banner) => {
-          if (banner.position === 'top' || banner.position === 'bottom') {
+          if (banner.position === 'top' || banner.position === 'bottom' || banner.position === 'footer') {
             loaded[banner.position] = banner
           }
         })
@@ -65,7 +68,7 @@ export default function PromoBannersPage() {
   }
 
   const handleInputChange = (
-    position: 'top' | 'bottom',
+    position: 'top' | 'bottom' | 'footer',
     field: keyof PromoBanner,
     value: string | boolean
   ) => {
@@ -80,14 +83,14 @@ export default function PromoBannersPage() {
           button_text: 'Tüm Ürünleri Keşfet',
           position,
           is_active: true,
-          display_order: position === 'top' ? 1 : 2,
+          display_order: position === 'top' ? 1 : position === 'bottom' ? 2 : 3,
         },
         [field]: value,
       },
     }))
   }
 
-  const handleSave = async (position: 'top' | 'bottom') => {
+  const handleSave = async (position: 'top' | 'bottom' | 'footer') => {
     const banner = banners[position]
     if (!banner || !banner.title || !banner.image) {
       alert('Lütfen başlık ve görsel alanlarını doldurun')
@@ -172,7 +175,7 @@ export default function PromoBannersPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {positions.map((pos) => {
-          const banner = banners[pos.value as 'top' | 'bottom'] || {
+                const banner = banners[pos.value as 'top' | 'bottom' | 'footer'] || {
             title: '',
             description: '',
             image: '',
@@ -182,7 +185,7 @@ export default function PromoBannersPage() {
             is_active: true,
             display_order: pos.value === 'top' ? 1 : 2,
           }
-          const isSaving = savingPosition === pos.value
+          const isSaving = savingPosition === (pos.value as 'top' | 'bottom' | 'footer')
 
           return (
             <div
@@ -224,7 +227,7 @@ export default function PromoBannersPage() {
                       />
                       <ImageUpload
                         onUpload={(url) =>
-                          handleInputChange(pos.value as 'top' | 'bottom', 'image', url)
+                          handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'image', url)
                         }
                         folder="banners"
                       />
@@ -239,7 +242,7 @@ export default function PromoBannersPage() {
                       type="text"
                       value={banner.title}
                       onChange={(e) =>
-                        handleInputChange(pos.value as 'top' | 'bottom', 'title', e.target.value)
+                        handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'title', e.target.value)
                       }
                       className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                       placeholder="Premium Ürünlerle Güzelliğinizi Keşfedin"
@@ -254,7 +257,7 @@ export default function PromoBannersPage() {
                       value={banner.description}
                       onChange={(e) =>
                         handleInputChange(
-                          pos.value as 'top' | 'bottom',
+                          pos.value as 'top' | 'bottom' | 'footer',
                           'description',
                           e.target.value
                         )
@@ -273,7 +276,7 @@ export default function PromoBannersPage() {
                       type="text"
                       value={banner.link}
                       onChange={(e) =>
-                        handleInputChange(pos.value as 'top' | 'bottom', 'link', e.target.value)
+                        handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'link', e.target.value)
                       }
                       className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                       placeholder="/tum-urunler"
@@ -289,7 +292,7 @@ export default function PromoBannersPage() {
                       value={banner.button_text}
                       onChange={(e) =>
                         handleInputChange(
-                          pos.value as 'top' | 'bottom',
+                          pos.value as 'top' | 'bottom' | 'footer',
                           'button_text',
                           e.target.value
                         )
@@ -305,7 +308,7 @@ export default function PromoBannersPage() {
                       checked={banner.is_active}
                       onChange={(e) =>
                         handleInputChange(
-                          pos.value as 'top' | 'bottom',
+                          pos.value as 'top' | 'bottom' | 'footer',
                           'is_active',
                           e.target.checked
                         )
@@ -318,7 +321,7 @@ export default function PromoBannersPage() {
 
                 {/* Save Button */}
                 <button
-                  onClick={() => handleSave(pos.value as 'top' | 'bottom')}
+                  onClick={() => handleSave(pos.value as 'top' | 'bottom' | 'footer')}
                   disabled={isSaving}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
                 >
