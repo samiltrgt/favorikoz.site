@@ -72,11 +72,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     <section className="py-8 bg-white border-t border-gray-100">
       <Link 
         href={banner.link || '/tum-urunler'} 
-        className="group relative block w-full overflow-hidden bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:shadow-2xl transition-all duration-300"
+        className="group relative block w-full overflow-hidden bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300"
       >
         {/* Background Image */}
         {banner.image && (
-          <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 opacity-40">
             <Image
               src={banner.image}
               alt={banner.title}
