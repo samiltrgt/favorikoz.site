@@ -223,7 +223,7 @@ export default function PromoBannersPage() {
                         placeholder="https://..."
                       />
                       <ImageUpload
-                        onUploadComplete={(url) =>
+                        onUpload={(url) =>
                           handleInputChange(pos.value as 'top' | 'bottom', 'image', url)
                         }
                         folder="banners"
