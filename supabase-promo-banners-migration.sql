@@ -25,6 +25,10 @@ BEGIN
     AND column_name = 'position'
   ) THEN
     ALTER TABLE public.promo_banners ADD COLUMN position TEXT NOT NULL DEFAULT 'top' CHECK (position IN ('top', 'bottom', 'footer'));
+  ELSE
+    -- Update existing constraint to include 'footer'
+    ALTER TABLE public.promo_banners DROP CONSTRAINT IF EXISTS promo_banners_position_check;
+    ALTER TABLE public.promo_banners ADD CONSTRAINT promo_banners_position_check CHECK (position IN ('top', 'bottom', 'footer'));
   END IF;
 END $$;
 
