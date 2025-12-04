@@ -32,12 +32,12 @@ export default async function HomePage() {
       // Fallback to empty array
       products = []
     } else {
-      // Convert price from kuruş to TL
-      products = (allProducts || []).map(p => ({
-        ...p,
-        price: p.price / 100,
-        original_price: p.original_price ? p.original_price / 100 : null,
-      }))
+    // Convert price from kuruş to TL
+    products = (allProducts || []).map(p => ({
+      ...p,
+      price: p.price / 100,
+      original_price: p.original_price ? p.original_price / 100 : null,
+    }))
     }
   } catch (error: any) {
     console.error('❌ Failed to fetch products:', {

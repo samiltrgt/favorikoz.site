@@ -8,11 +8,9 @@ interface ImageUploadProps {
   onUpload: (url: string) => void
   currentImage?: string
   folder?: string
-  maxWidth?: number
-  maxHeight?: number
 }
 
-export default function ImageUpload({ onUpload, currentImage, folder = 'products', maxWidth, maxHeight }: ImageUploadProps) {
+export default function ImageUpload({ onUpload, currentImage, folder = 'products' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState(currentImage || '')
   const [error, setError] = useState('')
@@ -27,40 +25,6 @@ export default function ImageUpload({ onUpload, currentImage, folder = 'products
     if (file.size > 5 * 1024 * 1024) {
       setError('Dosya boyutu 5MB\'dan küçük olmalıdır')
       return
-    }
-
-    // Check image dimensions if maxWidth/maxHeight are provided
-    if ((maxWidth || maxHeight) && typeof window !== 'undefined') {
-      try {
-        const img = document.createElement('img')
-        const objectUrl = URL.createObjectURL(file)
-        
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => {
-            URL.revokeObjectURL(objectUrl)
-            if (maxWidth && img.width > maxWidth) {
-              setError(`Görsel genişliği ${maxWidth}px'den büyük olamaz (Mevcut: ${img.width}px)`)
-              reject(new Error('Image too wide'))
-              return
-            }
-            if (maxHeight && img.height > maxHeight) {
-              setError(`Görsel yüksekliği ${maxHeight}px'den büyük olamaz (Mevcut: ${img.height}px)`)
-              reject(new Error('Image too tall'))
-              return
-            }
-            resolve()
-          }
-          img.onerror = () => {
-            URL.revokeObjectURL(objectUrl)
-            setError('Görsel yüklenemedi')
-            reject(new Error('Görsel yüklenemedi'))
-          }
-          img.src = objectUrl
-        })
-      } catch (err) {
-        // Error already set in onload/onerror
-        return
-      }
     }
 
     setUploading(true)
@@ -100,7 +64,7 @@ export default function ImageUpload({ onUpload, currentImage, folder = 'products
     } finally {
       setUploading(false)
     }
-  }, [folder, onUpload, maxWidth, maxHeight])
+  }, [folder, onUpload])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -188,10 +152,7 @@ export default function ImageUpload({ onUpload, currentImage, folder = 'products
                   <p className="text-sm text-gray-600">
                     <span className="font-medium text-black">Tıklayın</span> veya dosyayı sürükleyin
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG, WEBP (Max 5MB)
-                    {maxWidth && maxHeight && ` • Max ${maxWidth}x${maxHeight}px`}
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (Max 5MB)</p>
                 </div>
               </>
             )}

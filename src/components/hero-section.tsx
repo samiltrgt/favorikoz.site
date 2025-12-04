@@ -55,7 +55,6 @@ const slides = [
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [heroProducts, setHeroProducts] = useState<Record<number, HeroProduct[]>>({})
-  const [imageAspectRatios, setImageAspectRatios] = useState<Record<string, number>>({})
 
   useEffect(() => {
     // Load hero products from database
@@ -185,54 +184,34 @@ export default function HeroSection() {
                     <div className="relative">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {heroProducts[currentSlide] && heroProducts[currentSlide].length > 0 ? (
-                          heroProducts[currentSlide].slice(0, 2).map((product, index) => {
-                            const imageKey = product.id ?? `${product.slide_index}-${product.slot_index}`
-                            const aspectRatio = imageAspectRatios[imageKey] || 16 / 9
-                            
-                            return (
-                              <Link
-                                key={imageKey}
-                                href={product.link || '#'}
-                                className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
-                                style={{ animationDelay: `${(index + 1) * 200}ms` }}
-                              >
-                                <div 
-                                  className="rounded-2xl mb-6 overflow-hidden bg-gray-100 relative flex items-center justify-center" 
-                                  style={{ 
-                                    aspectRatio: aspectRatio.toString(),
-                                    minHeight: '300px',
-                                    maxHeight: '500px'
-                                  }}
-                                >
-                                  {product.image ? (
-                                    <img
-                                      src={product.image}
-                                      alt={product.name}
-                                      className="w-full h-full rounded-2xl"
-                                      style={{ objectFit: 'contain' }}
-                                      onLoad={(e) => {
-                                        const img = e.currentTarget
-                                        const ratio = img.naturalWidth / img.naturalHeight
-                                        setImageAspectRatios(prev => ({
-                                          ...prev,
-                                          [imageKey]: ratio
-                                        }))
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                                      <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
-                                    </div>
-                                  )}
-                                </div>
+                          heroProducts[currentSlide].slice(0, 2).map((product, index) => (
+                            <Link
+                              key={product.id ?? `${product.slide_index}-${product.slot_index}`}
+                              href={product.link || '#'}
+                              className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
+                              style={{ animationDelay: `${(index + 1) * 200}ms` }}
+                            >
+                              <div className="aspect-square rounded-2xl mb-6 overflow-hidden bg-gray-100 relative">
+                                {product.image ? (
+                                  <Image
+                                    src={product.image}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                                    <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                                  </div>
+                                )}
+                              </div>
                               <h3 className="text-lg sm:text-xl font-light mb-2">{product.name}</h3>
                               <p className="text-gray-600 text-sm mb-4">{product.description}</p>
                               <span className="text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
                                 Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
                               </span>
                             </Link>
-                            )
-                          })
+                          ))
                         ) : (
                           // Fallback: Default products if no data
                           <>
