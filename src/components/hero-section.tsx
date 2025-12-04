@@ -127,7 +127,7 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-[auto] sm:min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
+    <section className="relative overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
       {/* Background images with simple crossfade */}
       <div className="absolute inset-0 -z-10">
         {slides.map((s, i) => (
@@ -147,7 +147,7 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-gradient-to-tr from-gray-300/40 to-transparent blur-3xl hidden sm:block" />
 
       {/* Content */}
-      <div className="relative w-full flex items-center py-6 sm:py-12 md:py-20">
+      <div className="relative w-full flex items-start sm:items-center py-6 sm:py-12 md:py-20">
         <div className="container max-w-7xl w-full px-4 sm:px-6 lg:px-8">
           <div className="relative w-full">
             {(() => {
@@ -164,16 +164,16 @@ export default function HeroSection() {
                       {/* Description */}
                       <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-600 max-w-xl leading-relaxed hidden sm:block">{s.description}</p>
                       {/* CTA Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 pt-3 sm:pt-3 md:pt-4 lg:pt-6 pb-4 sm:pb-0">
                         <Link
                           href={s.ctaLink}
-                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-2.5 sm:py-3 md:py-4 lg:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-xs sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
+                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3 md:py-4 lg:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-sm sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
                         >
                           {s.cta}
                         </Link>
                         <Link
                           href={s.secondaryCtaLink}
-                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-2.5 sm:py-3 md:py-4 lg:py-5 bg-transparent hover:bg-white/50 active:scale-95 text-black font-light text-xs sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 border border-black rounded-full transform hover:scale-105"
+                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3 md:py-4 lg:py-5 bg-transparent hover:bg-white/50 active:scale-95 text-black font-light text-sm sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 border border-black rounded-full transform hover:scale-105"
                         >
                           {s.secondaryCta}
                         </Link>
@@ -181,17 +181,17 @@ export default function HeroSection() {
                     </div>
 
                     {/* Product Showcase */}
-                    <div className="relative order-1 lg:order-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="relative order-1 lg:order-2 w-full">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                         {heroProducts[currentSlide] && heroProducts[currentSlide].length > 0 ? (
                           heroProducts[currentSlide].slice(0, 2).map((product, index) => (
                             <Link
                               key={product.id ?? `${product.slide_index}-${product.slot_index}`}
                               href={product.link || '#'}
-                              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
+                              className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
                               style={{ animationDelay: `${(index + 1) * 200}ms` }}
                             >
-                              <div className="aspect-square rounded-xl sm:rounded-2xl mb-4 sm:mb-6 overflow-hidden bg-gray-100 relative">
+                              <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 overflow-hidden bg-gray-100 relative">
                                 {product.image ? (
                                   <Image
                                     src={product.image}
@@ -201,13 +201,13 @@ export default function HeroSection() {
                                   />
                                 ) : (
                                   <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                                    <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                                    <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
                                   </div>
                                 )}
                               </div>
-                              <h3 className="text-base sm:text-lg md:text-xl font-light mb-1 sm:mb-2">{product.name}</h3>
-                              <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">{product.description}</p>
-                              <span className="text-xs sm:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-light mb-1 sm:mb-2 line-clamp-2">{product.name}</h3>
+                              <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3 md:mb-4 line-clamp-2 hidden sm:block">{product.description}</p>
+                              <span className="text-[10px] sm:text-xs md:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-1 sm:gap-2 transition-all duration-200">
                                 Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
                               </span>
                             </Link>
@@ -215,23 +215,23 @@ export default function HeroSection() {
                         ) : (
                           // Fallback: Default products if no data
                           <>
-                            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
-                              <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 flex items-center justify-center">
-                                <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
+                            <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
+                              <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center">
+                                <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
                               </div>
-                              <h3 className="text-base sm:text-lg md:text-xl font-light mb-1 sm:mb-2">Saç Fiberi</h3>
-                              <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">Doğal hacim ve kaplama</p>
-                              <button className="text-xs sm:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-light mb-1 sm:mb-2 line-clamp-2">Saç Fiberi</h3>
+                              <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3 md:mb-4 line-clamp-2 hidden sm:block">Doğal hacim ve kaplama</p>
+                              <button className="text-[10px] sm:text-xs md:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-1 sm:gap-2 transition-all duration-200">
                                 Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
                               </button>
                             </div>
-                            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
-                              <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 flex items-center justify-center">
-                                <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
+                            <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
+                              <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center">
+                                <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
                               </div>
-                              <h3 className="text-base sm:text-lg md:text-xl font-light mb-1 sm:mb-2">Şekillendirme Pudrası</h3>
-                              <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">Mat bitim ve güçlü tutuş</p>
-                              <button className="text-xs sm:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-2 transition-all duration-200">
+                              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-light mb-1 sm:mb-2 line-clamp-2">Şekillendirme Pudrası</h3>
+                              <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3 md:mb-4 line-clamp-2 hidden sm:block">Mat bitim ve güçlü tutuş</p>
+                              <button className="text-[10px] sm:text-xs md:text-sm font-light text-pink-600 hover:text-pink-700 active:scale-95 flex items-center gap-1 sm:gap-2 transition-all duration-200">
                                 Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
                               </button>
                             </div>
@@ -246,32 +246,32 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-      {/* Slider controls */}
+      {/* Slider controls - Hidden on mobile */}
       {slides.length > 1 && (
         <>
           <button
             aria-label="Önceki"
             onClick={prevSlide}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full z-10"
+            className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full z-10"
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             aria-label="Sonraki"
             onClick={nextSlide}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full z-10"
+            className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full z-10"
           >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* Dots */}
-          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+          {/* Dots - Hidden on mobile */}
+          <div className="hidden sm:flex absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 items-center gap-2 z-10">
             {slides.map((s, i) => (
               <button
                 key={s.id}
                 aria-label={`Slide ${i+1}`}
                 onClick={() => goToSlide(i)}
-                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${i === currentSlide ? 'bg-black w-5 sm:w-6' : 'bg-black/40 hover:bg-black/60'}`}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentSlide ? 'bg-black w-6' : 'bg-black/40 hover:bg-black/60'}`}
               />
             ))}
           </div>
