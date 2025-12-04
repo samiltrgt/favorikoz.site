@@ -30,9 +30,9 @@ export default function ImageUpload({ onUpload, currentImage, folder = 'products
     }
 
     // Check image dimensions if maxWidth/maxHeight are provided
-    if (maxWidth || maxHeight) {
+    if ((maxWidth || maxHeight) && typeof window !== 'undefined') {
       try {
-        const img = new Image()
+        const img = document.createElement('img')
         const objectUrl = URL.createObjectURL(file)
         
         await new Promise<void>((resolve, reject) => {
