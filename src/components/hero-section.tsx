@@ -127,7 +127,7 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-[85vh] sm:min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
+    <section className="relative min-h-[auto] sm:min-h-[90vh] overflow-hidden bg-gradient-to-br from-secondary via-background to-secondary">
       {/* Background images with simple crossfade */}
       <div className="absolute inset-0 -z-10">
         {slides.map((s, i) => (
@@ -147,33 +147,33 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-gradient-to-tr from-gray-300/40 to-transparent blur-3xl hidden sm:block" />
 
       {/* Content */}
-      <div className="relative h-full flex items-center py-8 sm:py-12 md:py-20">
-        <div className="container max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative min-h-[350px] sm:min-h-[400px] md:min-h-[560px]">
+      <div className="relative w-full flex items-center py-6 sm:py-12 md:py-20">
+        <div className="container max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+          <div className="relative w-full">
             {(() => {
               const s = slides[currentSlide]
               return (
-                <div key={currentSlide} className="absolute inset-0 animate-fade-in-up">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 lg:gap-16 items-center">
+                <div key={currentSlide} className="w-full animate-fade-in-up">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-16 items-start lg:items-center">
                     {/* Text Content */}
-                    <div className="text-black space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 order-2 lg:order-1">
+                    <div className="text-black space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6 order-2 lg:order-1 w-full">
                       {/* Title */}
-                      <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-light leading-tight tracking-tight">{s.title}</h1>
+                      <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-light leading-[1.1] sm:leading-tight tracking-tight">{s.title}</h1>
                       {/* Subtitle */}
-                      <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-light text-gray-600 max-w-lg">{s.subtitle}</h2>
+                      <h2 className="text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-light text-gray-600 max-w-lg leading-snug">{s.subtitle}</h2>
                       {/* Description */}
-                      <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-xl leading-relaxed">{s.description}</p>
+                      <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-600 max-w-xl leading-relaxed hidden sm:block">{s.description}</p>
                       {/* CTA Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 pt-2 sm:pt-4 md:pt-6">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6">
                         <Link
                           href={s.ctaLink}
-                          className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 md:px-12 py-3 sm:py-4 md:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-sm sm:text-base md:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
+                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-2.5 sm:py-3 md:py-4 lg:py-5 bg-black hover:bg-gray-800 active:scale-95 text-white font-light text-xs sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 rounded-full transform hover:scale-105 shadow-lg hover:shadow-xl"
                         >
                           {s.cta}
                         </Link>
                         <Link
                           href={s.secondaryCtaLink}
-                          className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 md:px-12 py-3 sm:py-4 md:py-5 bg-transparent hover:bg-white/50 active:scale-95 text-black font-light text-sm sm:text-base md:text-lg tracking-wide transition-all duration-300 border border-black rounded-full transform hover:scale-105"
+                          className="inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-6 md:px-8 lg:px-12 py-2.5 sm:py-3 md:py-4 lg:py-5 bg-transparent hover:bg-white/50 active:scale-95 text-black font-light text-xs sm:text-sm md:text-base lg:text-lg tracking-wide transition-all duration-300 border border-black rounded-full transform hover:scale-105"
                         >
                           {s.secondaryCta}
                         </Link>
