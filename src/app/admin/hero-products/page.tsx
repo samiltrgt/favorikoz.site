@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { Save, Trash2, RefreshCw, Sparkles, Search, X, Package } from 'lucide-react'
+import ImageUpload from '@/components/image-upload'
 
 interface HeroProductSlot {
   id?: string
@@ -393,7 +394,19 @@ export default function HeroProductsAdminPage() {
                       )}
 
                       <div>
-                        <label className="text-xs font-medium text-gray-500">Görsel URL</label>
+                        <label className="text-xs font-medium text-gray-500">Görsel</label>
+                        <div className="mt-1">
+                          <ImageUpload
+                            onUpload={(url) => handleInputChange(key, 'image', url)}
+                            currentImage={slot.image}
+                            folder="hero-products"
+                            maxWidth={1920}
+                            maxHeight={1080}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Veya manuel olarak URL girin:
+                        </p>
                         <input
                           type="text"
                           value={slot.image}

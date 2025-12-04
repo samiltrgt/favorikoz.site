@@ -191,16 +191,16 @@ export default function HeroSection() {
                               className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
                               style={{ animationDelay: `${(index + 1) * 200}ms` }}
                             >
-                              <div className="aspect-square rounded-2xl mb-6 overflow-hidden bg-gray-100 relative">
+                              <div className="rounded-2xl mb-6 overflow-hidden bg-gray-100 relative flex items-center justify-center" style={{ minHeight: '300px' }}>
                                 {product.image ? (
-                                  <Image
+                                  <img
                                     src={product.image}
                                     alt={product.name}
-                                    fill
-                                    className="object-cover"
+                                    className="max-w-full max-h-full w-auto h-auto rounded-2xl"
+                                    style={{ objectFit: 'contain' }}
                                   />
                                 ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center" style={{ minHeight: '300px' }}>
                                     <div className="w-16 sm:w-20 h-16 sm:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
                                   </div>
                                 )}
