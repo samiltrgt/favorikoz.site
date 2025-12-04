@@ -23,19 +23,19 @@ const slides = [
     subtitle: 'Salon kalitesinde hacim. Zahmetsiz rutin.',
     description: 'Modern güzellik için tasarlanmış premium saç bakım koleksiyonumuzu keşfedin.',
     image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&h=900&fit=crop',
-    cta: 'Çok Satanları İncele',
-    ctaLink: '/cok-satanlar',
-    secondaryCta: 'Saç Hacmi Keşfet',
-    secondaryCtaLink: '/kategori/sac-bakimi'
+    cta: 'Ürünleri İncele',
+    ctaLink: '/kategori/protez-tirnak',
+    secondaryCta: 'Tüm Ürünler',
+    secondaryCtaLink: '/tum-urunler'
   },
   {
     id: 2,
-    title: 'Kişisel Bakımda Yeni Dönem',
+    title: 'Saç Bakımında Yeni Dönem',
     subtitle: 'Minimal. Etkili. Zamansız.',
-    description: 'Cildiniz için sade ama güçlü formüller. Günlük rutininize şıklık katın.',
+    description: 'Saç bakımı için sade ama güçlü formüller. Günlük rutininize şıklık katın.',
     image: 'https://images.unsplash.com/photo-1556228578-8b6b5be0b3ac?w=1600&h=900&fit=crop',
-    cta: 'Kişisel Bakım',
-    ctaLink: '/kategori/kisisel-bakim',
+    cta: 'Ürünleri İncele',
+    ctaLink: '/kategori/sac-bakimi',
     secondaryCta: 'Tüm Ürünler',
     secondaryCtaLink: '/tum-urunler'
   },
@@ -45,9 +45,9 @@ const slides = [
     subtitle: 'Doğal tonlar, güçlü etki.',
     description: 'Gün boyu kalıcı ve modern bir görünüm için seçilmiş ürünler.',
     image: 'https://images.unsplash.com/photo-1616394584738-fc6e6129138a?w=1600&h=900&fit=crop',
-    cta: 'İpek Kirpik Keşfet',
+    cta: 'Ürünleri İncele',
     ctaLink: '/kategori/ipek-kirpik',
-    secondaryCta: 'Yeni Gelenler',
+    secondaryCta: 'Tüm Ürünler',
     secondaryCtaLink: '/tum-urunler'
   }
 ]
