@@ -106,8 +106,8 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const hasDropdown = !!subcategories && subcategories.length > 0
 
   return (
-    <section className="py-8 bg-white border-t border-gray-100">
-      <div className="group relative block w-full overflow-hidden bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300">
+    <section className="py-8 bg-white border-t border-gray-100 relative z-10">
+      <div className="group relative block w-full overflow-visible bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300">
         {/* Background Image */}
         {banner.image && (
           <div className="absolute inset-0 opacity-40">
@@ -135,7 +135,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-flex items-center">
+              <div className="relative inline-flex items-center z-50">
                 <Link
                   href={banner.link || '/tum-urunler'}
                   className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300"
@@ -147,9 +147,10 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                     <button
                       onClick={(e) => {
                         e.preventDefault()
+                        e.stopPropagation()
                         setIsDropdownOpen(!isDropdownOpen)
                       }}
-                      className="ml-2 p-1 hover:bg-white/20 rounded transition-colors"
+                      className="ml-2 p-1 hover:bg-white/20 rounded transition-colors relative z-50"
                       aria-label="Alt kategorileri göster"
                     >
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -157,24 +158,32 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                     
                     {/* Dropdown Menu */}
                     {isDropdownOpen && (
-                      <div 
-                        className="absolute top-full left-0 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50 animate-slide-in-up"
-                        onMouseLeave={() => setIsDropdownOpen(false)}
-                      >
-                        <div className="grid grid-cols-1 gap-1">
-                          {subcategories.map((subcategory, index) => (
-                            <Link
-                              key={subcategory.href}
-                              href={subcategory.href}
-                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up"
-                              style={{ animationDelay: `${index * 50}ms` }}
-                              onClick={() => setIsDropdownOpen(false)}
-                            >
-                              {subcategory.name}
-                            </Link>
-                          ))}
+                      <>
+                        {/* Backdrop to close on outside click */}
+                        <div 
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsDropdownOpen(false)}
+                        />
+                        <div 
+                          className="absolute top-full left-0 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-[60] animate-slide-in-up"
+                          onMouseLeave={() => setIsDropdownOpen(false)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="grid grid-cols-1 gap-1">
+                            {subcategories.map((subcategory, index) => (
+                              <Link
+                                key={subcategory.href}
+                                href={subcategory.href}
+                                className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {subcategory.name}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </>
                 )}
