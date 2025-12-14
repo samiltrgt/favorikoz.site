@@ -175,7 +175,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                           {/* Ana Kategori */}
                           <Link
                             href={`/kategori/${category.slug}`}
-                            className="group flex items-center justify-between text-base font-semibold text-gray-900 hover:text-primary bg-gradient-to-r hover:from-gray-50 hover:to-transparent px-4 py-3 rounded-lg transition-all duration-200 hover:shadow-sm"
+                            className="group flex items-center justify-between text-base font-semibold text-gray-900 hover:text-primary px-4 py-3 rounded-lg transition-all duration-200"
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             <span className="flex items-center gap-2">
