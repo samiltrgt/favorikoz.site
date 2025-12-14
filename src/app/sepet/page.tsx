@@ -76,7 +76,12 @@ export default function CartPage() {
     }
     return total
   }, 0)
-  const shipping = subtotal >= 200 ? 0 : 5.00
+  // 1499 TL ve üzeri ücretsiz kargo, değilse 100 TL kargo ücreti
+  // Fiyatlar 10 ile çarpılmış formatta tutuluyor (100 TL = 1000 birim)
+  // Bu yüzden 1499 TL = 14990 birim, 100 TL kargo = 1000 birim
+  const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
+  const SHIPPING_COST = 1000 // 100 TL (display için /10 yapılacak)
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = subtotal - discount + shipping
 
   // Miktar güncelleme
@@ -292,7 +297,7 @@ export default function CartPage() {
                 <div className="flex justify-between text-gray-600">
                   <span>Kargo</span>
                   <span className={shipping === 0 ? 'text-green-600' : ''}>
-                    {shipping === 0 ? 'Ücretsiz' : `₺${shipping.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    {shipping === 0 ? 'Ücretsiz' : `₺${(shipping / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   </span>
                 </div>
                 
@@ -305,7 +310,7 @@ export default function CartPage() {
               </div>
 
               {/* Free Shipping Progress */}
-              {subtotal < 200 && (
+              {subtotal < FREE_SHIPPING_THRESHOLD && (
                 <div className="mb-6 p-4 bg-orange-50 rounded-xl animate-pulse-slow">
                   <div className="flex items-center gap-2 mb-2">
                     <Truck className="w-4 h-4 text-orange-600 animate-float" />
@@ -316,11 +321,11 @@ export default function CartPage() {
                   <div className="w-full bg-orange-200 rounded-full h-2 mb-2">
                     <div 
                       className="bg-orange-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${(subtotal / 200) * 100}%` }}
+                      style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
                     ></div>
                   </div>
                   <p className="text-xs text-orange-700">
-                    ₺{(200 - subtotal).toFixed(2)} daha ekleyin
+                    ₺{((FREE_SHIPPING_THRESHOLD - subtotal) / 10).toFixed(2)} daha ekleyin
                   </p>
                 </div>
               )}

@@ -30,8 +30,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Sepet boş' }, { status: 400 })
     }
 
-    const totalPrice = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
-    const priceStr = toPriceString(totalPrice)
+    // Calculate subtotal (prices are in 10x format: 100 TL = 1000)
+    const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
+    
+    // Calculate shipping: free if >= 1499 TL (14990 in 10x format), otherwise 100 TL (1000 in 10x format)
+    const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
+    const SHIPPING_COST = 1000 // 100 TL
+    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+    
+    // Total price in 10x format
+    const totalPrice = subtotal + shipping
+    // Convert to TL for Iyzico (divide by 10)
+    const priceStr = toPriceString(totalPrice / 10)
 
     // Detect current domain dynamically
     const getBaseUrl = () => {
@@ -120,7 +130,7 @@ export async function POST(request: NextRequest) {
         name: item.name,
         category1: item.category || 'Genel',
         itemType: 'PHYSICAL',
-        price: toPriceString(item.price)
+        price: toPriceString(item.price / 10) // Convert from 10x format to TL
       })),
       callbackUrl,
       options: {
@@ -164,12 +174,12 @@ export async function POST(request: NextRequest) {
             items: items.map(item => ({
               product_id: item.id,
               name: item.name,
-              price: item.price * 100, // Store in kuruş
+              price: item.price * 10, // Store in kuruş (item.price is in 10x format, so *10 = kuruş)
               quantity: item.quantity || 1
             })) as any,
-            subtotal: Math.round(totalPrice * 100), // Store in kuruş
-            shipping_cost: 0,
-            total: Math.round(totalPrice * 100), // Store in kuruş
+            subtotal: Math.round(subtotal * 10), // Store in kuruş (subtotal is in 10x format, so *10 = kuruş)
+            shipping_cost: Math.round(shipping * 10), // Store in kuruş (shipping is in 10x format, so *10 = kuruş)
+            total: Math.round(totalPrice * 10), // Store in kuruş (totalPrice is in 10x format, so *10 = kuruş)
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',
