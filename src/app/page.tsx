@@ -7,6 +7,7 @@ import HomeBanners from '@/components/home-banners'
 import FeaturedProducts from '@/components/featured-products'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic' // Force dynamic rendering because we use cookies
 export const revalidate = 10 // Revalidate every 10 seconds (for admin changes to show faster)
 
 export default async function HomePage() {
