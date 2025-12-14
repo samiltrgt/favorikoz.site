@@ -43,11 +43,11 @@ export async function GET(
       )
     }
     
-    // Convert price from kuruş to TL
+    // Convert price from kuruş to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: data.price / 100,
-      original_price: data.original_price ? data.original_price / 100 : null,
+      price: (data.price / 100) / 10, // Kuruş → TL → /10
+      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
     }
     
     return NextResponse.json({ success: true, data: product })
@@ -103,15 +103,16 @@ export async function PUT(
     // Stock quantity
     if (body.stock_quantity !== undefined) updateData.stock_quantity = body.stock_quantity
     
-    // Price conversion (TL → kuruş)
+    // Price conversion (TL/10 → kuruş)
+    // Admin panelden gelen fiyat zaten /10 formatında, bu yüzden *1000 yapıyoruz (TL/10 * 10 * 100 = kuruş)
     if (body.price !== undefined) {
-      updateData.price = Math.round(body.price * 100)
+      updateData.price = Math.round(body.price * 1000)
     }
     if (body.original_price !== undefined) {
-      updateData.original_price = body.original_price ? Math.round(body.original_price * 100) : null
+      updateData.original_price = body.original_price ? Math.round(body.original_price * 1000) : null
     }
     if (body.originalPrice !== undefined) {
-      updateData.original_price = body.originalPrice ? Math.round(body.originalPrice * 100) : null
+      updateData.original_price = body.originalPrice ? Math.round(body.originalPrice * 1000) : null
     }
     
     const { data, error } = await supabase
@@ -128,11 +129,11 @@ export async function PUT(
       )
     }
     
-    // Convert back to TL
+    // Convert back to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: data.price / 100,
-      original_price: data.original_price ? data.original_price / 100 : null,
+      price: (data.price / 100) / 10, // Kuruş → TL → /10
+      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
     }
     
     return NextResponse.json({ success: true, data: product })

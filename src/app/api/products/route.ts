@@ -58,11 +58,11 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Convert price from kuruş to TL for backwards compatibility
+    // Convert price from kuruş to TL, then divide by 10 for display
     const products = data.map(p => ({
       ...p,
-      price: p.price / 100,
-      original_price: p.original_price ? p.original_price / 100 : null,
+      price: (p.price / 100) / 10, // Kuruş → TL → /10
+      original_price: p.original_price ? (p.original_price / 100) / 10 : null,
     }))
     
     return NextResponse.json({ success: true, data: products })
@@ -126,9 +126,10 @@ export async function POST(request: NextRequest) {
       is_best_seller: body.isBestSeller || false,
       in_stock: body.inStock !== undefined ? body.inStock : true,
       stock_quantity: body.stock_quantity || 300,
-      // Price conversion (TL → kuruş)
-      price: Math.round(body.price * 100),
-      original_price: body.original_price ? Math.round(body.original_price * 100) : (body.originalPrice ? Math.round(body.originalPrice * 100) : null),
+      // Price conversion (TL/10 → kuruş)
+      // Admin panelden gelen fiyat zaten /10 formatında, bu yüzden *1000 yapıyoruz (TL/10 * 10 * 100 = kuruş)
+      price: Math.round(body.price * 1000),
+      original_price: body.original_price ? Math.round(body.original_price * 1000) : (body.originalPrice ? Math.round(body.originalPrice * 1000) : null),
     }
     
     const { data, error } = await supabase
@@ -145,11 +146,11 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Convert back to TL
+    // Convert back to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: data.price / 100,
-      original_price: data.original_price ? data.original_price / 100 : null,
+      price: (data.price / 100) / 10, // Kuruş → TL → /10
+      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
     }
     
     return NextResponse.json({ success: true, data: product })

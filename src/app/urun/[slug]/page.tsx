@@ -221,7 +221,7 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                   disabled={!product.in_stock}
                   onClick={() => {
                     if (!product.in_stock) return
-                    addToCart({ id: product.id, slug: product.slug, name: product.name, image: product.image, price: product.price, qty })
+                    addToCart({ id: product.id, slug: product.slug, name: product.name, image: product.image, price: product.price * 10, qty }) // API'den /10 formatında geliyor, sepete 10x formatında kaydediyoruz
                     setAdded(true)
                     setTimeout(()=>setAdded(false), 1500)
                   }}

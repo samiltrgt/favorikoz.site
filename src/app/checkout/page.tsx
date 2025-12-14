@@ -160,7 +160,7 @@ export default function CheckoutPage() {
               cartItems.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.name} x{item.quantity}</span>
-                  <span>₺{(item.price * item.quantity).toFixed(2)}</span>
+                  <span>₺{((item.price * item.quantity) / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               ))
             )}
@@ -170,7 +170,7 @@ export default function CheckoutPage() {
           <div className="border-t pt-4 mb-4">
             <div className="flex justify-between font-bold text-lg">
               <span>Toplam</span>
-              <span>₺{totalAmount.toFixed(2)}</span>
+              <span>₺{(totalAmount / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 

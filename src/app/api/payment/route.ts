@@ -34,13 +34,13 @@ export async function POST(request: NextRequest) {
     const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
     
     // Calculate shipping: free if >= 1499 TL (14990 in 10x format), otherwise 100 TL (1000 in 10x format)
-    const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
-    const SHIPPING_COST = 1000 // 100 TL
+    const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL (10x formatında)
+    const SHIPPING_COST = 1000 // 100 TL (10x formatında)
     const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
     
     // Total price in 10x format
     const totalPrice = subtotal + shipping
-    // Convert to TL for Iyzico (divide by 10)
+    // Convert to TL for Iyzico (divide by 10 to get actual TL)
     const priceStr = toPriceString(totalPrice / 10)
 
     // Detect current domain dynamically
@@ -174,12 +174,12 @@ export async function POST(request: NextRequest) {
             items: items.map(item => ({
               product_id: item.id,
               name: item.name,
-              price: item.price * 10, // Store in kuruş (item.price is in 10x format, so *10 = kuruş)
+              price: item.price * 10, // Store in kuruş (item.price is in 10x format, so *10 = kuruş: 255 * 10 = 2550)
               quantity: item.quantity || 1
             })) as any,
-            subtotal: Math.round(subtotal * 10), // Store in kuruş (subtotal is in 10x format, so *10 = kuruş)
-            shipping_cost: Math.round(shipping * 10), // Store in kuruş (shipping is in 10x format, so *10 = kuruş)
-            total: Math.round(totalPrice * 10), // Store in kuruş (totalPrice is in 10x format, so *10 = kuruş)
+            subtotal: Math.round(subtotal * 10), // Store in kuruş (subtotal is in 10x format, so *10 = kuruş: 2550 * 10 = 25500)
+            shipping_cost: Math.round(shipping * 10), // Store in kuruş (shipping is in 10x format, so *10 = kuruş: 1000 * 10 = 10000)
+            total: Math.round(totalPrice * 10), // Store in kuruş (totalPrice is in 10x format, so *10 = kuruş: 3550 * 10 = 35500)
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',

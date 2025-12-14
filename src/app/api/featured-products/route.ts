@@ -54,8 +54,8 @@ export async function GET() {
         ...fp,
         products: product ? {
           ...product,
-          price: product.price / 100,
-          original_price: product.original_price ? product.original_price / 100 : null,
+          price: (product.price / 100) / 10, // Kuruş → TL → /10
+          original_price: product.original_price ? (product.original_price / 100) / 10 : null,
         } : null
       }
     })

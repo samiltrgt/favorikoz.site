@@ -33,11 +33,11 @@ export default async function HomePage() {
       // Fallback to empty array
       products = []
     } else {
-    // Convert price from kuruş to TL
+    // Convert price from kuruş to TL, then divide by 10 for display
     products = (allProducts || []).map(p => ({
       ...p,
-      price: p.price / 100,
-      original_price: p.original_price ? p.original_price / 100 : null,
+      price: (p.price / 100) / 10, // Kuruş → TL → /10
+      original_price: p.original_price ? (p.original_price / 100) / 10 : null,
     }))
     }
   } catch (error: any) {

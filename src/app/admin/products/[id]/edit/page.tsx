@@ -84,7 +84,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
-            price: foundProduct.price.toString(), // API'den TL formatında geliyor, direkt yazıyoruz
+            price: foundProduct.price.toString(), // API'den /10 formatında geliyor, direkt yazıyoruz
             originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
             description: foundProduct.description || '',
             category: foundProduct.category_slug || foundProduct.category,
@@ -145,7 +145,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       const updatePayload = {
         name: formData.name,
         brand: formData.brand,
-        price: parseFloat(formData.price), // Form'dan TL formatında geliyor, API'ye direkt gönderiyoruz (API içinde *100 yapılacak)
+        price: parseFloat(formData.price), // Form'dan /10 formatında geliyor, API'ye direkt gönderiyoruz (API içinde *1000 yapılacak)
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         description: formData.description,
         category: formData.category,
