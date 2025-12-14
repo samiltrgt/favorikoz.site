@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -53,6 +54,13 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -79,6 +87,31 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     const interval = setInterval(loadBanner, 10000)
     return () => clearInterval(interval)
   }, [position])
+
+  // Update dropdown position when it opens or window resizes/scrolls
+  useEffect(() => {
+    if (!isDropdownOpen || !buttonRef.current) return
+
+    const updatePosition = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 8,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        })
+      }
+    }
+
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [isDropdownOpen])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -114,6 +147,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const handleButtonClick = (e: React.MouseEvent) => {
     if (hasDropdown) {
       e.preventDefault()
+      e.stopPropagation()
       setIsDropdownOpen(!isDropdownOpen)
     }
   }
@@ -148,10 +182,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-block overflow-visible" data-dropdown-wrapper>
+              <div className="relative inline-block" data-dropdown-wrapper>
                 {hasDropdown ? (
                   <>
                     <button
+                      ref={buttonRef}
                       onClick={handleButtonClick}
                       className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300 cursor-pointer"
                     >
@@ -159,32 +194,44 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     
-                    {/* Dropdown Menu */}
-                    {isDropdownOpen && subcategories && (
-                      <div 
-                        className="absolute top-full left-0 mt-3 w-64 bg-white shadow-2xl border border-gray-200 rounded-lg p-4"
-                        style={{ zIndex: 9999 }}
-                      >
-                        <div className="grid grid-cols-1 gap-1">
-                          <Link
-                            href={banner.link || '/tum-urunler'}
-                            className="text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors border-b border-gray-200 mb-1"
-                            onClick={() => setIsDropdownOpen(false)}
-                          >
-                            Tüm {categorySlug === 'tirnak' ? 'Tırnak' : categorySlug === 'sac-bakimi' ? 'Saç Bakımı' : categorySlug === 'kisisel-bakim' ? 'Kişisel Bakım' : categorySlug === 'ipek-kirpik' ? 'İpek Kirpik' : categorySlug === 'kuafor-malzemeleri' ? 'Kuaför Malzemeleri' : ''} Ürünleri
-                          </Link>
-                          {subcategories.map((subcategory) => (
+                    {/* Dropdown Menu - Portal */}
+                    {mounted && isDropdownOpen && subcategories && typeof window !== 'undefined' && createPortal(
+                      <>
+                        {/* Backdrop */}
+                        <div 
+                          className="fixed inset-0 z-[9998]"
+                          onClick={() => setIsDropdownOpen(false)}
+                        />
+                        {/* Dropdown */}
+                        <div 
+                          className="fixed w-64 bg-white shadow-2xl border border-gray-200 rounded-lg p-4 z-[9999]"
+                          style={{
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                          }}
+                        >
+                          <div className="grid grid-cols-1 gap-1">
                             <Link
-                              key={subcategory.href}
-                              href={subcategory.href}
-                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors"
+                              href={banner.link || '/tum-urunler'}
+                              className="text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors border-b border-gray-200 mb-1"
                               onClick={() => setIsDropdownOpen(false)}
                             >
-                              {subcategory.name}
+                              Tüm {categorySlug === 'tirnak' ? 'Tırnak' : categorySlug === 'sac-bakimi' ? 'Saç Bakımı' : categorySlug === 'kisisel-bakim' ? 'Kişisel Bakım' : categorySlug === 'ipek-kirpik' ? 'İpek Kirpik' : categorySlug === 'kuafor-malzemeleri' ? 'Kuaför Malzemeleri' : ''} Ürünleri
                             </Link>
-                          ))}
+                            {subcategories.map((subcategory) => (
+                              <Link
+                                key={subcategory.href}
+                                href={subcategory.href}
+                                className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {subcategory.name}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      </>,
+                      document.body
                     )}
                   </>
                 ) : (
