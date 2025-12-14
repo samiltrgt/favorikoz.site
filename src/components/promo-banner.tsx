@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -54,7 +55,12 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
+  const [mounted, setMounted] = useState(false)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -131,6 +137,18 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const subcategories = categorySlug ? categorySubcategories[categorySlug] : null
   const hasDropdown = !!subcategories && subcategories.length > 0
 
+  // Debug
+  useEffect(() => {
+    if (hasDropdown) {
+      console.log('🔽 Promo Banner Dropdown:', {
+        categorySlug,
+        subcategories,
+        isDropdownOpen,
+        hasDropdown
+      })
+    }
+  }, [hasDropdown, categorySlug, subcategories, isDropdownOpen])
+
   return (
     <section className="py-8 bg-white border-t border-gray-100 relative" style={{ zIndex: 10 }}>
       <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
@@ -189,40 +207,52 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     
-                    {/* Dropdown Menu */}
-                    {isDropdownOpen && (
+                    {/* Dropdown Menu - Rendered via Portal */}
+                    {mounted && isDropdownOpen && hasDropdown && subcategories && createPortal(
                       <>
                         {/* Backdrop to close on outside click */}
                         <div 
-                          className="fixed inset-0"
+                          className="fixed inset-0 bg-transparent"
                           style={{ zIndex: 9998 }}
-                          onClick={() => setIsDropdownOpen(false)}
+                          onClick={() => {
+                            console.log('Backdrop clicked, closing dropdown')
+                            setIsDropdownOpen(false)
+                          }}
                         />
                         <div 
-                          className="fixed w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 animate-slide-in-up"
+                          className="fixed w-64 bg-white shadow-2xl border-2 border-gray-300 rounded-lg p-4"
                           style={{ 
                             zIndex: 9999,
                             top: `${dropdownPosition.top}px`,
                             left: `${dropdownPosition.left}px`,
                           }}
-                          onMouseLeave={() => setIsDropdownOpen(false)}
-                          onClick={(e) => e.stopPropagation()}
+                          onMouseLeave={() => {
+                            console.log('Mouse left dropdown')
+                            setIsDropdownOpen(false)
+                          }}
+                          onClick={(e) => {
+                            console.log('Dropdown clicked')
+                            e.stopPropagation()
+                          }}
                         >
                           <div className="grid grid-cols-1 gap-1">
                             {subcategories.map((subcategory, index) => (
                               <Link
                                 key={subcategory.href}
                                 href={subcategory.href}
-                                className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                                onClick={() => setIsDropdownOpen(false)}
+                                className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200"
+                                onClick={() => {
+                                  console.log('Subcategory clicked:', subcategory.href)
+                                  setIsDropdownOpen(false)
+                                }}
                               >
                                 {subcategory.name}
                               </Link>
                             ))}
                           </div>
                         </div>
-                      </>
+                      </>,
+                      document.body
                     )}
                   </>
                 )}
