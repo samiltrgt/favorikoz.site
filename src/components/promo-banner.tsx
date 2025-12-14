@@ -184,24 +184,28 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                   <>
                     {/* Backdrop */}
                     <div 
-                      className="fixed inset-0 z-[9998]"
+                      className="fixed inset-0"
+                      style={{ zIndex: 99998 }}
                       onClick={() => setIsDropdownOpen(false)}
                     />
                     {/* Dropdown */}
                     <div 
-                      className="fixed w-80 bg-white shadow-2xl border border-gray-200 rounded-lg p-4 z-[9999]"
+                      className="fixed w-80 bg-white rounded-lg p-4 max-h-[80vh] overflow-y-auto"
                       style={{
                         top: `${dropdownPosition.top}px`,
                         left: `${dropdownPosition.left}px`,
+                        zIndex: 99999,
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        border: '2px solid #e5e7eb',
                       }}
                     >
                       <div className="grid grid-cols-1 gap-3">
                         {allCategories.map((category) => (
-                          <div key={category.slug} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0">
+                          <div key={category.slug} className="border-b border-gray-200 last:border-b-0 pb-3 last:pb-0">
                             {/* Ana Kategori */}
                             <Link
                               href={`/kategori/${category.slug}`}
-                              className="block text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2 rounded transition-colors mb-1"
+                              className="block text-sm font-bold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2 rounded transition-colors mb-1"
                               onClick={() => setIsDropdownOpen(false)}
                             >
                               {category.name}
@@ -212,10 +216,10 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                                 <Link
                                   key={subcategory.href}
                                   href={subcategory.href}
-                                  className="block text-xs text-gray-600 hover:text-black hover:bg-gray-50 px-3 py-1.5 rounded transition-colors"
+                                  className="block text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2 rounded transition-colors"
                                   onClick={() => setIsDropdownOpen(false)}
                                 >
-                                  {subcategory.name}
+                                  • {subcategory.name}
                                 </Link>
                               ))}
                             </div>
