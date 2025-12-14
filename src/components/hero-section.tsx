@@ -191,7 +191,7 @@ export default function HeroSection() {
                               className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
                               style={{ animationDelay: `${(index + 1) * 200}ms` }}
                             >
-                              <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 overflow-hidden bg-gray-100 relative">
+                              <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 overflow-hidden relative">
                                 {product.image ? (
                                   <Image
                                     src={product.image}
@@ -216,7 +216,7 @@ export default function HeroSection() {
                           // Fallback: Default products if no data
                           <>
                             <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
-                              <div className="aspect-square bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center">
+                              <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center overflow-hidden relative">
                                 <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
                               </div>
                               <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-light mb-1 sm:mb-2 line-clamp-2">Saç Fiberi</h3>
@@ -226,7 +226,7 @@ export default function HeroSection() {
                               </button>
                             </div>
                             <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 shadow-lg hover:shadow-2xl active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
-                              <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center">
+                              <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center overflow-hidden relative">
                                 <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
                               </div>
                               <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-light mb-1 sm:mb-2 line-clamp-2">Şekillendirme Pudrası</h3>
