@@ -14,6 +14,7 @@ interface Order {
   customer_email: string
   customer_phone: string
   shipping_address: any
+  billing_address?: any
   items: any[]
   subtotal: number
   shipping_cost: number
