@@ -84,8 +84,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
-            price: foundProduct.price.toString(),
-            originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
+            price: (foundProduct.price / 10).toString(),
+            originalPrice: foundProduct.original_price ? (foundProduct.original_price / 10).toString() : (foundProduct.originalPrice ? (foundProduct.originalPrice / 10).toString() : ''),
             description: foundProduct.description || '',
             category: foundProduct.category_slug || foundProduct.category,
             // Convert snake_case to camelCase for checkboxes
@@ -145,7 +145,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       const updatePayload = {
         name: formData.name,
         brand: formData.brand,
-        price: parseFloat(formData.price),
+        price: parseFloat(formData.price), // Form'dan TL formatında geliyor, API'ye direkt gönderiyoruz (API içinde *100 yapılacak)
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         description: formData.description,
         category: formData.category,

@@ -222,9 +222,9 @@ export default function ProductsPage() {
                       </p>
                     )}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-lg font-bold text-gray-900">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-lg font-bold text-gray-900">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {product.original_price && (
-                        <span className="text-sm text-gray-500 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-sm text-gray-500 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       )}
                     </div>
                     
