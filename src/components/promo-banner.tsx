@@ -97,6 +97,25 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return null
   }
 
+  // Position'a göre kategorileri filtrele
+  const getCategoriesToShow = () => {
+    switch (position) {
+      case 'top':
+        // Sadece Tırnak
+        return allCategories.filter(cat => cat.slug === 'tirnak')
+      case 'bottom':
+        // Sadece Saç Bakımı
+        return allCategories.filter(cat => cat.slug === 'sac-bakimi')
+      case 'footer':
+        // Sadece İpek Kirpik
+        return allCategories.filter(cat => cat.slug === 'ipek-kirpik')
+      default:
+        return allCategories
+    }
+  }
+
+  const categoriesToShow = getCategoriesToShow()
+
   return (
     <section className="relative py-8 bg-white border-t border-gray-100" style={{ overflow: 'visible' }}>
       <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
@@ -142,35 +161,42 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div 
-                    className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg p-4 max-h-96 overflow-y-auto"
+                    className="absolute top-full left-0 mt-3 w-80 bg-white rounded-xl p-5 max-h-[32rem] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200"
                     style={{ 
                       zIndex: 1001,
-                      boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-                      border: '2px solid #d1d5db'
+                      boxShadow: '0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+                      backdropFilter: 'blur(10px)',
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="space-y-3">
-                      {allCategories.map((category) => (
-                        <div key={category.slug} className="border-b border-gray-200 last:border-b-0 pb-3 last:pb-0">
+                    <div className="space-y-4">
+                      {categoriesToShow.map((category, index) => (
+                        <div key={category.slug} className={`${index !== categoriesToShow.length - 1 ? 'border-b border-gray-100 pb-4' : ''}`}>
                           {/* Ana Kategori */}
                           <Link
                             href={`/kategori/${category.slug}`}
-                            className="block text-sm font-bold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2 rounded transition-colors"
+                            className="group flex items-center justify-between text-base font-semibold text-gray-900 hover:text-primary bg-gradient-to-r hover:from-gray-50 hover:to-transparent px-4 py-3 rounded-lg transition-all duration-200 hover:shadow-sm"
                             onClick={() => setIsDropdownOpen(false)}
                           >
-                            {category.name}
+                            <span className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                              {category.name}
+                            </span>
+                            <svg className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </Link>
                           {/* Alt Kategoriler */}
-                          <div className="ml-2 mt-1 space-y-1">
+                          <div className="mt-2 space-y-1 pl-3">
                             {category.subcategories.map((subcategory) => (
                               <Link
                                 key={subcategory.href}
                                 href={subcategory.href}
-                                className="block text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-1.5 rounded transition-colors"
+                                className="group flex items-start gap-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2.5 rounded-md transition-all duration-150"
                                 onClick={() => setIsDropdownOpen(false)}
                               >
-                                • {subcategory.name}
+                                <span className="text-primary opacity-50 group-hover:opacity-100 transition-opacity mt-0.5">→</span>
+                                <span className="flex-1">{subcategory.name}</span>
                               </Link>
                             ))}
                           </div>
