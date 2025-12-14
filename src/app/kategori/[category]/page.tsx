@@ -27,7 +27,7 @@ const sortOptions = [
 
 export default function CategoryPage() {
   const params = useParams()
-  const categorySlug = params.slug as string
+  const categorySlug = params.category as string
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
@@ -271,3 +271,4 @@ export default function CategoryPage() {
     </div>
   )
 }
+
