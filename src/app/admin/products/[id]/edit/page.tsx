@@ -84,8 +84,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
-            price: (foundProduct.price / 10).toString(),
-            originalPrice: foundProduct.original_price ? (foundProduct.original_price / 10).toString() : (foundProduct.originalPrice ? (foundProduct.originalPrice / 10).toString() : ''),
+            price: foundProduct.price.toString(), // API'den TL formatında geliyor, direkt yazıyoruz
+            originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
             description: foundProduct.description || '',
             category: foundProduct.category_slug || foundProduct.category,
             // Convert snake_case to camelCase for checkboxes
