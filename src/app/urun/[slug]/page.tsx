@@ -186,9 +186,9 @@ export default function ProductDetailPage({ params }: { params: Params }) {
 
             <div className="rounded-xl border border-gray-200 p-6 bg-gray-50">
               <div className="flex items-end gap-4 mb-4">
-                <span className="text-4xl font-bold text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="text-4xl font-bold text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 {product.original_price && (
-                  <span className="text-xl text-gray-400 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-xl text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 )}
                 {product.discount && product.discount > 0 && (
                   <span className="text-sm bg-red-100 text-red-600 font-bold px-2 py-1 rounded-full">-%{product.discount}</span>

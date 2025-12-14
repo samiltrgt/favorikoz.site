@@ -81,9 +81,9 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-light text-black">₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-light text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   {product.original_price && (
-                    <span className="text-xs text-gray-400 line-through">₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-xs text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   )}
                 </div>
                 {product.discount && product.discount > 0 && (

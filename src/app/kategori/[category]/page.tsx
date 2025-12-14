@@ -229,11 +229,11 @@ export default function CategoryPage() {
                       <div className="flex items-center gap-2">
                         {product.original_price && (
                           <span className="text-sm text-gray-400 line-through">
-                            ₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         )}
                         <span className="font-light text-black">
-                          ₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                         {product.discount && (
                           <span className="text-xs text-red-600 font-medium">
