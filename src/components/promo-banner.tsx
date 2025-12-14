@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -54,13 +53,8 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
-  const [mounted, setMounted] = useState(false)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -98,27 +92,24 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return () => clearInterval(interval)
   }, [position])
 
-  // Update dropdown position when open or window resizes
+  // Close dropdown when clicking outside
   useEffect(() => {
-    if (!isDropdownOpen || !buttonRef.current) return
+    if (!isDropdownOpen) return
 
-    const updatePosition = () => {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        setDropdownPosition({
-          top: rect.bottom + 8,
-          left: rect.left
-        })
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        buttonRef.current && 
+        !buttonRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false)
       }
     }
 
-    updatePosition()
-    window.addEventListener('scroll', updatePosition, true)
-    window.addEventListener('resize', updatePosition)
-
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
-      window.removeEventListener('scroll', updatePosition, true)
-      window.removeEventListener('resize', updatePosition)
+      document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isDropdownOpen])
 
@@ -137,20 +128,8 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const subcategories = categorySlug ? categorySubcategories[categorySlug] : null
   const hasDropdown = !!subcategories && subcategories.length > 0
 
-  // Debug
-  useEffect(() => {
-    if (hasDropdown) {
-      console.log('🔽 Promo Banner Dropdown:', {
-        categorySlug,
-        subcategories,
-        isDropdownOpen,
-        hasDropdown
-      })
-    }
-  }, [hasDropdown, categorySlug, subcategories, isDropdownOpen])
-
   return (
-    <section className="py-8 bg-white border-t border-gray-100 relative" style={{ zIndex: 10 }}>
+    <section className="py-8 bg-white border-t border-gray-100 relative" style={{ zIndex: 10, overflow: 'visible' }}>
       <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
         {/* Background Image */}
         {banner.image && (
@@ -166,9 +145,9 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         )}
         
         {/* Content */}
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16" style={{ zIndex: 1 }}>
-          <div className="container max-w-7xl mx-auto">
-            <div className="max-w-2xl">
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16" style={{ zIndex: 1, overflow: 'visible' }}>
+          <div className="container max-w-7xl mx-auto" style={{ overflow: 'visible' }}>
+            <div className="max-w-2xl" style={{ overflow: 'visible' }}>
               <h2 className="text-3xl md:text-4xl font-light mb-4 tracking-tight">
                 {banner.title}
               </h2>
@@ -179,7 +158,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-flex items-center" style={{ zIndex: 9999 }}>
+              <div className="relative inline-flex items-center" style={{ zIndex: 10000, position: 'relative' }}>
                 <Link
                   href={banner.link || '/tum-urunler'}
                   className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300"
@@ -193,66 +172,38 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        setDropdownPosition({
-                          top: rect.bottom + 8,
-                          left: rect.left
-                        })
                         setIsDropdownOpen(!isDropdownOpen)
                       }}
                       className="ml-2 p-1 hover:bg-white/20 rounded transition-colors relative"
                       aria-label="Alt kategorileri göster"
-                      style={{ zIndex: 10000 }}
                     >
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     
-                    {/* Dropdown Menu - Rendered via Portal */}
-                    {mounted && isDropdownOpen && hasDropdown && subcategories && createPortal(
-                      <>
-                        {/* Backdrop to close on outside click */}
-                        <div 
-                          className="fixed inset-0 bg-transparent"
-                          style={{ zIndex: 9998 }}
-                          onClick={() => {
-                            console.log('Backdrop clicked, closing dropdown')
-                            setIsDropdownOpen(false)
-                          }}
-                        />
-                        <div 
-                          className="fixed w-64 bg-white shadow-2xl border-2 border-gray-300 rounded-lg p-4"
-                          style={{ 
-                            zIndex: 9999,
-                            top: `${dropdownPosition.top}px`,
-                            left: `${dropdownPosition.left}px`,
-                          }}
-                          onMouseLeave={() => {
-                            console.log('Mouse left dropdown')
-                            setIsDropdownOpen(false)
-                          }}
-                          onClick={(e) => {
-                            console.log('Dropdown clicked')
-                            e.stopPropagation()
-                          }}
-                        >
-                          <div className="grid grid-cols-1 gap-1">
-                            {subcategories.map((subcategory, index) => (
-                              <Link
-                                key={subcategory.href}
-                                href={subcategory.href}
-                                className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200"
-                                onClick={() => {
-                                  console.log('Subcategory clicked:', subcategory.href)
-                                  setIsDropdownOpen(false)
-                                }}
-                              >
-                                {subcategory.name}
-                              </Link>
-                            ))}
-                          </div>
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && hasDropdown && subcategories && (
+                      <div 
+                        ref={dropdownRef}
+                        className="absolute top-full left-0 mt-2 w-64 bg-white shadow-2xl border-2 border-gray-300 rounded-lg p-4"
+                        style={{ 
+                          zIndex: 10000,
+                        }}
+                        onMouseLeave={() => setIsDropdownOpen(false)}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="grid grid-cols-1 gap-1">
+                          {subcategories.map((subcategory, index) => (
+                            <Link
+                              key={subcategory.href}
+                              href={subcategory.href}
+                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              {subcategory.name}
+                            </Link>
+                          ))}
                         </div>
-                      </>,
-                      document.body
+                      </div>
                     )}
                   </>
                 )}
