@@ -98,11 +98,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   }
 
   return (
-    <section className="relative py-8 bg-white border-t border-gray-100">
-      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300">
+    <section className="relative py-8 bg-white border-t border-gray-100" style={{ overflow: 'visible' }}>
+      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
         {/* Background Image */}
         {banner.image && (
-          <div className="absolute inset-0 opacity-40 overflow-hidden">
+          <div className="absolute inset-0 opacity-40" style={{ overflow: 'hidden' }}>
             <Image
               src={banner.image}
               alt={banner.title}
@@ -114,9 +114,9 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         )}
         
         {/* Content */}
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="container max-w-7xl mx-auto">
-            <div className="max-w-2xl">
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16" style={{ overflow: 'visible' }}>
+          <div className="container max-w-7xl mx-auto" style={{ overflow: 'visible' }}>
+            <div className="max-w-2xl" style={{ overflow: 'visible' }}>
               <h2 className="text-3xl md:text-4xl font-light mb-4 tracking-tight">
                 {banner.title}
               </h2>
@@ -127,7 +127,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-block z-50">
+              <div className="relative inline-block" style={{ zIndex: 1000 }}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -142,7 +142,12 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div 
-                    className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border-2 border-gray-300 p-4 max-h-96 overflow-y-auto z-50"
+                    className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg p-4 max-h-96 overflow-y-auto"
+                    style={{ 
+                      zIndex: 1001,
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                      border: '2px solid #d1d5db'
+                    }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="space-y-3">
