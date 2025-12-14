@@ -293,14 +293,23 @@ export default function Header() {
                <div 
                  key={category.name}
                  className="relative"
-                 onMouseEnter={() => category.hasDropdown && setHoveredCategory(category.name)}
-                 onMouseLeave={() => category.hasDropdown && setHoveredCategory(null)}
                >
                  {category.hasDropdown ? (
-                   <button className="flex items-center gap-1 text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2">
-                     {category.name}
-                     <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${hoveredCategory === category.name ? 'rotate-180' : ''}`} />
-                   </button>
+                   <div className="flex items-center gap-1">
+                     <Link
+                       href={category.href}
+                       className="text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2"
+                     >
+                       {category.name}
+                     </Link>
+                     <button 
+                       onClick={() => setHoveredCategory(hoveredCategory === category.name ? null : category.name)}
+                       className="p-1 hover:bg-gray-100 rounded transition-colors"
+                       aria-label="Alt kategorileri göster"
+                     >
+                       <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${hoveredCategory === category.name ? 'rotate-180' : ''}`} />
+                     </button>
+                   </div>
                  ) : (
                    <Link
                      href={category.href}
@@ -316,7 +325,10 @@ export default function Header() {
                      {/* Invisible bridge to prevent gap */}
                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 h-2 bg-transparent"></div>
                      
-                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50 animate-slide-in-up">
+                     <div 
+                       className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50 animate-slide-in-up"
+                       onMouseLeave={() => setHoveredCategory(null)}
+                     >
                        <div className="grid grid-cols-1 gap-1">
                          {category.subcategories?.map((subcategory, index) => (
                            <Link
@@ -324,6 +336,7 @@ export default function Header() {
                              href={subcategory.href}
                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up flex items-center justify-between"
                              style={{ animationDelay: `${index * 50}ms` }}
+                             onClick={() => setHoveredCategory(null)}
                            >
                              <span>{subcategory.name}</span>
                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
