@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -53,6 +53,8 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -84,11 +86,35 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     }
 
     loadBanner()
-
+    
     // Reload every 10 seconds to catch updates
     const interval = setInterval(loadBanner, 10000)
     return () => clearInterval(interval)
   }, [position])
+
+  // Update dropdown position when open or window resizes
+  useEffect(() => {
+    if (!isDropdownOpen || !buttonRef.current) return
+
+    const updatePosition = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left
+        })
+      }
+    }
+
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [isDropdownOpen])
 
   if (isLoading) {
     return null
@@ -106,11 +132,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const hasDropdown = !!subcategories && subcategories.length > 0
 
   return (
-    <section className="py-8 bg-white border-t border-gray-100 relative z-10">
-      <div className="group relative block w-full overflow-visible bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300">
+    <section className="py-8 bg-white border-t border-gray-100 relative" style={{ zIndex: 10 }}>
+      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
         {/* Background Image */}
         {banner.image && (
-          <div className="absolute inset-0 opacity-40">
+          <div className="absolute inset-0 opacity-40" style={{ overflow: 'hidden' }}>
             <Image
               src={banner.image}
               alt={banner.title}
@@ -122,7 +148,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         )}
         
         {/* Content */}
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16" style={{ zIndex: 1 }}>
           <div className="container max-w-7xl mx-auto">
             <div className="max-w-2xl">
               <h2 className="text-3xl md:text-4xl font-light mb-4 tracking-tight">
@@ -135,7 +161,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-flex items-center z-50">
+              <div className="relative inline-flex items-center" style={{ zIndex: 9999 }}>
                 <Link
                   href={banner.link || '/tum-urunler'}
                   className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300"
@@ -145,13 +171,20 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                 {hasDropdown && (
                   <>
                     <button
+                      ref={buttonRef}
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setDropdownPosition({
+                          top: rect.bottom + 8,
+                          left: rect.left
+                        })
                         setIsDropdownOpen(!isDropdownOpen)
                       }}
-                      className="ml-2 p-1 hover:bg-white/20 rounded transition-colors relative z-50"
+                      className="ml-2 p-1 hover:bg-white/20 rounded transition-colors relative"
                       aria-label="Alt kategorileri göster"
+                      style={{ zIndex: 10000 }}
                     >
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -161,11 +194,17 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                       <>
                         {/* Backdrop to close on outside click */}
                         <div 
-                          className="fixed inset-0 z-40"
+                          className="fixed inset-0"
+                          style={{ zIndex: 9998 }}
                           onClick={() => setIsDropdownOpen(false)}
                         />
                         <div 
-                          className="absolute top-full left-0 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-[60] animate-slide-in-up"
+                          className="fixed w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 animate-slide-in-up"
+                          style={{ 
+                            zIndex: 9999,
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                          }}
                           onMouseLeave={() => setIsDropdownOpen(false)}
                           onClick={(e) => e.stopPropagation()}
                         >
