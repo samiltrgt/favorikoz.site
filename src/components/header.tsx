@@ -68,7 +68,7 @@ export default function Header() {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false)
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
 
   // Load user on mount (safe for unmount)
   useEffect(() => {
