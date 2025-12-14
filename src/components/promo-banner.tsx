@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -53,8 +53,6 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const dropdownRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -65,21 +63,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         })
         const result = await response.json()
 
-        console.log(`🎯 Promo Banner [${position}] API Response:`, {
-          success: result.success,
-          dataLength: result.data?.length,
-          data: result.data
-        })
-
         if (result.success && result.data && result.data.length > 0) {
-          const bannerData = result.data[0]
-          console.log(`✅ Promo Banner [${position}] loaded:`, bannerData)
-          setBanner(bannerData)
-        } else {
-          console.warn(`⚠️ No promo banner found for position: ${position}`)
+          setBanner(result.data[0])
         }
       } catch (error) {
-        console.error(`❌ Error loading promo banner [${position}]:`, error)
+        console.error(`Error loading promo banner [${position}]:`, error)
       } finally {
         setIsLoading(false)
       }
@@ -97,19 +85,15 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     if (!isDropdownOpen) return
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        buttonRef.current && 
-        !buttonRef.current.contains(event.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as HTMLElement
+      if (!target.closest('[data-dropdown-wrapper]')) {
         setIsDropdownOpen(false)
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('click', handleClickOutside)
     }
   }, [isDropdownOpen])
 
@@ -118,7 +102,6 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   }
 
   if (!banner) {
-    console.log(`ℹ️ Promo Banner [${position}] not found or not active`)
     return null
   }
 
@@ -128,12 +111,19 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const subcategories = categorySlug ? categorySubcategories[categorySlug] : null
   const hasDropdown = !!subcategories && subcategories.length > 0
 
+  const handleButtonClick = (e: React.MouseEvent) => {
+    if (hasDropdown) {
+      e.preventDefault()
+      setIsDropdownOpen(!isDropdownOpen)
+    }
+  }
+
   return (
-    <section className="py-8 bg-white border-t border-gray-100 relative" style={{ zIndex: 10, overflow: 'visible' }}>
-      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300" style={{ overflow: 'visible' }}>
+    <section className="py-8 bg-white border-t border-gray-100 relative overflow-visible">
+      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300 overflow-visible">
         {/* Background Image */}
         {banner.image && (
-          <div className="absolute inset-0 opacity-40" style={{ overflow: 'hidden' }}>
+          <div className="absolute inset-0 opacity-40 overflow-hidden">
             <Image
               src={banner.image}
               alt={banner.title}
@@ -145,9 +135,9 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         )}
         
         {/* Content */}
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16" style={{ zIndex: 1, overflow: 'visible' }}>
-          <div className="container max-w-7xl mx-auto" style={{ overflow: 'visible' }}>
-            <div className="max-w-2xl" style={{ overflow: 'visible' }}>
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16 overflow-visible">
+          <div className="container max-w-7xl mx-auto overflow-visible">
+            <div className="max-w-2xl overflow-visible">
               <h2 className="text-3xl md:text-4xl font-light mb-4 tracking-tight">
                 {banner.title}
               </h2>
@@ -158,45 +148,36 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-flex items-center" style={{ zIndex: 10000, position: 'relative' }}>
-                <Link
-                  href={banner.link || '/tum-urunler'}
-                  className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300"
-                >
-                  {banner.button_text || 'Tüm Ürünleri Keşfet'}
-                </Link>
-                {hasDropdown && (
+              <div className="relative inline-block overflow-visible" data-dropdown-wrapper>
+                {hasDropdown ? (
                   <>
                     <button
-                      ref={buttonRef}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        setIsDropdownOpen(!isDropdownOpen)
-                      }}
-                      className="ml-2 p-1 hover:bg-white/20 rounded transition-colors relative"
-                      aria-label="Alt kategorileri göster"
+                      onClick={handleButtonClick}
+                      className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300 cursor-pointer"
                     >
+                      {banner.button_text || 'Tüm Ürünleri Keşfet'}
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     
                     {/* Dropdown Menu */}
-                    {isDropdownOpen && hasDropdown && subcategories && (
+                    {isDropdownOpen && subcategories && (
                       <div 
-                        ref={dropdownRef}
-                        className="absolute top-full left-0 mt-2 w-64 bg-white shadow-2xl border-2 border-gray-300 rounded-lg p-4"
-                        style={{ 
-                          zIndex: 10000,
-                        }}
-                        onMouseLeave={() => setIsDropdownOpen(false)}
-                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-full left-0 mt-3 w-64 bg-white shadow-2xl border border-gray-200 rounded-lg p-4"
+                        style={{ zIndex: 9999 }}
                       >
                         <div className="grid grid-cols-1 gap-1">
-                          {subcategories.map((subcategory, index) => (
+                          <Link
+                            href={banner.link || '/tum-urunler'}
+                            className="text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors border-b border-gray-200 mb-1"
+                            onClick={() => setIsDropdownOpen(false)}
+                          >
+                            Tüm {categorySlug === 'tirnak' ? 'Tırnak' : categorySlug === 'sac-bakimi' ? 'Saç Bakımı' : categorySlug === 'kisisel-bakim' ? 'Kişisel Bakım' : categorySlug === 'ipek-kirpik' ? 'İpek Kirpik' : categorySlug === 'kuafor-malzemeleri' ? 'Kuaför Malzemeleri' : ''} Ürünleri
+                          </Link>
+                          {subcategories.map((subcategory) => (
                             <Link
                               key={subcategory.href}
                               href={subcategory.href}
-                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200"
+                              className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors"
                               onClick={() => setIsDropdownOpen(false)}
                             >
                               {subcategory.name}
@@ -206,9 +187,14 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                       </div>
                     )}
                   </>
-                )}
-                {!hasDropdown && (
-                  <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+                ) : (
+                  <Link
+                    href={banner.link || '/tum-urunler'}
+                    className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300"
+                  >
+                    {banner.button_text || 'Tüm Ürünleri Keşfet'}
+                    <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                  </Link>
                 )}
               </div>
             </div>
@@ -218,4 +204,3 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     </section>
   )
 }
-
