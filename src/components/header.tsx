@@ -9,14 +9,53 @@ const staticCategories = [
   { name: 'Anasayfa', href: '/' },
   { name: 'Tüm Ürünler', href: '/tum-urunler' },
   { 
-    name: 'Kategoriler', 
-    href: '#',
+    name: 'Tırnak', 
+    href: '/kategori/tirnak',
     hasDropdown: true,
     subcategories: [
-      { name: 'Kişisel Bakım', href: '/kategori/kisisel-bakim', key: 'kisisel-bakim' },
-      { name: 'Saç Bakımı', href: '/kategori/sac-bakimi', key: 'sac-bakimi' },
-      { name: 'Protez Tırnak', href: '/kategori/protez-tirnak', key: 'protez-tirnak' },
-      { name: 'İpek Kirpik', href: '/kategori/ipek-kirpik', key: 'ipek-kirpik' },
+      { name: 'Jeller', href: '/kategori/tirnak/jeller', key: 'tirnak-jeller' },
+      { name: 'Cihazlar', href: '/kategori/tirnak/cihazlar', key: 'tirnak-cihazlar' },
+      { name: 'Freze Uçları', href: '/kategori/tirnak/freze-uclari', key: 'tirnak-freze-uclari' },
+      { name: 'Kalıcı Oje', href: '/kategori/tirnak/kalici-oje', key: 'tirnak-kalici-oje' },
+      { name: 'Protez Tırnak Malzemeleri', href: '/kategori/tirnak/protez-tirnak-malzemeleri', key: 'tirnak-protez-tirnak-malzemeleri' },
+    ]
+  },
+  { 
+    name: 'Saç Bakımı', 
+    href: '/kategori/sac-bakimi',
+    hasDropdown: true,
+    subcategories: [
+      { name: 'Saç Bakım', href: '/kategori/sac-bakimi/sac-bakim', key: 'sac-bakim' },
+      { name: 'Saç Topik', href: '/kategori/sac-bakimi/sac-topik', key: 'sac-topik' },
+      { name: 'Saç Şekillendiriciler', href: '/kategori/sac-bakimi/sac-sekillendiriciler', key: 'sac-sekillendiriciler' },
+      { name: 'Saç Fırçası ve Tarak', href: '/kategori/sac-bakimi/sac-fircasi-ve-tarak', key: 'sac-fircasi-ve-tarak' },
+    ]
+  },
+  { 
+    name: 'Kişisel Bakım', 
+    href: '/kategori/kisisel-bakim',
+    hasDropdown: true,
+    subcategories: [
+      { name: 'Kişisel Bakım', href: '/kategori/kisisel-bakim/kisisel-bakim', key: 'kisisel-bakim' },
+      { name: 'Cilt Bakımı', href: '/kategori/kisisel-bakim/cilt-bakimi', key: 'cilt-bakimi' },
+    ]
+  },
+  { 
+    name: 'İpek Kirpik', 
+    href: '/kategori/ipek-kirpik',
+    hasDropdown: true,
+    subcategories: [
+      { name: 'İpek Kirpikler', href: '/kategori/ipek-kirpik/ipek-kirpikler', key: 'ipek-kirpikler' },
+      { name: 'Diğer İpek Kirpik Ürünleri', href: '/kategori/ipek-kirpik/diger-ipek-kirpik-urunleri', key: 'diger-ipek-kirpik-urunleri' },
+    ]
+  },
+  { 
+    name: 'Kuaför Malzemeleri', 
+    href: '/kategori/kuafor-malzemeleri',
+    hasDropdown: true,
+    subcategories: [
+      { name: 'Tıraş Makineleri', href: '/kategori/kuafor-malzemeleri/tiras-makineleri', key: 'tiras-makineleri' },
+      { name: 'Diğer Kuaför Malzemeleri', href: '/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri', key: 'diger-kuafor-malzemeleri' },
     ]
   },
 ]
@@ -275,15 +314,15 @@ export default function Header() {
                  {category.hasDropdown && hoveredCategory === category.name && (
                    <>
                      {/* Invisible bridge to prevent gap */}
-                     <div className="absolute top-full left-0 w-80 h-2 bg-transparent"></div>
+                     <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 h-2 bg-transparent"></div>
                      
-                     <div className="absolute top-full left-0 mt-2 w-80 bg-white shadow-xl border border-gray-200 rounded-lg p-6 z-50 animate-slide-in-up">
-                       <div className="grid grid-cols-1 gap-2">
+                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50 animate-slide-in-up">
+                       <div className="grid grid-cols-1 gap-1">
                          {category.subcategories?.map((subcategory, index) => (
                            <Link
                              key={subcategory.href}
                              href={subcategory.href}
-                             className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-3 rounded transition-all duration-200 animate-fade-in-up flex items-center justify-between"
+                             className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up flex items-center justify-between"
                              style={{ animationDelay: `${index * 50}ms` }}
                            >
                              <span>{subcategory.name}</span>
@@ -324,16 +363,17 @@ export default function Header() {
             <div className="space-y-2">
               {staticCategories.map((category) => {
                 if ((category as any).hasDropdown) {
+                  const isOpen = mobileCategoriesOpen[category.name] || false
                   return (
                     <div key={category.name}>
                       <button
-                        onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
+                        onClick={() => setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })}
                         className="flex items-center justify-between w-full py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
                       >
                         <span>{category.name}</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${mobileCategoriesOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
-                      {mobileCategoriesOpen && (category as any).subcategories && (
+                      {isOpen && (category as any).subcategories && (
                         <div className="pl-4 space-y-1 mt-2">
                           {(category as any).subcategories.map((subcategory: any) => (
                             <Link
@@ -342,7 +382,7 @@ export default function Header() {
                               className="flex items-center justify-between py-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
                               onClick={() => {
                                 setIsMenuOpen(false)
-                                setMobileCategoriesOpen(false)
+                                setMobileCategoriesOpen({})
                               }}
                             >
                               <span>{subcategory.name}</span>

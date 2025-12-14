@@ -7,8 +7,37 @@ import Image from 'next/image'
 import { ArrowLeft, Filter, Grid, List, Star } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-// Fetch from API to reflect admin edits
 
+// Alt kategori isimleri mapping
+const subcategoryNames: { [key: string]: { [key: string]: string } } = {
+  'tirnak': {
+    'jeller': 'Jeller',
+    'cihazlar': 'Cihazlar',
+    'freze-uclari': 'Freze Uçları',
+    'kalici-oje': 'Kalıcı Oje',
+    'protez-tirnak-malzemeleri': 'Protez Tırnak Malzemeleri',
+  },
+  'sac-bakimi': {
+    'sac-bakim': 'Saç Bakım',
+    'sac-topik': 'Saç Topik',
+    'sac-sekillendiriciler': 'Saç Şekillendiriciler',
+    'sac-fircasi-ve-tarak': 'Saç Fırçası ve Tarak',
+  },
+  'kisisel-bakim': {
+    'kisisel-bakim': 'Kişisel Bakım',
+    'cilt-bakimi': 'Cilt Bakımı',
+  },
+  'ipek-kirpik': {
+    'ipek-kirpikler': 'İpek Kirpikler',
+    'diger-ipek-kirpik-urunleri': 'Diğer İpek Kirpik Ürünleri',
+  },
+  'kuafor-malzemeleri': {
+    'tiras-makineleri': 'Tıraş Makineleri',
+    'diger-kuafor-malzemeleri': 'Diğer Kuaför Malzemeleri',
+  },
+}
+
+// Ana kategori isimleri
 const categoryNames: { [key: string]: string } = {
   'tirnak': 'Tırnak',
   'sac-bakimi': 'Saç Bakımı',
@@ -25,9 +54,10 @@ const sortOptions = [
   { value: 'name', label: 'İsim (A → Z)' }
 ]
 
-export default function CategoryPage() {
+export default function SubcategoryPage() {
   const params = useParams()
-  const categorySlug = params.slug as string
+  const categorySlug = params.category as string
+  const subcategorySlug = params.subcategory as string
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
@@ -48,9 +78,24 @@ export default function CategoryPage() {
     load()
   }, [])
 
-  // Kategoriye göre filtrele
+  // Alt kategoriye göre filtrele
   useEffect(() => {
-    let filtered = allProducts.filter((product:any) => product.category_slug === categorySlug)
+    // Alt kategori slug'ını oluştur (örn: tirnak-jeller)
+    const fullSubcategorySlug = `${categorySlug}-${subcategorySlug}`
+    
+    let filtered = allProducts.filter((product: any) => {
+      // Önce category_slug ile ana kategoriyi kontrol et
+      if (product.category_slug !== categorySlug) return false
+      
+      // Sonra subcategory_slug veya category_slug ile alt kategoriyi kontrol et
+      // Eğer subcategory_slug varsa onu kullan, yoksa category_slug'un alt kategori içerip içermediğine bak
+      if (product.subcategory_slug) {
+        return product.subcategory_slug === subcategorySlug || product.subcategory_slug === fullSubcategorySlug
+      }
+      
+      // Fallback: category_slug'un alt kategori içerip içermediğine bak
+      return product.category_slug === fullSubcategorySlug || product.category_slug?.includes(subcategorySlug)
+    })
     
     // Sıralama
     switch (sortBy) {
@@ -72,9 +117,10 @@ export default function CategoryPage() {
     }
     
     setFilteredProducts(filtered)
-  }, [categorySlug, sortBy, allProducts])
+  }, [categorySlug, subcategorySlug, sortBy, allProducts])
 
   const categoryName = categoryNames[categorySlug] || 'Kategori'
+  const subcategoryName = subcategoryNames[categorySlug]?.[subcategorySlug] || subcategorySlug
 
   return (
     <div className="min-h-screen bg-white">
@@ -85,6 +131,7 @@ export default function CategoryPage() {
           {isLoading && (
             <div className="text-center py-20 text-gray-600">Yükleniyor...</div>
           )}
+          
           {/* Breadcrumb */}
           <nav className="mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -92,7 +139,9 @@ export default function CategoryPage() {
               <span>/</span>
               <Link href="/tum-urunler" className="hover:text-black">Tüm Ürünler</Link>
               <span>/</span>
-              <span className="text-black">{categoryName}</span>
+              <Link href={`/kategori/${categorySlug}`} className="hover:text-black">{categoryName}</Link>
+              <span>/</span>
+              <span className="text-black">{subcategoryName}</span>
             </div>
           </nav>
 
@@ -100,14 +149,14 @@ export default function CategoryPage() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Link 
-                href="/tum-urunler" 
+                href={`/kategori/${categorySlug}`}
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-black transition-colors duration-200"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Geri Dön
+                {categoryName}'e Dön
               </Link>
             </div>
-            <h1 className="text-3xl md:text-4xl font-light text-black mb-2">{categoryName}</h1>
+            <h1 className="text-3xl md:text-4xl font-light text-black mb-2">{subcategoryName}</h1>
             <p className="text-gray-600">
               {filteredProducts.length} ürün bulundu
             </p>
@@ -221,7 +270,7 @@ export default function CategoryPage() {
                         ))}
                       </div>
                       <span className="text-xs text-gray-500">
-                        {product.rating?.toFixed(1) || '0.0'} ({product.reviewCount} değerlendirme)
+                        {product.rating?.toFixed(1) || '0.0'} ({product.reviewCount || 0} değerlendirme)
                       </span>
                     </div>
 
@@ -229,11 +278,11 @@ export default function CategoryPage() {
                       <div className="flex items-center gap-2">
                         {product.original_price && (
                           <span className="text-sm text-gray-400 line-through">
-                            ₺{(product.original_price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         )}
                         <span className="font-light text-black">
-                          ₺{(product.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                         {product.discount && (
                           <span className="text-xs text-red-600 font-medium">
@@ -251,16 +300,16 @@ export default function CategoryPage() {
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8">
                 <Filter className="w-12 h-12 text-gray-400" />
               </div>
-              <h2 className="text-2xl font-light text-black mb-4">Bu kategoride ürün bulunamadı</h2>
+              <h2 className="text-2xl font-light text-black mb-4">Bu alt kategoride ürün bulunamadı</h2>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
                 Aradığınız kriterlere uygun ürün bulunmamaktadır. Filtreleri değiştirmeyi deneyin.
               </p>
               <Link
-                href="/tum-urunler"
+                href={`/kategori/${categorySlug}`}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-black hover:bg-gray-800 text-white font-light text-lg transition-all duration-300 rounded-full"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Tüm Ürünleri Görüntüle
+                {categoryName}'e Dön
               </Link>
             </div>
           )}
@@ -271,3 +320,4 @@ export default function CategoryPage() {
     </div>
   )
 }
+

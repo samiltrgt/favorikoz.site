@@ -68,8 +68,8 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Kategoriler</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/kategori/kisisel-bakim" className="text-gray-300 hover:text-white transition-colors">
-                  Kişisel Bakım
+                <Link href="/kategori/tirnak" className="text-gray-300 hover:text-white transition-colors">
+                  Tırnak
                 </Link>
               </li>
               <li>
@@ -78,13 +78,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/kategori/protez-tirnak" className="text-gray-300 hover:text-white transition-colors">
-                  Protez Tırnak
+                <Link href="/kategori/kisisel-bakim" className="text-gray-300 hover:text-white transition-colors">
+                  Kişisel Bakım
                 </Link>
               </li>
               <li>
                 <Link href="/kategori/ipek-kirpik" className="text-gray-300 hover:text-white transition-colors">
                   İpek Kirpik
+                </Link>
+              </li>
+              <li>
+                <Link href="/kategori/kuafor-malzemeleri" className="text-gray-300 hover:text-white transition-colors">
+                  Kuaför Malzemeleri
                 </Link>
               </li>
             </ul>
