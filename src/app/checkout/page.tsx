@@ -72,7 +72,16 @@ export default function CheckoutPage() {
     loadUserProfile()
   }, [])
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  // Subtotal calculation (in 10x format)
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  
+  // Shipping calculation (1499 TL = 14990 in 10x format, 100 TL = 1000 in 10x format)
+  const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
+  const SHIPPING_COST = 1000 // 100 TL
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+  
+  // Total amount (in 10x format)
+  const totalAmount = subtotal + shipping
 
   const handlePayment = async () => {
     if (cartItems.length === 0) {
@@ -163,6 +172,35 @@ export default function CheckoutPage() {
                   <span>₺{((item.price * item.quantity) / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               ))
+            )}
+          </div>
+
+          {/* Price Breakdown */}
+          <div className="border-t pt-4 mb-4 space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Ara Toplam</span>
+              <span>₺{(subtotal / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Kargo</span>
+              <span className={shipping === 0 ? 'text-green-600' : ''}>
+                {shipping === 0 ? 'Ücretsiz' : `₺${(shipping / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+            
+            {/* Free Shipping Progress */}
+            {subtotal < FREE_SHIPPING_THRESHOLD && (
+              <div className="pt-2 pb-2">
+                <div className="text-xs text-orange-600 mb-1">
+                  Ücretsiz kargo için ₺{((FREE_SHIPPING_THRESHOLD - subtotal) / 10).toFixed(2)} daha ekleyin
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
             )}
           </div>
 
