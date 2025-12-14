@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -54,13 +53,6 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
-  const buttonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -87,39 +79,12 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return () => clearInterval(interval)
   }, [position])
 
-  // Update dropdown position
-  useEffect(() => {
-    if (!isDropdownOpen || !buttonRef.current) return
-
-    const updatePosition = () => {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        setDropdownPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
-        })
-      }
-    }
-
-    updatePosition()
-    window.addEventListener('scroll', updatePosition, true)
-    window.addEventListener('resize', updatePosition)
-
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true)
-      window.removeEventListener('resize', updatePosition)
-    }
-  }, [isDropdownOpen])
-
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!isDropdownOpen) return
 
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('[data-dropdown-wrapper]')) {
-        setIsDropdownOpen(false)
-      }
+    const handleClickOutside = () => {
+      setIsDropdownOpen(false)
     }
 
     document.addEventListener('click', handleClickOutside)
@@ -128,17 +93,13 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     }
   }, [isDropdownOpen])
 
-  if (isLoading) {
-    return null
-  }
-
-  if (!banner) {
+  if (isLoading || !banner) {
     return null
   }
 
   return (
-    <section className="py-8 bg-white border-t border-gray-100 relative overflow-visible">
-      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300 overflow-visible">
+    <section className="relative py-8 bg-white border-t border-gray-100">
+      <div className="group relative block w-full bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:shadow-2xl transition-all duration-300">
         {/* Background Image */}
         {banner.image && (
           <div className="absolute inset-0 opacity-40 overflow-hidden">
@@ -153,9 +114,9 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         )}
         
         {/* Content */}
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16 overflow-visible">
-          <div className="container max-w-7xl mx-auto overflow-visible">
-            <div className="max-w-2xl overflow-visible">
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+          <div className="container max-w-7xl mx-auto">
+            <div className="max-w-2xl">
               <h2 className="text-3xl md:text-4xl font-light mb-4 tracking-tight">
                 {banner.title}
               </h2>
@@ -166,69 +127,52 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               )}
               
               {/* Button with dropdown */}
-              <div className="relative inline-block" data-dropdown-wrapper>
+              <div className="relative inline-block z-50">
                 <button
-                  ref={buttonRef}
                   onClick={(e) => {
-                    e.preventDefault()
+                    e.stopPropagation()
                     setIsDropdownOpen(!isDropdownOpen)
                   }}
-                  className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300 cursor-pointer"
+                  className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300 cursor-pointer bg-transparent border-0"
                 >
                   {banner.button_text || 'Kategorileri Keşfet'}
                   <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
-                {/* Dropdown Menu - Portal */}
-                {mounted && isDropdownOpen && typeof window !== 'undefined' && createPortal(
-                  <>
-                    {/* Backdrop */}
-                    <div 
-                      className="fixed inset-0"
-                      style={{ zIndex: 99998 }}
-                      onClick={() => setIsDropdownOpen(false)}
-                    />
-                    {/* Dropdown */}
-                    <div 
-                      className="fixed w-80 bg-white rounded-lg p-4 max-h-[80vh] overflow-y-auto"
-                      style={{
-                        top: `${dropdownPosition.top}px`,
-                        left: `${dropdownPosition.left}px`,
-                        zIndex: 99999,
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                        border: '2px solid #e5e7eb',
-                      }}
-                    >
-                      <div className="grid grid-cols-1 gap-3">
-                        {allCategories.map((category) => (
-                          <div key={category.slug} className="border-b border-gray-200 last:border-b-0 pb-3 last:pb-0">
-                            {/* Ana Kategori */}
-                            <Link
-                              href={`/kategori/${category.slug}`}
-                              className="block text-sm font-bold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2 rounded transition-colors mb-1"
-                              onClick={() => setIsDropdownOpen(false)}
-                            >
-                              {category.name}
-                            </Link>
-                            {/* Alt Kategoriler */}
-                            <div className="ml-2 space-y-1">
-                              {category.subcategories.map((subcategory) => (
-                                <Link
-                                  key={subcategory.href}
-                                  href={subcategory.href}
-                                  className="block text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2 rounded transition-colors"
-                                  onClick={() => setIsDropdownOpen(false)}
-                                >
-                                  • {subcategory.name}
-                                </Link>
-                              ))}
-                            </div>
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border-2 border-gray-300 p-4 max-h-96 overflow-y-auto z-50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="space-y-3">
+                      {allCategories.map((category) => (
+                        <div key={category.slug} className="border-b border-gray-200 last:border-b-0 pb-3 last:pb-0">
+                          {/* Ana Kategori */}
+                          <Link
+                            href={`/kategori/${category.slug}`}
+                            className="block text-sm font-bold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2 rounded transition-colors"
+                            onClick={() => setIsDropdownOpen(false)}
+                          >
+                            {category.name}
+                          </Link>
+                          {/* Alt Kategoriler */}
+                          <div className="ml-2 mt-1 space-y-1">
+                            {category.subcategories.map((subcategory) => (
+                              <Link
+                                key={subcategory.href}
+                                href={subcategory.href}
+                                className="block text-sm text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-1.5 rounded transition-colors"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                • {subcategory.name}
+                              </Link>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  </>,
-                  document.body
+                  </div>
                 )}
               </div>
             </div>
