@@ -55,8 +55,8 @@ export default function PromoBanner({ position }: PromoBannerProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -83,12 +83,11 @@ export default function PromoBanner({ position }: PromoBannerProps) {
 
     loadBanner()
     
-    // Reload every 10 seconds to catch updates
     const interval = setInterval(loadBanner, 10000)
     return () => clearInterval(interval)
   }, [position])
 
-  // Update dropdown position when it opens or window resizes/scrolls
+  // Update dropdown position
   useEffect(() => {
     if (!isDropdownOpen || !buttonRef.current) return
 
@@ -98,7 +97,6 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         setDropdownPosition({
           top: rect.bottom + window.scrollY + 8,
           left: rect.left + window.scrollX,
-          width: rect.width
         })
       }
     }
@@ -138,18 +136,21 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return null
   }
 
-  // Kategori linkini kontrol et (örn: /kategori/tirnak)
+  // Kategori linkini kontrol et
   const categoryMatch = banner.link?.match(/\/kategori\/([^\/]+)/)
   const categorySlug = categoryMatch ? categoryMatch[1] : null
   const subcategories = categorySlug ? categorySubcategories[categorySlug] : null
   const hasDropdown = !!subcategories && subcategories.length > 0
 
-  const handleButtonClick = (e: React.MouseEvent) => {
-    if (hasDropdown) {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDropdownOpen(!isDropdownOpen)
+  const getCategoryName = () => {
+    const names: { [key: string]: string } = {
+      'tirnak': 'Tırnak',
+      'sac-bakimi': 'Saç Bakımı',
+      'kisisel-bakim': 'Kişisel Bakım',
+      'ipek-kirpik': 'İpek Kirpik',
+      'kuafor-malzemeleri': 'Kuaför Malzemeleri'
     }
+    return categorySlug ? names[categorySlug] || '' : ''
   }
 
   return (
@@ -185,14 +186,18 @@ export default function PromoBanner({ position }: PromoBannerProps) {
               <div className="relative inline-block" data-dropdown-wrapper>
                 {hasDropdown ? (
                   <>
-                    <button
+                    <a
                       ref={buttonRef}
-                      onClick={handleButtonClick}
+                      href={banner.link || '/tum-urunler'}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setIsDropdownOpen(!isDropdownOpen)
+                      }}
                       className="inline-flex items-center gap-2 text-base font-medium hover:gap-4 transition-all duration-300 cursor-pointer"
                     >
                       {banner.button_text || 'Tüm Ürünleri Keşfet'}
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
+                      <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                    </a>
                     
                     {/* Dropdown Menu - Portal */}
                     {mounted && isDropdownOpen && subcategories && typeof window !== 'undefined' && createPortal(
@@ -204,20 +209,22 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                         />
                         {/* Dropdown */}
                         <div 
-                          className="fixed w-64 bg-white shadow-2xl border border-gray-200 rounded-lg p-4 z-[9999]"
+                          className="fixed w-72 bg-white shadow-2xl border border-gray-200 rounded-lg p-4 z-[9999]"
                           style={{
                             top: `${dropdownPosition.top}px`,
                             left: `${dropdownPosition.left}px`,
                           }}
                         >
                           <div className="grid grid-cols-1 gap-1">
+                            {/* Ana Kategori */}
                             <Link
                               href={banner.link || '/tum-urunler'}
-                              className="text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-50 px-3 py-2.5 rounded transition-colors border-b border-gray-200 mb-1"
+                              className="text-sm font-semibold text-gray-900 hover:text-black hover:bg-gray-100 px-3 py-2.5 rounded transition-colors border-b border-gray-200 mb-1"
                               onClick={() => setIsDropdownOpen(false)}
                             >
-                              Tüm {categorySlug === 'tirnak' ? 'Tırnak' : categorySlug === 'sac-bakimi' ? 'Saç Bakımı' : categorySlug === 'kisisel-bakim' ? 'Kişisel Bakım' : categorySlug === 'ipek-kirpik' ? 'İpek Kirpik' : categorySlug === 'kuafor-malzemeleri' ? 'Kuaför Malzemeleri' : ''} Ürünleri
+                              Tüm {getCategoryName()} Ürünleri
                             </Link>
+                            {/* Alt Kategoriler */}
                             {subcategories.map((subcategory) => (
                               <Link
                                 key={subcategory.href}
