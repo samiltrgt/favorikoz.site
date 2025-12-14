@@ -403,7 +403,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div id="mobile-menu" className="lg:hidden bg-white border-t border-gray-200" data-testid="mobile-menu">
+        <div id="mobile-menu" className="lg:hidden bg-white border-t border-gray-200 fixed inset-x-0 top-[73px] bottom-0 overflow-y-auto z-50" data-testid="mobile-menu" style={{ maxHeight: 'calc(100vh - 73px)' }}>
           <div className="container py-4">
             {/* Mobile search */}
             <form className="mb-4" onSubmit={handleSearch}>
@@ -421,7 +421,7 @@ export default function Header() {
             </form>
 
             {/* Mobile categories */}
-            <div className="space-y-2">
+            <div className="space-y-2 pb-4">
               {staticCategories.map((category) => {
                 if ((category as any).hasDropdown) {
                   const isOpen = mobileCategoriesOpen[category.name] || false
