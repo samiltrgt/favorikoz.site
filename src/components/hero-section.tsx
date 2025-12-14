@@ -188,7 +188,7 @@ export default function HeroSection() {
                             <Link
                               key={product.id ?? `${product.slide_index}-${product.slot_index}`}
                               href={product.link || '#'}
-                              className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 hover:shadow-lg active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
+                              className="block active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float"
                               style={{ animationDelay: `${(index + 1) * 200}ms` }}
                             >
                               <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 overflow-hidden relative">
@@ -215,7 +215,7 @@ export default function HeroSection() {
                         ) : (
                           // Fallback: Default products if no data
                           <>
-                            <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 hover:shadow-lg active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
+                            <div className="block active:scale-95 transition-all duration-500 transform hover:-translate-y-2 animate-float animation-delay-300">
                               <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center overflow-hidden relative">
                                 <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-orange-300 rounded-full animate-pulse-slow"></div>
                               </div>
@@ -225,7 +225,7 @@ export default function HeroSection() {
                                 Şimdi Al <span className="transform transition-transform group-hover:translate-x-1">→</span>
                               </button>
                             </div>
-                            <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 hover:shadow-lg active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
+                            <div className="block active:scale-95 transition-all duration-500 transform hover:-translate-y-2 sm:mt-8 animate-float animation-delay-500">
                               <div className="aspect-square rounded-lg sm:rounded-xl md:rounded-2xl mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center overflow-hidden relative">
                                 <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-8 sm:h-12 md:h-16 lg:h-20 bg-pink-300 rounded-full animate-pulse-slow"></div>
                               </div>
