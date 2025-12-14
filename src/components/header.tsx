@@ -85,6 +85,19 @@ export default function Header() {
     }
   }, [pathname, searchParams])
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMenuOpen])
+
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault()
     if (searchQuery.trim()) {
@@ -235,7 +248,7 @@ export default function Header() {
           <div className="flex items-center space-x-6">
             <button 
               onClick={handleSearch}
-              className="text-gray-600 hover:text-gray-900"
+              className="hidden lg:flex text-gray-600 hover:text-gray-900"
               aria-label="Ara"
             >
               <Search className="w-5 h-5" />
