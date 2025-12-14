@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
@@ -73,6 +73,8 @@ export default function Header() {
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const headerRef = useRef<HTMLElement>(null)
 
   // Sync search query from URL when on tum-urunler page
   useEffect(() => {
@@ -84,6 +86,22 @@ export default function Header() {
       setSearchQuery('')
     }
   }, [pathname, searchParams])
+
+  // Calculate header height for mobile menu positioning
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight)
+      }
+    }
+    
+    updateHeaderHeight()
+    window.addEventListener('resize', updateHeaderHeight)
+    
+    return () => {
+      window.removeEventListener('resize', updateHeaderHeight)
+    }
+  }, [])
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -203,7 +221,7 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header ref={headerRef} className="sticky top-0 z-50 bg-white border-b border-gray-200">
       {/* Top bar */}
       <div className="bg-gray-50 py-2">
         <div className="container">
@@ -403,7 +421,15 @@ export default function Header() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div id="mobile-menu" className="lg:hidden bg-white border-t border-gray-200 fixed inset-x-0 top-[73px] bottom-0 overflow-y-auto z-50" data-testid="mobile-menu" style={{ maxHeight: 'calc(100vh - 73px)' }}>
+        <div 
+          id="mobile-menu" 
+          className="lg:hidden bg-white border-t border-gray-200 fixed inset-x-0 bottom-0 overflow-y-auto z-50" 
+          data-testid="mobile-menu" 
+          style={{ 
+            top: `${headerHeight}px`,
+            maxHeight: `calc(100vh - ${headerHeight}px)`
+          }}
+        >
           <div className="container py-4">
             {/* Mobile search */}
             <form className="mb-4" onSubmit={handleSearch}>
