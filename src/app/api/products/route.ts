@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     }
     
     if (search) {
-      query = query.ilike('name', `%${search}%`)
+      // Search in name, brand, and description fields
+      query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
     }
     
     if (inStock === 'true') {

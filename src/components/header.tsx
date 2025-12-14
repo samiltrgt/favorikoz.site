@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
 import { getCart } from '@/lib/cart'
 
@@ -61,6 +62,9 @@ const staticCategories = [
 ]
 
 export default function Header() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
@@ -69,6 +73,31 @@ export default function Header() {
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
+
+  // Sync search query from URL when on tum-urunler page
+  useEffect(() => {
+    if (pathname === '/tum-urunler') {
+      const urlSearch = searchParams.get('search') || ''
+      setSearchQuery(urlSearch)
+    } else {
+      // Clear search when navigating away from search page
+      setSearchQuery('')
+    }
+  }, [pathname, searchParams])
+
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/tum-urunler?search=${encodeURIComponent(searchQuery.trim())}`)
+      setIsMenuOpen(false) // Close mobile menu if open
+    }
+  }
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch(e)
+    }
+  }
 
   // Load user on mount (safe for unmount)
   useEffect(() => {
@@ -188,7 +217,7 @@ export default function Header() {
            </Link>
 
                      {/* Search bar - Desktop */}
-           <div className="hidden lg:flex flex-1 max-w-md mx-8">
+           <form className="hidden lg:flex flex-1 max-w-md mx-8" onSubmit={handleSearch}>
              <div className="relative w-full">
                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                <input
@@ -196,14 +225,19 @@ export default function Header() {
                  placeholder="Ürün ara..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
+                 onKeyDown={handleSearchKeyDown}
                  className="w-full pl-10 pr-4 py-2 border-b border-gray-300 bg-transparent focus:outline-none focus:border-black text-sm tracking-wide"
                />
              </div>
-           </div>
+           </form>
 
           {/* Actions */}
           <div className="flex items-center space-x-6">
-            <button className="text-gray-600 hover:text-gray-900">
+            <button 
+              onClick={handleSearch}
+              className="text-gray-600 hover:text-gray-900"
+              aria-label="Ara"
+            >
               <Search className="w-5 h-5" />
             </button>
             
@@ -359,7 +393,7 @@ export default function Header() {
         <div id="mobile-menu" className="lg:hidden bg-white border-t border-gray-200" data-testid="mobile-menu">
           <div className="container py-4">
             {/* Mobile search */}
-            <div className="mb-4">
+            <form className="mb-4" onSubmit={handleSearch}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -367,10 +401,11 @@ export default function Header() {
                   placeholder="Ürün, kategori veya marka ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
-            </div>
+            </form>
 
             {/* Mobile categories */}
             <div className="space-y-2">

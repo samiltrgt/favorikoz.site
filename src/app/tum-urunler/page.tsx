@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { 
   SortAsc, 
   Grid, 
@@ -182,7 +183,10 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
   )
 }
 
-export default function AllProductsPage() {
+function AllProductsContent() {
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
+  
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [allProducts, setAllProducts] = useState<any[]>([])
@@ -191,18 +195,22 @@ export default function AllProductsPage() {
   const [page, setPage] = useState(1)
   const pageSize = 40 // render 40 at a time for speed
 
-  // Load products from API
+  // Load products from API with search parameter
   useEffect(() => {
     const load = async () => {
+      setIsLoading(true)
       try {
-        const res = await fetch('/api/products', { cache: 'no-store' })
+        const url = searchQuery 
+          ? `/api/products?search=${encodeURIComponent(searchQuery)}`
+          : '/api/products'
+        const res = await fetch(url, { cache: 'no-store' })
         const json = await res.json()
         if (json.success) setAllProducts(json.data || [])
       } catch {}
       setIsLoading(false)
     }
     load()
-  }, [])
+  }, [searchQuery])
 
   // Sort products
   useEffect(() => {
@@ -251,9 +259,19 @@ export default function AllProductsPage() {
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-light text-black mb-2">Tüm Ürünler</h1>
+              <h1 className="text-3xl font-light text-black mb-2">
+                {searchQuery ? `"${searchQuery}" için arama sonuçları` : 'Tüm Ürünler'}
+              </h1>
               <p className="text-gray-600 text-sm">
                 {filteredProducts.length} ürün bulundu
+                {searchQuery && (
+                  <Link 
+                    href="/tum-urunler" 
+                    className="ml-2 text-gray-400 hover:text-black underline"
+                  >
+                    Tüm ürünleri göster
+                  </Link>
+                )}
               </p>
             </div>
 
@@ -349,5 +367,22 @@ export default function AllProductsPage() {
       </div>
       <Footer />
     </div>
+  )
+}
+
+export default function AllProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white">
+        <Header />
+        <Breadcrumbs />
+        <div className="container py-8">
+          <div className="text-center py-12 text-gray-600">Yükleniyor...</div>
+        </div>
+        <Footer />
+      </div>
+    }>
+      <AllProductsContent />
+    </Suspense>
   )
 }
