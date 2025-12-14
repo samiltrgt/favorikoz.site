@@ -88,9 +88,9 @@ export default function ProductCard({ product }: ProductCardProps) {
               Best Seller
             </span>
           )}
-          {product.discount && product.discount > 0 && (
+          {product.original_price && product.original_price > product.price && (
             <span className="bg-red-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
-              -{product.discount}%
+              -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
             </span>
           )}
         </div>

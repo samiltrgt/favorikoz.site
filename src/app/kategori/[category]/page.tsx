@@ -235,9 +235,9 @@ export default function CategoryPage() {
                         <span className="font-light text-black">
                           ₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
-                        {product.discount && (
+                        {product.original_price && product.original_price > product.price && (
                           <span className="text-xs text-red-600 font-medium">
-                            -%{product.discount}
+                            -%{Math.round(((product.original_price - product.price) / product.original_price) * 100)}
                           </span>
                         )}
                       </div>

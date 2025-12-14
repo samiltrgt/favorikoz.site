@@ -86,8 +86,8 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
                     <span className="text-xs text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   )}
                 </div>
-                {product.discount && product.discount > 0 && (
-                  <span className="text-xs text-red-500">-{product.discount}%</span>
+                {product.original_price && product.original_price > product.price && (
+                  <span className="text-xs text-red-500">-{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%</span>
                 )}
               </div>
               <button 
@@ -124,9 +124,9 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
           {product.is_new && (
             <span className="bg-black text-white text-xs px-2 py-1 uppercase tracking-wide">New</span>
           )}
-          {product.discount && product.discount > 0 && (
+          {product.original_price && product.original_price > product.price && (
             <span className="bg-red-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
-              -{product.discount}%
+              -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
             </span>
           )}
         </div>
