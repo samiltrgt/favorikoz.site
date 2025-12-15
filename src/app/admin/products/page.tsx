@@ -22,14 +22,15 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load categories from API
+  // Load categories from API (only main categories, not subcategories)
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const response = await fetch('/api/categories')
         const result = await response.json()
-        if (result.success && result.data) {
-          const mappedCategories = result.data.map((cat: any) => ({
+        if (result.success && result.mainCategories) {
+          // Sadece ana kategorileri al (parent_slug olmayanlar)
+          const mappedCategories = result.mainCategories.map((cat: any) => ({
             value: cat.slug,
             label: cat.name
           }))
@@ -37,6 +38,44 @@ export default function ProductsPage() {
             { value: 'all', label: 'Tüm Kategoriler' },
             ...mappedCategories
           ])
+          
+          // Alt kategorileri map'le (ana kategori slug -> alt kategori slug'ları)
+          if (result.subcategories) {
+            const map: Record<string, string[]> = {}
+            result.subcategories.forEach((sub: any) => {
+              if (sub.parent_slug) {
+                if (!map[sub.parent_slug]) {
+                  map[sub.parent_slug] = []
+                }
+                map[sub.parent_slug].push(sub.slug)
+              }
+            })
+            setSubcategoriesMap(map)
+          }
+        } else if (result.success && result.data) {
+          // Fallback: data varsa ama mainCategories yoksa, parent_slug olmayanları filtrele
+          const mainCategories = result.data.filter((cat: any) => !cat.parent_slug)
+          const mappedCategories = mainCategories.map((cat: any) => ({
+            value: cat.slug,
+            label: cat.name
+          }))
+          setCategories([
+            { value: 'all', label: 'Tüm Kategoriler' },
+            ...mappedCategories
+          ])
+          
+          // Alt kategorileri map'le
+          const subcategories = result.data.filter((cat: any) => cat.parent_slug)
+          const map: Record<string, string[]> = {}
+          subcategories.forEach((sub: any) => {
+            if (sub.parent_slug) {
+              if (!map[sub.parent_slug]) {
+                map[sub.parent_slug] = []
+              }
+              map[sub.parent_slug].push(sub.slug)
+            }
+          })
+          setSubcategoriesMap(map)
         }
       } catch (error) {
         console.error('Error loading categories:', error)
@@ -101,11 +140,25 @@ export default function ProductsPage() {
                          (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    // Kategori kontrolü: category_slug veya subcategory_slug ile eşleşmeli
-    const matchesCategory = selectedCategory === 'all' || 
-                           product.category_slug === selectedCategory ||
-                           product.subcategory_slug === selectedCategory ||
-                           product.category === selectedCategory
+    // Kategori kontrolü
+    if (selectedCategory === 'all') {
+      return matchesSearch
+    }
+    
+    // Ana kategori seçildiğinde: hem ana kategori hem de alt kategorileri kontrol et
+    // 1. Direkt ana kategori eşleşmesi
+    const directCategoryMatch = product.category_slug === selectedCategory ||
+                                product.category === selectedCategory
+    
+    // 2. Alt kategori kontrolü: Ürünün alt kategorisi seçili ana kategoriye ait mi?
+    const subcategorySlugs = subcategoriesMap[selectedCategory] || []
+    const subcategoryMatch = product.subcategory_slug && 
+                            subcategorySlugs.includes(product.subcategory_slug)
+    
+    // 3. Alt kategori direkt eşleşmesi (eğer alt kategori seçildiyse)
+    const directSubcategoryMatch = product.subcategory_slug === selectedCategory
+    
+    const matchesCategory = directCategoryMatch || subcategoryMatch || directSubcategoryMatch
     return matchesSearch && matchesCategory
   })
 
