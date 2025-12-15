@@ -20,12 +20,23 @@ interface PromoBannerProps {
   position: 'top' | 'bottom' | 'footer'
 }
 
+interface Subcategory {
+  name: string
+  href: string
+}
+
+interface Category {
+  name: string
+  slug: string
+  subcategories: Subcategory[]
+}
+
 
 export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   // Load categories from API
   useEffect(() => {
@@ -38,7 +49,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
         
         if (result.success && result.data) {
           // Transform API data to promo banner format
-          const transformedCategories = result.data.map((cat: any) => ({
+          const transformedCategories: Category[] = result.data.map((cat: any) => ({
             name: cat.name,
             slug: cat.slug,
             subcategories: cat.subcategories?.map((sub: any) => ({
@@ -192,7 +203,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
                           </Link>
                           {/* Alt Kategoriler */}
                           <div className="mt-2 space-y-1 pl-3">
-                            {category.subcategories.map((subcategory) => (
+                            {category.subcategories.map((subcategory: Subcategory) => (
                               <Link
                                 key={subcategory.href}
                                 href={subcategory.href}
