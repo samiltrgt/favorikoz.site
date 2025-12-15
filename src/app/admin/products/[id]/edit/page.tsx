@@ -130,7 +130,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             price: foundProduct.price.toString(), // API'den /10 formatında geliyor, direkt yazıyoruz
             originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
             description: foundProduct.description || '',
-            category: subcategorySlug || categorySlug, // Alt kategori varsa onu kullan, yoksa kategori
+            category: categorySlug, // Ana kategori
             // Convert snake_case to camelCase for checkboxes
             isNew: foundProduct.is_new ?? foundProduct.isNew ?? false,
             isBestSeller: foundProduct.is_best_seller ?? foundProduct.isBestSeller ?? false,
@@ -191,8 +191,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: parseFloat(formData.price), // Form'dan /10 formatında geliyor, API'ye direkt gönderiyoruz (API içinde *1000 yapılacak)
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         description: formData.description,
-        category: selectedSubcategory || selectedCategory, // Alt kategori varsa onu kullan, yoksa ana kategori
-        subcategory: selectedSubcategory || undefined,
+        category: selectedCategory, // Ana kategori
+        subcategory: selectedSubcategory || undefined, // Alt kategori (opsiyonel)
         isNew: formData.isNew,
         isBestSeller: formData.isBestSeller,
         inStock: formData.inStock,
@@ -400,10 +400,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                       <select
                         name="subcategory"
                         value={selectedSubcategory}
-                        onChange={(e) => {
-                          setSelectedSubcategory(e.target.value)
-                          setFormData(prev => ({ ...prev, category: e.target.value || selectedCategory }))
-                        }}
+                      onChange={(e) => {
+                        setSelectedSubcategory(e.target.value)
+                        // formData.category stays as selectedCategory (main category)
+                      }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
                       >
                         <option value="">Alt kategori seçin (opsiyonel)</option>

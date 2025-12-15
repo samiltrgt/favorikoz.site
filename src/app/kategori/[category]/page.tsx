@@ -50,7 +50,14 @@ export default function CategoryPage() {
 
   // Kategoriye göre filtrele
   useEffect(() => {
-    let filtered = allProducts.filter((product:any) => product.category_slug === categorySlug)
+    // Ana kategori sayfasında: Sadece alt kategorisi olmayan ürünleri göster
+    // (Alt kategorisi olan ürünler alt kategori sayfalarında gösterilir)
+    let filtered = allProducts.filter((product:any) => {
+      // Ana kategori eşleşmeli
+      if (product.category_slug !== categorySlug) return false
+      // Alt kategorisi olmamalı (null veya undefined)
+      return !product.subcategory_slug
+    })
     
     // Sıralama
     switch (sortBy) {

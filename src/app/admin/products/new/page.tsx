@@ -104,7 +104,8 @@ export default function NewProductPage() {
           price: parseFloat(formData.price),
           originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
           description: formData.description,
-          category: formData.category,
+          category: selectedCategory, // Ana kategori
+          subcategory: selectedSubcategory || undefined, // Alt kategori (opsiyonel)
           isNew: formData.isNew,
           isBestSeller: formData.isBestSeller,
           inStock: formData.inStock,
@@ -241,7 +242,7 @@ export default function NewProductPage() {
                       value={selectedSubcategory}
                       onChange={(e) => {
                         setSelectedSubcategory(e.target.value)
-                        setFormData(prev => ({ ...prev, category: e.target.value || selectedCategory }))
+                        // formData.category stays as selectedCategory (main category)
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                     >

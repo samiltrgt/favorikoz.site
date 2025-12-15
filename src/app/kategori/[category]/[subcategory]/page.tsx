@@ -80,21 +80,12 @@ export default function SubcategoryPage() {
 
   // Alt kategoriye göre filtrele
   useEffect(() => {
-    // Alt kategori slug'ını oluştur (örn: tirnak-jeller)
-    const fullSubcategorySlug = `${categorySlug}-${subcategorySlug}`
-    
     let filtered = allProducts.filter((product: any) => {
       // Önce category_slug ile ana kategoriyi kontrol et
       if (product.category_slug !== categorySlug) return false
       
-      // Sonra subcategory_slug veya category_slug ile alt kategoriyi kontrol et
-      // Eğer subcategory_slug varsa onu kullan, yoksa category_slug'un alt kategori içerip içermediğine bak
-      if (product.subcategory_slug) {
-        return product.subcategory_slug === subcategorySlug || product.subcategory_slug === fullSubcategorySlug
-      }
-      
-      // Fallback: category_slug'un alt kategori içerip içermediğine bak
-      return product.category_slug === fullSubcategorySlug || product.category_slug?.includes(subcategorySlug)
+      // Alt kategori slug'ı tam olarak eşleşmeli
+      return product.subcategory_slug === subcategorySlug
     })
     
     // Sıralama

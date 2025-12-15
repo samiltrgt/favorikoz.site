@@ -86,12 +86,27 @@ export async function PUT(
     if (body.name !== undefined) updateData.name = body.name
     if (body.slug !== undefined) updateData.slug = body.slug
     if (body.brand !== undefined) updateData.brand = body.brand
-    if (body.category !== undefined) {
-      // Eğer subcategory varsa onu kullan, yoksa category'yi kullan
-      updateData.category_slug = body.subcategory || body.category
+    // Category handling: category_slug should be the main category, subcategory_slug should be the subcategory
+    if (body.category !== undefined || body.subcategory !== undefined) {
+      // If subcategory is provided, we need to find its parent category
       if (body.subcategory) {
         updateData.subcategory_slug = body.subcategory
+        // Find parent category for the subcategory
+        const { data: subcategoryData } = await supabase
+          .from('categories')
+          .select('parent_slug')
+          .eq('slug', body.subcategory)
+          .single()
+        
+        if (subcategoryData?.parent_slug) {
+          updateData.category_slug = subcategoryData.parent_slug
+        } else {
+          // Fallback: use category if provided
+          updateData.category_slug = body.category || null
+        }
       } else {
+        // No subcategory, just set main category
+        updateData.category_slug = body.category || null
         updateData.subcategory_slug = null
       }
     }

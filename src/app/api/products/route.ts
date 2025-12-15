@@ -108,13 +108,30 @@ export async function POST(request: NextRequest) {
     // Generate slug from name if not provided
     const generatedSlug = body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || crypto.randomUUID()
     
+    // Category handling: category_slug should be the main category, subcategory_slug should be the subcategory
+    let categorySlug = body.category || null
+    let subcategorySlug = body.subcategory || null
+    
+    // If subcategory is provided, find its parent category
+    if (subcategorySlug) {
+      const { data: subcategoryData } = await supabase
+        .from('categories')
+        .select('parent_slug')
+        .eq('slug', subcategorySlug)
+        .single()
+      
+      if (subcategoryData?.parent_slug) {
+        categorySlug = subcategoryData.parent_slug
+      }
+    }
+    
     const productData: any = {
       id: body.id || crypto.randomUUID(),
       slug: body.slug || generatedSlug,
       name: body.name,
       brand: body.brand || null,
-      category_slug: body.subcategory || body.category || null,
-      subcategory_slug: body.subcategory || null,
+      category_slug: categorySlug,
+      subcategory_slug: subcategorySlug,
       description: body.description || null,
       barcode: body.barcode || null,
       image: body.image || null,
