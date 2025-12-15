@@ -19,7 +19,40 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Load categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        const result = await response.json()
+        if (result.success && result.data) {
+          const mappedCategories = result.data.map((cat: any) => ({
+            value: cat.slug,
+            label: cat.name
+          }))
+          setCategories([
+            { value: 'all', label: 'Tüm Kategoriler' },
+            ...mappedCategories
+          ])
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Fallback to default categories
+        setCategories([
+          { value: 'all', label: 'Tüm Kategoriler' },
+          { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
+          { value: 'sac-bakimi', label: 'Saç Bakımı' },
+          { value: 'tirnak', label: 'Tırnak' },
+          { value: 'ipek-kirpik', label: 'İpek Kirpik' },
+          { value: 'kuafor-malzemeleri', label: 'Kuaför Malzemeleri' },
+        ])
+      }
+    }
+    loadCategories()
+  }, [])
 
   // Load products on component mount
   useEffect(() => {
@@ -65,9 +98,14 @@ export default function ProductsPage() {
   // Filter products based on search and category
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
+    
+    // Kategori kontrolü: category_slug veya subcategory_slug ile eşleşmeli
+    const matchesCategory = selectedCategory === 'all' || 
+                           product.category_slug === selectedCategory ||
+                           product.subcategory_slug === selectedCategory ||
+                           product.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
@@ -87,13 +125,6 @@ export default function ProductsPage() {
     }
   })
 
-  const categories = [
-    { value: 'all', label: 'Tüm Kategoriler' },
-    { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
-    { value: 'sac-bakimi', label: 'Saç Bakımı' },
-    { value: 'protez-tirnak', label: 'Protez Tırnak' },
-    { value: 'ipek-kirpik', label: 'İpek Kirpik' },
-  ]
 
   if (isLoading) {
     return (
