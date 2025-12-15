@@ -55,13 +55,46 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [categories, setCategories] = useState<Array<{ value: string; label: string; color: string }>>([])
 
-  const categories = [
-    { value: 'kisisel-bakim', label: 'Kişisel Bakım', color: 'bg-blue-100 text-blue-800' },
-    { value: 'sac-bakimi', label: 'Saç Bakımı', color: 'bg-green-100 text-green-800' },
-    { value: 'protez-tirnak', label: 'Protez Tırnak', color: 'bg-purple-100 text-purple-800' },
-    { value: 'ipek-kirpik', label: 'İpek Kirpik', color: 'bg-pink-100 text-pink-800' },
-  ]
+  // Load categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        const result = await response.json()
+        if (result.success && result.data) {
+          // Map categories from API to form format
+          const categoryColors = [
+            'bg-blue-100 text-blue-800',
+            'bg-green-100 text-green-800',
+            'bg-purple-100 text-purple-800',
+            'bg-pink-100 text-pink-800',
+            'bg-orange-100 text-orange-800',
+            'bg-yellow-100 text-yellow-800',
+            'bg-indigo-100 text-indigo-800',
+            'bg-red-100 text-red-800',
+          ]
+          const mappedCategories = result.data.map((cat: any, index: number) => ({
+            value: cat.slug,
+            label: cat.name,
+            color: categoryColors[index % categoryColors.length]
+          }))
+          setCategories(mappedCategories)
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Fallback to default categories if API fails
+        setCategories([
+          { value: 'kisisel-bakim', label: 'Kişisel Bakım', color: 'bg-blue-100 text-blue-800' },
+          { value: 'sac-bakimi', label: 'Saç Bakımı', color: 'bg-green-100 text-green-800' },
+          { value: 'protez-tirnak', label: 'Protez Tırnak', color: 'bg-purple-100 text-purple-800' },
+          { value: 'ipek-kirpik', label: 'İpek Kirpik', color: 'bg-pink-100 text-pink-800' },
+        ])
+      }
+    }
+    loadCategories()
+  }, [])
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -342,7 +375,6 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         <option 
                           key={category.value} 
                           value={category.value}
-                          selected={formData.category === category.value}
                         >
                           {category.label}
                         </option>

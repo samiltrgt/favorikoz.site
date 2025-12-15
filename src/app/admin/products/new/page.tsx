@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -24,13 +24,34 @@ export default function NewProductPage() {
     barcode: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
 
-  const categories = [
-    { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
-    { value: 'sac-bakimi', label: 'Saç Bakımı' },
-    { value: 'protez-tirnak', label: 'Protez Tırnak' },
-    { value: 'ipek-kirpik', label: 'İpek Kirpik' },
-  ]
+  // Load categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        const result = await response.json()
+        if (result.success && result.data) {
+          const mappedCategories = result.data.map((cat: any) => ({
+            value: cat.slug,
+            label: cat.name
+          }))
+          setCategories(mappedCategories)
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Fallback to default categories if API fails
+        setCategories([
+          { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
+          { value: 'sac-bakimi', label: 'Saç Bakımı' },
+          { value: 'protez-tirnak', label: 'Protez Tırnak' },
+          { value: 'ipek-kirpik', label: 'İpek Kirpik' },
+        ])
+      }
+    }
+    loadCategories()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
