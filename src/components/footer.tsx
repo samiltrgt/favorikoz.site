@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Mail, Phone, MapPin, Facebook, Instagram, Twitter } from 'lucide-react'
+import { Mail, Phone, MapPin, Instagram } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -19,14 +19,8 @@ export default function Footer() {
               Güvenilir, kaliteli ve uygun fiyatlı ürünler için doğru adres.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://www.instagram.com/favorikozmetik/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -48,16 +42,6 @@ export default function Footer() {
               <li>
                 <Link href="/kargo-iade" className="text-gray-300 hover:text-white transition-colors">
                   Kargo & İade
-                </Link>
-              </li>
-              <li>
-                <Link href="/sss" className="text-gray-300 hover:text-white transition-colors">
-                  Sık Sorulan Sorular
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">
-                  Blog
                 </Link>
               </li>
             </ul>
