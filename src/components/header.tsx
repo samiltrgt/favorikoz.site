@@ -12,6 +12,19 @@ const staticMenuItems = [
   { name: 'Tüm Ürünler', href: '/tum-urunler' },
 ]
 
+interface Subcategory {
+  name: string
+  href: string
+  key: string
+}
+
+interface Category {
+  name: string
+  href: string
+  hasDropdown: boolean
+  subcategories?: Subcategory[]
+}
+
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
@@ -26,7 +39,7 @@ export default function Header() {
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
   const [headerHeight, setHeaderHeight] = useState(0)
   const headerRef = useRef<HTMLElement>(null)
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   // Sync search query from URL when on tum-urunler page
   useEffect(() => {
@@ -390,7 +403,7 @@ export default function Header() {
                        onMouseLeave={() => setHoveredCategory(null)}
                      >
                        <div className="grid grid-cols-1 gap-1">
-                         {category.subcategories?.map((subcategory, index) => (
+                         {category.subcategories?.map((subcategory: Subcategory, index: number) => (
                            <Link
                              key={subcategory.href}
                              href={subcategory.href}
@@ -453,8 +466,8 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
-              {categories.map((category) => {
-                if ((category as any).hasDropdown) {
+              {categories.map((category: Category) => {
+                if (category.hasDropdown) {
                   const isOpen = mobileCategoriesOpen[category.name] || false
                   return (
                     <div key={category.name}>
@@ -465,9 +478,9 @@ export default function Header() {
                         <span>{category.name}</span>
                         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
-                      {isOpen && (category as any).subcategories && (
+                      {isOpen && category.subcategories && (
                         <div className="pl-4 space-y-1 mt-2">
-                          {(category as any).subcategories.map((subcategory: any) => (
+                          {category.subcategories.map((subcategory: Subcategory) => (
                             <Link
                               key={subcategory.href}
                               href={subcategory.href}
