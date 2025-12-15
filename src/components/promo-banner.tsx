@@ -45,6 +45,7 @@ const allCategories = [
   ]},
   { name: 'Kuaför Malzemeleri', slug: 'kuafor-malzemeleri', subcategories: [
     { name: 'Tıraş Makineleri', href: '/kategori/kuafor-malzemeleri/tiras-makineleri' },
+    { name: 'Fön Makineleri', href: '/kategori/kuafor-malzemeleri/fon-makineleri' },
     { name: 'Diğer Kuaför Malzemeleri', href: '/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri' },
   ]},
 ]

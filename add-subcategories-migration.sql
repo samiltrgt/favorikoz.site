@@ -59,6 +59,7 @@ ON CONFLICT (slug) DO NOTHING;
 INSERT INTO public.categories (slug, name, parent_slug, description, created_at, updated_at)
 VALUES 
   ('tiras-makineleri', 'Tıraş Makineleri', 'kuafor-malzemeleri', 'Tıraş makineleri', NOW(), NOW()),
+  ('fon-makineleri', 'Fön Makineleri', 'kuafor-malzemeleri', 'Fön makineleri', NOW(), NOW()),
   ('diger-kuafor-malzemeleri', 'Diğer Kuaför Malzemeleri', 'kuafor-malzemeleri', 'Diğer kuaför malzemeleri', NOW(), NOW())
 ON CONFLICT (slug) DO NOTHING;
 

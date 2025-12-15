@@ -17,10 +17,11 @@ import {
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
-  const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, string[]>>({})
+  const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, Array<{ value: string; label: string }>>>({})
   const [isLoading, setIsLoading] = useState(true)
 
   // Load categories from API (only main categories, not subcategories)
@@ -29,54 +30,47 @@ export default function ProductsPage() {
       try {
         const response = await fetch('/api/categories')
         const result = await response.json()
-        if (result.success && result.mainCategories) {
-          // Sadece ana kategorileri al (parent_slug olmayanlar)
-          const mappedCategories = result.mainCategories.map((cat: any) => ({
-            value: cat.slug,
-            label: cat.name
-          }))
-          setCategories([
-            { value: 'all', label: 'Tüm Kategoriler' },
-            ...mappedCategories
-          ])
+        if (result.success) {
+          // Önce mainCategories'i kontrol et
+          let mainCats = result.mainCategories
+          let subCats = result.subcategories
           
-          // Alt kategorileri map'le (ana kategori slug -> alt kategori slug'ları)
-          if (result.subcategories) {
-            const map: Record<string, string[]> = {}
-            result.subcategories.forEach((sub: any) => {
+          // Eğer mainCategories yoksa, data'dan filtrele
+          if (!mainCats && result.data) {
+            // result.data hiyerarşik yapıda olabilir (subcategories içinde), düzleştir
+            const flatData = result.flat || result.data
+            mainCats = flatData.filter((cat: any) => !cat.parent_slug)
+            subCats = flatData.filter((cat: any) => cat.parent_slug)
+          }
+          
+          // Sadece ana kategorileri dropdown'a ekle (KESINLIKLE alt kategoriler eklenmemeli)
+          if (mainCats && mainCats.length > 0) {
+            const mappedCategories = mainCats.map((cat: any) => ({
+              value: cat.slug,
+              label: cat.name
+            }))
+            setCategories([
+              { value: 'all', label: 'Tüm Kategoriler' },
+              ...mappedCategories
+            ])
+          }
+          
+          // Alt kategorileri map'le (dropdown için)
+          if (subCats && subCats.length > 0) {
+            const map: Record<string, Array<{ value: string; label: string }>> = {}
+            subCats.forEach((sub: any) => {
               if (sub.parent_slug) {
                 if (!map[sub.parent_slug]) {
                   map[sub.parent_slug] = []
                 }
-                map[sub.parent_slug].push(sub.slug)
+                map[sub.parent_slug].push({
+                  value: sub.slug,
+                  label: sub.name
+                })
               }
             })
             setSubcategoriesMap(map)
           }
-        } else if (result.success && result.data) {
-          // Fallback: data varsa ama mainCategories yoksa, parent_slug olmayanları filtrele
-          const mainCategories = result.data.filter((cat: any) => !cat.parent_slug)
-          const mappedCategories = mainCategories.map((cat: any) => ({
-            value: cat.slug,
-            label: cat.name
-          }))
-          setCategories([
-            { value: 'all', label: 'Tüm Kategoriler' },
-            ...mappedCategories
-          ])
-          
-          // Alt kategorileri map'le
-          const subcategories = result.data.filter((cat: any) => cat.parent_slug)
-          const map: Record<string, string[]> = {}
-          subcategories.forEach((sub: any) => {
-            if (sub.parent_slug) {
-              if (!map[sub.parent_slug]) {
-                map[sub.parent_slug] = []
-              }
-              map[sub.parent_slug].push(sub.slug)
-            }
-          })
-          setSubcategoriesMap(map)
         }
       } catch (error) {
         console.error('Error loading categories:', error)
@@ -135,6 +129,11 @@ export default function ProductsPage() {
     return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
+  // Ana kategori değiştiğinde alt kategoriyi sıfırla
+  useEffect(() => {
+    setSelectedSubcategory('all')
+  }, [selectedCategory])
+
   // Filter products based on search and category
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,20 +145,23 @@ export default function ProductsPage() {
       return matchesSearch
     }
     
-    // Ana kategori seçildiğinde: hem ana kategori hem de alt kategorileri kontrol et
+    // Alt kategori seçildiyse, sadece o alt kategoriyi kontrol et
+    if (selectedSubcategory !== 'all') {
+      const matchesSubcategory = product.subcategory_slug === selectedSubcategory
+      return matchesSearch && matchesSubcategory
+    }
+    
+    // Alt kategori seçilmediyse, ana kategori ve tüm alt kategorilerini kontrol et
     // 1. Direkt ana kategori eşleşmesi
     const directCategoryMatch = product.category_slug === selectedCategory ||
                                 product.category === selectedCategory
     
     // 2. Alt kategori kontrolü: Ürünün alt kategorisi seçili ana kategoriye ait mi?
-    const subcategorySlugs = subcategoriesMap[selectedCategory] || []
+    const subcategorySlugs = (subcategoriesMap[selectedCategory] || []).map(sub => sub.value)
     const subcategoryMatch = product.subcategory_slug && 
                             subcategorySlugs.includes(product.subcategory_slug)
     
-    // 3. Alt kategori direkt eşleşmesi (eğer alt kategori seçildiyse)
-    const directSubcategoryMatch = product.subcategory_slug === selectedCategory
-    
-    const matchesCategory = directCategoryMatch || subcategoryMatch || directSubcategoryMatch
+    const matchesCategory = directCategoryMatch || subcategoryMatch
     return matchesSearch && matchesCategory
   })
 
@@ -216,23 +218,26 @@ export default function ProductsPage() {
 
       {/* Filters */}
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Ürün, marka veya kod ara..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-              />
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Ürün, marka veya kod ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-3 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+            />
+          </div>
 
           {/* Category Filter */}
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value)
+              setSelectedSubcategory('all') // Ana kategori değişince alt kategoriyi sıfırla
+            }}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           >
             {categories.map((category) => (
@@ -241,6 +246,26 @@ export default function ProductsPage() {
               </option>
             ))}
           </select>
+
+          {/* Subcategory Filter - Sadece ana kategori seçildiğinde ve alt kategoriler varsa görünür */}
+          {selectedCategory !== 'all' && subcategoriesMap[selectedCategory] && subcategoriesMap[selectedCategory].length > 0 ? (
+            <select
+              value={selectedSubcategory}
+              onChange={(e) => setSelectedSubcategory(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+            >
+              <option value="all">Tüm Alt Kategoriler</option>
+              {subcategoriesMap[selectedCategory].map((subcategory) => (
+                <option key={subcategory.value} value={subcategory.value}>
+                  {subcategory.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-400">
+              Alt kategori yok
+            </div>
+          )}
 
           {/* Sort */}
           <select

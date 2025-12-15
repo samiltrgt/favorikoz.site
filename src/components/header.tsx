@@ -56,6 +56,7 @@ const staticCategories = [
     hasDropdown: true,
     subcategories: [
       { name: 'Tıraş Makineleri', href: '/kategori/kuafor-malzemeleri/tiras-makineleri', key: 'tiras-makineleri' },
+      { name: 'Fön Makineleri', href: '/kategori/kuafor-malzemeleri/fon-makineleri', key: 'fon-makineleri' },
       { name: 'Diğer Kuaför Malzemeleri', href: '/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri', key: 'diger-kuafor-malzemeleri' },
     ]
   },
