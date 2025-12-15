@@ -6,60 +6,10 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
 import { getCart } from '@/lib/cart'
 
-const staticCategories = [
+// Static menu items (not categories)
+const staticMenuItems = [
   { name: 'Anasayfa', href: '/' },
   { name: 'Tüm Ürünler', href: '/tum-urunler' },
-  { 
-    name: 'Tırnak', 
-    href: '/kategori/tirnak',
-    hasDropdown: true,
-    subcategories: [
-      { name: 'Jeller', href: '/kategori/tirnak/jeller', key: 'tirnak-jeller' },
-      { name: 'Cihazlar', href: '/kategori/tirnak/cihazlar', key: 'tirnak-cihazlar' },
-      { name: 'Freze Uçları', href: '/kategori/tirnak/freze-uclari', key: 'tirnak-freze-uclari' },
-      { name: 'Kalıcı Oje', href: '/kategori/tirnak/kalici-oje', key: 'tirnak-kalici-oje' },
-      { name: 'Protez Tırnak Malzemeleri', href: '/kategori/tirnak/protez-tirnak-malzemeleri', key: 'tirnak-protez-tirnak-malzemeleri' },
-    ]
-  },
-  { 
-    name: 'Saç Bakımı', 
-    href: '/kategori/sac-bakimi',
-    hasDropdown: true,
-    subcategories: [
-      { name: 'Saç Bakım', href: '/kategori/sac-bakimi/sac-bakim', key: 'sac-bakim' },
-      { name: 'Saç Topik', href: '/kategori/sac-bakimi/sac-topik', key: 'sac-topik' },
-      { name: 'Saç Şekillendiriciler', href: '/kategori/sac-bakimi/sac-sekillendiriciler', key: 'sac-sekillendiriciler' },
-      { name: 'Saç Fırçası ve Tarak', href: '/kategori/sac-bakimi/sac-fircasi-ve-tarak', key: 'sac-fircasi-ve-tarak' },
-    ]
-  },
-  { 
-    name: 'Kişisel Bakım', 
-    href: '/kategori/kisisel-bakim',
-    hasDropdown: true,
-    subcategories: [
-      { name: 'Kişisel Bakım', href: '/kategori/kisisel-bakim/kisisel-bakim', key: 'kisisel-bakim' },
-      { name: 'Cilt Bakımı', href: '/kategori/kisisel-bakim/cilt-bakimi', key: 'cilt-bakimi' },
-    ]
-  },
-  { 
-    name: 'İpek Kirpik', 
-    href: '/kategori/ipek-kirpik',
-    hasDropdown: true,
-    subcategories: [
-      { name: 'İpek Kirpikler', href: '/kategori/ipek-kirpik/ipek-kirpikler', key: 'ipek-kirpikler' },
-      { name: 'Diğer İpek Kirpik Ürünleri', href: '/kategori/ipek-kirpik/diger-ipek-kirpik-urunleri', key: 'diger-ipek-kirpik-urunleri' },
-    ]
-  },
-  { 
-    name: 'Kuaför Malzemeleri', 
-    href: '/kategori/kuafor-malzemeleri',
-    hasDropdown: true,
-    subcategories: [
-      { name: 'Tıraş Makineleri', href: '/kategori/kuafor-malzemeleri/tiras-makineleri', key: 'tiras-makineleri' },
-      { name: 'Fön Makineleri', href: '/kategori/kuafor-malzemeleri/fon-makineleri', key: 'fon-makineleri' },
-      { name: 'Diğer Kuaför Malzemeleri', href: '/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri', key: 'diger-kuafor-malzemeleri' },
-    ]
-  },
 ]
 
 export default function Header() {
@@ -76,6 +26,7 @@ export default function Header() {
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
   const [headerHeight, setHeaderHeight] = useState(0)
   const headerRef = useRef<HTMLElement>(null)
+  const [categories, setCategories] = useState<any[]>([])
 
   // Sync search query from URL when on tum-urunler page
   useEffect(() => {
@@ -196,6 +147,40 @@ export default function Header() {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('cartUpdated', handleStorageChange)
     }
+  }, [])
+
+  // Load categories from API
+  useEffect(() => {
+    let isMounted = true
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories', { cache: 'no-store' })
+        const result = await response.json()
+        if (!isMounted) return
+        
+        if (result.success && result.data) {
+          // Transform API data to header format
+          const transformedCategories = result.data.map((cat: any) => ({
+            name: cat.name,
+            href: `/kategori/${cat.slug}`,
+            hasDropdown: cat.subcategories && cat.subcategories.length > 0,
+            subcategories: cat.subcategories?.map((sub: any) => ({
+              name: sub.name,
+              href: `/kategori/${cat.slug}/${sub.slug}`,
+              key: sub.slug
+            })) || []
+          }))
+          setCategories(transformedCategories)
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Fallback to empty array on error
+        if (isMounted) setCategories([])
+      }
+    }
+    
+    loadCategories()
+    return () => { isMounted = false }
   }, [])
 
   // Load category counts dynamically from API so edits reflect in header
@@ -355,7 +340,16 @@ export default function Header() {
        <nav className="border-t border-gray-200">
          <div className="container">
            <div className="hidden lg:flex items-center justify-center space-x-8 py-4">
-            {staticCategories.map((category) => (
+            {staticMenuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2"
+              >
+                {item.name}
+              </Link>
+            ))}
+            {categories.map((category) => (
                <div 
                  key={category.name}
                  className="relative"
@@ -449,7 +443,17 @@ export default function Header() {
 
             {/* Mobile categories */}
             <div className="space-y-2 pb-4">
-              {staticCategories.map((category) => {
+              {staticMenuItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              {categories.map((category) => {
                 if ((category as any).hasDropdown) {
                   const isOpen = mobileCategoriesOpen[category.name] || false
                   return (

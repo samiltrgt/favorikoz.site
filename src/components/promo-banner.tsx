@@ -20,40 +20,43 @@ interface PromoBannerProps {
   position: 'top' | 'bottom' | 'footer'
 }
 
-// Sabit kategori listesi
-const allCategories = [
-  { name: 'Tırnak', slug: 'tirnak', subcategories: [
-    { name: 'Jeller', href: '/kategori/tirnak/jeller' },
-    { name: 'Cihazlar', href: '/kategori/tirnak/cihazlar' },
-    { name: 'Freze Uçları', href: '/kategori/tirnak/freze-uclari' },
-    { name: 'Kalıcı Oje', href: '/kategori/tirnak/kalici-oje' },
-    { name: 'Protez Tırnak Malzemeleri', href: '/kategori/tirnak/protez-tirnak-malzemeleri' },
-  ]},
-  { name: 'Saç Bakımı', slug: 'sac-bakimi', subcategories: [
-    { name: 'Saç Bakım', href: '/kategori/sac-bakimi/sac-bakim' },
-    { name: 'Saç Topik', href: '/kategori/sac-bakimi/sac-topik' },
-    { name: 'Saç Şekillendiriciler', href: '/kategori/sac-bakimi/sac-sekillendiriciler' },
-    { name: 'Saç Fırçası ve Tarak', href: '/kategori/sac-bakimi/sac-fircasi-ve-tarak' },
-  ]},
-  { name: 'Kişisel Bakım', slug: 'kisisel-bakim', subcategories: [
-    { name: 'Kişisel Bakım', href: '/kategori/kisisel-bakim/kisisel-bakim' },
-    { name: 'Cilt Bakımı', href: '/kategori/kisisel-bakim/cilt-bakimi' },
-  ]},
-  { name: 'İpek Kirpik', slug: 'ipek-kirpik', subcategories: [
-    { name: 'İpek Kirpikler', href: '/kategori/ipek-kirpik/ipek-kirpikler' },
-    { name: 'Diğer İpek Kirpik Ürünleri', href: '/kategori/ipek-kirpik/diger-ipek-kirpik-urunleri' },
-  ]},
-  { name: 'Kuaför Malzemeleri', slug: 'kuafor-malzemeleri', subcategories: [
-    { name: 'Tıraş Makineleri', href: '/kategori/kuafor-malzemeleri/tiras-makineleri' },
-    { name: 'Fön Makineleri', href: '/kategori/kuafor-malzemeleri/fon-makineleri' },
-    { name: 'Diğer Kuaför Malzemeleri', href: '/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri' },
-  ]},
-]
 
 export default function PromoBanner({ position }: PromoBannerProps) {
   const [banner, setBanner] = useState<PromoBannerData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
+
+  // Load categories from API
+  useEffect(() => {
+    let isMounted = true
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories', { cache: 'no-store' })
+        const result = await response.json()
+        if (!isMounted) return
+        
+        if (result.success && result.data) {
+          // Transform API data to promo banner format
+          const transformedCategories = result.data.map((cat: any) => ({
+            name: cat.name,
+            slug: cat.slug,
+            subcategories: cat.subcategories?.map((sub: any) => ({
+              name: sub.name,
+              href: `/kategori/${cat.slug}/${sub.slug}`
+            })) || []
+          }))
+          setCategories(transformedCategories)
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        if (isMounted) setCategories([])
+      }
+    }
+    
+    loadCategories()
+    return () => { isMounted = false }
+  }, [])
 
   useEffect(() => {
     const loadBanner = async () => {
@@ -103,15 +106,15 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     switch (position) {
       case 'top':
         // Sadece Tırnak
-        return allCategories.filter(cat => cat.slug === 'tirnak')
+        return categories.filter(cat => cat.slug === 'tirnak')
       case 'bottom':
         // Sadece Saç Bakımı
-        return allCategories.filter(cat => cat.slug === 'sac-bakimi')
+        return categories.filter(cat => cat.slug === 'sac-bakimi')
       case 'footer':
         // Sadece İpek Kirpik
-        return allCategories.filter(cat => cat.slug === 'ipek-kirpik')
+        return categories.filter(cat => cat.slug === 'ipek-kirpik')
       default:
-        return allCategories
+        return categories
     }
   }
 
