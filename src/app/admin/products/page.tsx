@@ -20,6 +20,7 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('name')
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
+  const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, string[]>>({})
   const [isLoading, setIsLoading] = useState(true)
 
   // Load categories from API (only main categories, not subcategories)
