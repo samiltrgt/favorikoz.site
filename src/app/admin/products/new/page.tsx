@@ -24,7 +24,9 @@ export default function NewProductPage() {
     barcode: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
+  const [categories, setCategories] = useState<Array<{ value: string; label: string; subcategories?: Array<{ value: string; label: string }> }>>([])
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedSubcategory, setSelectedSubcategory] = useState('')
 
   // Load categories from API
   useEffect(() => {
@@ -35,7 +37,11 @@ export default function NewProductPage() {
         if (result.success && result.data) {
           const mappedCategories = result.data.map((cat: any) => ({
             value: cat.slug,
-            label: cat.name
+            label: cat.name,
+            subcategories: cat.subcategories?.map((sub: any) => ({
+              value: sub.slug,
+              label: sub.name
+            })) || []
           }))
           setCategories(mappedCategories)
         }
@@ -212,18 +218,41 @@ export default function NewProductPage() {
                   </label>
                   <select
                     name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value)
+                      setSelectedSubcategory('')
+                      setFormData(prev => ({ ...prev, category: e.target.value }))
+                    }}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent mb-2"
                   >
-                    <option value="">Kategori seçin</option>
+                    <option value="">Ana kategori seçin</option>
                     {categories.map((category) => (
                       <option key={category.value} value={category.value}>
                         {category.label}
                       </option>
                     ))}
                   </select>
+                  
+                  {selectedCategory && categories.find(c => c.value === selectedCategory)?.subcategories && categories.find(c => c.value === selectedCategory)!.subcategories!.length > 0 && (
+                    <select
+                      name="subcategory"
+                      value={selectedSubcategory}
+                      onChange={(e) => {
+                        setSelectedSubcategory(e.target.value)
+                        setFormData(prev => ({ ...prev, category: e.target.value || selectedCategory }))
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    >
+                      <option value="">Alt kategori seçin (opsiyonel)</option>
+                      {categories.find(c => c.value === selectedCategory)?.subcategories?.map((subcategory) => (
+                        <option key={subcategory.value} value={subcategory.value}>
+                          {subcategory.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div>

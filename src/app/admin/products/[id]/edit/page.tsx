@@ -55,7 +55,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [categories, setCategories] = useState<Array<{ value: string; label: string; color: string }>>([])
+  const [categories, setCategories] = useState<Array<{ value: string; label: string; color: string; subcategories?: Array<{ value: string; label: string }> }>>([])
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedSubcategory, setSelectedSubcategory] = useState('')
 
   // Load categories from API
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         const response = await fetch('/api/categories')
         const result = await response.json()
         if (result.success && result.data) {
-          // Map categories from API to form format
+          // Map categories from API to form format with subcategories
           const categoryColors = [
             'bg-blue-100 text-blue-800',
             'bg-green-100 text-green-800',
@@ -78,7 +80,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           const mappedCategories = result.data.map((cat: any, index: number) => ({
             value: cat.slug,
             label: cat.name,
-            color: categoryColors[index % categoryColors.length]
+            color: categoryColors[index % categoryColors.length],
+            subcategories: cat.subcategories?.map((sub: any) => ({
+              value: sub.slug,
+              label: sub.name
+            })) || []
           }))
           setCategories(mappedCategories)
         }
@@ -114,13 +120,17 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             inStock: foundProduct.inStock,
           })
           setProduct(foundProduct)
+          const categorySlug = foundProduct.category_slug || foundProduct.category || ''
+          const subcategorySlug = foundProduct.subcategory_slug || ''
+          setSelectedCategory(categorySlug)
+          setSelectedSubcategory(subcategorySlug)
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
             price: foundProduct.price.toString(), // API'den /10 formatında geliyor, direkt yazıyoruz
             originalPrice: foundProduct.original_price?.toString() || foundProduct.originalPrice?.toString() || '',
             description: foundProduct.description || '',
-            category: foundProduct.category_slug || foundProduct.category,
+            category: subcategorySlug || categorySlug, // Alt kategori varsa onu kullan, yoksa kategori
             // Convert snake_case to camelCase for checkboxes
             isNew: foundProduct.is_new ?? foundProduct.isNew ?? false,
             isBestSeller: foundProduct.is_best_seller ?? foundProduct.isBestSeller ?? false,
@@ -181,7 +191,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: parseFloat(formData.price), // Form'dan /10 formatında geliyor, API'ye direkt gönderiyoruz (API içinde *1000 yapılacak)
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         description: formData.description,
-        category: formData.category,
+        category: selectedSubcategory || selectedCategory, // Alt kategori varsa onu kullan, yoksa ana kategori
+        subcategory: selectedSubcategory || undefined,
         isNew: formData.isNew,
         isBestSeller: formData.isBestSeller,
         inStock: formData.inStock,
@@ -365,12 +376,16 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                     </label>
                     <select
                       name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
+                      value={selectedCategory}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value)
+                        setSelectedSubcategory('')
+                        setFormData(prev => ({ ...prev, category: e.target.value }))
+                      }}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white mb-2"
                     >
-                      <option value="" disabled>Kategori seçin</option>
+                      <option value="" disabled>Ana kategori seçin</option>
                       {categories.map((category) => (
                         <option 
                           key={category.value} 
@@ -380,11 +395,36 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         </option>
                       ))}
                     </select>
+                    
+                    {selectedCategory && categories.find(c => c.value === selectedCategory)?.subcategories && categories.find(c => c.value === selectedCategory)!.subcategories!.length > 0 && (
+                      <select
+                        name="subcategory"
+                        value={selectedSubcategory}
+                        onChange={(e) => {
+                          setSelectedSubcategory(e.target.value)
+                          setFormData(prev => ({ ...prev, category: e.target.value || selectedCategory }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">Alt kategori seçin (opsiyonel)</option>
+                        {categories.find(c => c.value === selectedCategory)?.subcategories?.map((subcategory) => (
+                          <option 
+                            key={subcategory.value} 
+                            value={subcategory.value}
+                          >
+                            {subcategory.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
                     {formData.category && (
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Seçili kategori:</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categories.find(c => c.value === formData.category)?.color}`}>
-                          {categories.find(c => c.value === formData.category)?.label}
+                        <span className="text-sm text-gray-600">Seçili:</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categories.find(c => c.value === selectedCategory)?.color || 'bg-gray-100 text-gray-800'}`}>
+                          {selectedSubcategory 
+                            ? categories.find(c => c.value === selectedCategory)?.subcategories?.find(s => s.value === selectedSubcategory)?.label
+                            : categories.find(c => c.value === selectedCategory)?.label}
                         </span>
                       </div>
                     )}

@@ -86,7 +86,15 @@ export async function PUT(
     if (body.name !== undefined) updateData.name = body.name
     if (body.slug !== undefined) updateData.slug = body.slug
     if (body.brand !== undefined) updateData.brand = body.brand
-    if (body.category !== undefined) updateData.category_slug = body.category
+    if (body.category !== undefined) {
+      // Eğer subcategory varsa onu kullan, yoksa category'yi kullan
+      updateData.category_slug = body.subcategory || body.category
+      if (body.subcategory) {
+        updateData.subcategory_slug = body.subcategory
+      } else {
+        updateData.subcategory_slug = null
+      }
+    }
     if (body.description !== undefined) updateData.description = body.description
     if (body.barcode !== undefined) updateData.barcode = body.barcode
     if (body.image !== undefined) updateData.image = body.image
