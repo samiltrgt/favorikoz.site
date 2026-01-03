@@ -53,14 +53,14 @@ export default function PromoBanner({ position }: PromoBannerProps) {
 
   return (
     <section className="relative bg-white border-t border-gray-100">
-      <div className="relative block w-full overflow-hidden h-[200px] md:h-[250px] lg:h-auto lg:[aspect-ratio:1910/250]">
-        {/* Background Image - Full opacity, no overlay */}
+      <div className="relative block w-full overflow-hidden min-h-[180px] md:min-h-[200px] lg:min-h-0 lg:[aspect-ratio:1910/250] flex items-center justify-center bg-gray-50">
+        {/* Background Image - Full opacity, no overlay, contains to show full banner */}
         {banner.image && (
           <Image
             src={banner.image}
             alt={banner.title || 'Promo banner'}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="100vw"
             priority
           />
