@@ -53,7 +53,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
 
   return (
     <section className="relative bg-white border-t border-gray-100">
-      <div className="relative block w-full overflow-hidden" style={{ aspectRatio: '1910/250' }}>
+      <div className="relative block w-full overflow-hidden h-[200px] md:h-[250px] lg:h-auto lg:[aspect-ratio:1910/250]">
         {/* Background Image - Full opacity, no overlay */}
         {banner.image && (
           <Image
