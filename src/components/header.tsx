@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
 import { getCart } from '@/lib/cart'
+import { getFavorites } from '@/lib/favorites'
 
 // Static menu items (not categories)
 const staticMenuItems = [
@@ -33,6 +34,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
+  const [favoritesCount, setFavoritesCount] = useState(0)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -159,6 +161,33 @@ export default function Header() {
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('cartUpdated', handleStorageChange)
+    }
+  }, [])
+
+  // Favoriler sayısını güncelle
+  useEffect(() => {
+    const updateFavoritesCount = async () => {
+      try {
+        const favorites = await getFavorites()
+        setFavoritesCount(favorites.length)
+      } catch (error) {
+        // If not authenticated, count will be 0
+        setFavoritesCount(0)
+      }
+    }
+
+    // İlk yükleme
+    updateFavoritesCount()
+
+    // Favoriler değiştiğinde güncelle
+    const handleFavoritesChange = () => {
+      updateFavoritesCount()
+    }
+
+    window.addEventListener('favoritesUpdated', handleFavoritesChange)
+
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesChange)
     }
   }, [])
 
@@ -316,9 +345,19 @@ export default function Header() {
               </Link>
             )}
             
-            <button className="text-gray-600 hover:text-gray-900">
+            <Link
+              href="/favorilerim"
+              className="text-gray-600 hover:text-gray-900 relative"
+              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount} ürün)` : ''}`}
+              title="Favorilerim"
+            >
               <Heart className="w-5 h-5" />
-            </button>
+              {favoritesCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-4 h-4 flex items-center justify-center px-1">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
+                </span>
+              )}
+            </Link>
             
             <Link
               href="/sepet"
@@ -531,14 +570,33 @@ export default function Header() {
 
             {/* Mobile actions */}
             <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-              <button className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600">
+              <Link
+                href="/favorilerim"
+                className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 <Heart className="w-5 h-5" />
-                <span>Favoriler</span>
-              </button>
-              <button className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600">
-                <User className="w-5 h-5" />
-                <span>Hesabım</span>
-              </button>
+                <span>Favoriler{favoritesCount > 0 ? ` (${favoritesCount})` : ''}</span>
+              </Link>
+              {user ? (
+                <Link
+                  href="/hesabim"
+                  className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="w-5 h-5" />
+                  <span>Hesabım</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/giris"
+                  className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="w-5 h-5" />
+                  <span>Giriş Yap</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

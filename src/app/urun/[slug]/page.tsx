@@ -330,18 +330,63 @@ function QuantitySelector({ onChange }: { onChange?: (qty: number)=>void }) {
 }
 
 function FavButton({ id }: { id: string }) {
-  const [fav, setFav] = useState(isFavorite(id))
+  const [fav, setFav] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Load initial favorite status
+    const loadFavoriteStatus = async () => {
+      try {
+        const isFav = await isFavorite(id)
+        setFav(isFav)
+      } catch (err) {
+        console.error('Error loading favorite status:', err)
+      }
+    }
+    loadFavoriteStatus()
+  }, [id])
+
+  const handleToggle = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const result = await toggleFavorite(id)
+      if (result.success) {
+        setFav(result.isFavorite)
+      } else {
+        setError(result.error || 'Bir hata oluştu')
+        // If error is about authentication, show message
+        if (result.error?.includes('giriş')) {
+          if (confirm('Favorilere eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?')) {
+            window.location.href = '/giris'
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+      setError('Bir hata oluştu')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <button
-      onClick={() => setFav(toggleFavorite(id))}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
+      onClick={handleToggle}
+      disabled={isLoading}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
         fav 
           ? 'text-red-600 bg-red-50 hover:bg-red-100' 
           : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
       }`}
+      title={error || undefined}
     >
-      <Heart className={`w-5 h-5 ${fav ? 'fill-current' : ''}`} /> 
-      <span className="text-sm">{fav ? 'Favorilerde' : 'Favorilere ekle'}</span>
+      <Heart className={`w-5 h-5 ${fav ? 'fill-current' : ''} ${isLoading ? 'animate-pulse' : ''}`} /> 
+      <span className="text-sm">
+        {isLoading ? 'Yükleniyor...' : fav ? 'Favorilerde' : 'Favorilere ekle'}
+      </span>
     </button>
   )
 }

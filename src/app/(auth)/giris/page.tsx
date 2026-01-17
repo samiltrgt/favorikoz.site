@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import { migrateLocalStorageFavorites } from '@/lib/favorites'
 
 export default function SignInPage() {
   const router = useRouter()
@@ -32,6 +33,12 @@ export default function SignInPage() {
       if (result.success) {
         // Trigger storage event for cart/header update
         window.dispatchEvent(new Event('authChanged'))
+        
+        // Migrate localStorage favorites to database
+        await migrateLocalStorageFavorites()
+        
+        // Trigger favorites update event
+        window.dispatchEvent(new Event('favoritesUpdated'))
         
         alert('Giriş başarılı!')
         router.push('/hesabim')

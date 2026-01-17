@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart, Star, Truck, RotateCcw } from 'lucide-react'
+import { toggleFavorite, isFavorite } from '@/lib/favorites'
 
 interface ProductCardProps {
   product: {
@@ -25,26 +26,60 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isFavoriteState, setIsFavoriteState] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isCartLoading, setIsCartLoading] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const router = useRouter()
+
+  // Load favorite status on mount
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      try {
+        const fav = await isFavorite(product.id)
+        setIsFavoriteState(fav)
+      } catch (err) {
+        console.error('Error loading favorite status:', err)
+      }
+    }
+    loadFavoriteStatus()
+  }, [product.id])
 
   const handleAddToCart = async () => {
     if (!product.in_stock) {
       return // Stokta yoksa sepete ekleme
     }
     
-    setIsLoading(true)
+    setIsCartLoading(true)
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500))
-    setIsLoading(false)
+    setIsCartLoading(false)
     // TODO: Add to cart logic
   }
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-    // TODO: Add to favorites logic
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    setIsFavoriteLoading(true)
+    
+    try {
+      const result = await toggleFavorite(product.id)
+      if (result.success) {
+        setIsFavoriteState(result.isFavorite)
+      } else {
+        // If error is about authentication, show message
+        if (result.error?.includes('giriş')) {
+          if (confirm('Favorilere eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?')) {
+            window.location.href = '/giris'
+          }
+        } else {
+          console.error('Error toggling favorite:', result.error)
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+    } finally {
+      setIsFavoriteLoading(false)
+    }
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -101,16 +136,26 @@ export default function ProductCard({ product }: ProductCardProps) {
         }`}>
           <button
             onClick={handleToggleFavorite}
-            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors"
+            disabled={isFavoriteLoading}
+            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isFavoriteState ? 'Favorilerden çıkar' : 'Favorilere ekle'}
           >
             <Heart 
-              className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-black'}`} 
+              className={`w-4 h-4 transition-all ${
+                isFavoriteState 
+                  ? 'fill-red-500 text-red-500' 
+                  : 'text-black'
+              } ${isFavoriteLoading ? 'animate-pulse' : ''}`} 
             />
           </button>
           <button 
             className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleAddToCart}
-            disabled={!product.in_stock || isLoading}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleAddToCart()
+            }}
+            disabled={!product.in_stock || isCartLoading}
+            title="Sepete ekle"
           >
             <ShoppingCart className="w-4 h-4 text-black" />
           </button>
