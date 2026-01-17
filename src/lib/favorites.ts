@@ -17,14 +17,15 @@ export async function getFavorites(): Promise<string[]> {
   }
   
   // Fetch favorites from API
-  favoritesCachePromise = (async () => {
+  const promise = (async (): Promise<string[]> => {
     try {
       const response = await fetch('/api/favorites')
       const result = await response.json()
       
       if (result.success) {
-        favoritesCache = result.favorites || []
-        return favoritesCache
+        const favorites = result.favorites || []
+        favoritesCache = favorites
+        return favorites
       } else {
         // If not authenticated, return empty array
         favoritesCache = []
@@ -39,7 +40,8 @@ export async function getFavorites(): Promise<string[]> {
     }
   })()
   
-  return favoritesCachePromise
+  favoritesCachePromise = promise
+  return promise
 }
 
 // Clear favorites cache (call after adding/removing favorites)
