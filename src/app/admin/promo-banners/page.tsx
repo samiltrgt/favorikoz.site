@@ -99,7 +99,7 @@ export default function PromoBannersPage() {
 
     setSavingPosition(position)
     try {
-      const defaultLink = position === 'bottom' ? '/kategori/protez-tirnak' : '/tum-urunler'
+      const defaultLink = position === 'bottom' ? '/kategori/tirnak' : '/tum-urunler'
       const body = {
         title: banner.title,
         description: banner.description || '',
@@ -176,7 +176,7 @@ export default function PromoBannersPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {positions.map((pos) => {
-          const defaultLink = pos.value === 'bottom' ? '/kategori/protez-tirnak' : '/tum-urunler'
+          const defaultLink = pos.value === 'bottom' ? '/kategori/tirnak' : '/tum-urunler'
           const banner = banners[pos.value as 'top' | 'bottom' | 'footer'] || {
             title: '',
             description: '',

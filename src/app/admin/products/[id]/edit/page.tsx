@@ -94,7 +94,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         setCategories([
           { value: 'kisisel-bakim', label: 'Kişisel Bakım', color: 'bg-blue-100 text-blue-800' },
           { value: 'sac-bakimi', label: 'Saç Bakımı', color: 'bg-green-100 text-green-800' },
-          { value: 'protez-tirnak', label: 'Protez Tırnak', color: 'bg-purple-100 text-purple-800' },
+          { value: 'tirnak', label: 'Tırnak', color: 'bg-purple-100 text-purple-800' },
           { value: 'ipek-kirpik', label: 'İpek Kirpik', color: 'bg-pink-100 text-pink-800' },
         ])
       }

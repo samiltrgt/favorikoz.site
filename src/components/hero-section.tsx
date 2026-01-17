@@ -24,7 +24,7 @@ const slides = [
     description: 'Modern güzellik için tasarlanmış premium saç bakım koleksiyonumuzu keşfedin.',
     image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&h=900&fit=crop',
     cta: 'Ürünleri İncele',
-    ctaLink: '/kategori/protez-tirnak',
+    ctaLink: '/kategori/tirnak',
     secondaryCta: 'Tüm Ürünler',
     secondaryCtaLink: '/tum-urunler'
   },

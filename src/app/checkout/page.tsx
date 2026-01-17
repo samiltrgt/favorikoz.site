@@ -295,8 +295,8 @@ export default function CheckoutPage() {
               const StepIcon = step.icon
               const isActive = step.id === currentStep
               const isCompleted = index < currentStepIndex
-              
-              return (
+
+  return (
                 <div key={step.id} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
@@ -333,8 +333,8 @@ export default function CheckoutPage() {
               )
             })}
           </div>
-        </div>
-
+          </div>
+          
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
@@ -352,7 +352,7 @@ export default function CheckoutPage() {
                   <div>
                     <h2 className="text-2xl font-bold text-black mb-2">Kişisel Bilgiler</h2>
                     <p className="text-gray-600 text-sm">Fatura ve iletişim bilgilerinizi girin</p>
-                  </div>
+            </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -369,10 +369,10 @@ export default function CheckoutPage() {
                           placeholder="Adınız"
                           required
                         />
-                      </div>
-                    </div>
+          </div>
+        </div>
 
-                    <div>
+        <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Soyad <span className="text-red-500">*</span>
                       </label>
@@ -808,14 +808,14 @@ export default function CheckoutPage() {
                         className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
                       />
-                    </div>
-                  </div>
-                )}
+                </div>
+              </div>
+            )}
 
                 <div className="flex justify-between text-base font-bold text-black pt-3 border-t border-gray-200">
-                  <span>Toplam</span>
+              <span>Toplam</span>
                   <span>₺{(total / 10).toFixed(2)}</span>
-                </div>
+            </div>
           </div>
 
               {/* Security Icons */}
@@ -832,8 +832,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
-          </div>
         </div>
+      </div>
       </div>
 
       <Footer />

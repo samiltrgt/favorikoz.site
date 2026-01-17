@@ -61,7 +61,7 @@ export default function HomeBanners() {
             </div>
             <div className="absolute -right-8 -bottom-8 w-40 h-40 rounded-full bg-muted z-0" />
           </Link>
-          <Link href="/kategori/protez-tirnak" className="group relative overflow-hidden rounded-3xl bg-card border p-8 transform-gpu animate-float animation-delay-300">
+          <Link href="/kategori/tirnak" className="group relative overflow-hidden rounded-3xl bg-card border p-8 transform-gpu animate-float animation-delay-300">
             {/* Background image */}
             <Image
               src="https://images.unsplash.com/photo-1547825407-2d060104b1c5?w=1200&h=800&fit=crop"

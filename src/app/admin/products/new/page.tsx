@@ -51,7 +51,7 @@ export default function NewProductPage() {
         setCategories([
           { value: 'kisisel-bakim', label: 'Kişisel Bakım' },
           { value: 'sac-bakimi', label: 'Saç Bakımı' },
-          { value: 'protez-tirnak', label: 'Protez Tırnak' },
+          { value: 'tirnak', label: 'Tırnak' },
           { value: 'ipek-kirpik', label: 'İpek Kirpik' },
         ])
       }
