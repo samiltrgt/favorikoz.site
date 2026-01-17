@@ -41,7 +41,7 @@ describe('Header Component', () => {
 
     it('should render contact information', () => {
       render(<Header />)
-      expect(screen.getByText(/0537 647 07 17/)).toBeInTheDocument()
+      expect(screen.getByText(/0537 647 07 10/)).toBeInTheDocument()
       expect(screen.getByText(/mervesaat@gmail.com/)).toBeInTheDocument()
     })
 

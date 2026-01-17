@@ -20,7 +20,7 @@ test.describe('Homepage', () => {
     await page.goto('/')
     
     // Check contact info in top bar
-    await expect(page.locator('text=0537 647 07 17')).toBeVisible()
+    await expect(page.locator('text=0537 647 07 10')).toBeVisible()
     await expect(page.locator('text=mervesaat@gmail.com')).toBeVisible()
   })
 
