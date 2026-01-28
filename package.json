@@ -24,6 +24,7 @@
   "scripts": {
     "dev": "next dev",
     "import:excel": "node scripts/import-excel.js",
+    "import:excel:supabase": "tsx scripts/import-excel-to-supabase.ts",
     "migrate:products": "tsx scripts/migrate-to-supabase.ts",
     "migrate:protez-tirnak": "tsx scripts/migrate-protez-tirnak-to-tirnak.ts",
     "build": "next build",
