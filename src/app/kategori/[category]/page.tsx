@@ -53,6 +53,8 @@ export default function CategoryPage() {
     // Ana kategori sayfasında: Sadece alt kategorisi olmayan ürünleri göster
     // (Alt kategorisi olan ürünler alt kategori sayfalarında gösterilir)
     let filtered = allProducts.filter((product:any) => {
+      // Stokta olmalı (extra güvenlik katmanı)
+      if (!product.in_stock || product.stock_quantity <= 0) return false
       // Ana kategori eşleşmeli
       if (product.category_slug !== categorySlug) return false
       // Alt kategorisi olmamalı (null veya undefined)

@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
       .from('products')
       .select('*')
       .is('deleted_at', null)
+      .eq('in_stock', true) // Müşterilere sadece stokta olan ürünleri göster
+      .gt('stock_quantity', 0) // Stok miktarı 0'dan büyük olmalı
     
     // Apply filters
     if (category) {
@@ -28,9 +30,7 @@ export async function GET(request: NextRequest) {
       query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
     }
     
-    if (inStock === 'true') {
-      query = query.eq('in_stock', true)
-    }
+    // inStock parametresi artık gereksiz çünkü varsayılan olarak filtrelenmiş durumda
     
     // Apply limit and order
     query = query.order('created_at', { ascending: false }).limit(limit)

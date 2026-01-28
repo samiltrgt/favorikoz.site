@@ -16,11 +16,13 @@ export default async function HomePage() {
   try {
     const supabase = await createSupabaseServer()
     
-    // Fetch products from Supabase
+    // Fetch products from Supabase (sadece stokta olanlar)
     const { data: allProducts, error: supabaseError } = await supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
+      .eq('in_stock', true) // Müşterilere sadece stokta olan ürünleri göster
+      .gt('stock_quantity', 0) // Stok miktarı 0'dan büyük olmalı
       .limit(1000)
     
     if (supabaseError) {

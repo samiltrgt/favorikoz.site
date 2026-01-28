@@ -214,7 +214,10 @@ function AllProductsContent() {
 
   // Sort products
   useEffect(() => {
-    let filtered = [...allProducts]
+    // Sadece stokta olan ürünleri göster (extra güvenlik katmanı)
+    let filtered = allProducts.filter((product: any) => 
+      product.in_stock && product.stock_quantity > 0
+    )
 
     // Sort
     switch (sortBy) {

@@ -81,6 +81,8 @@ export default function SubcategoryPage() {
   // Alt kategoriye göre filtrele
   useEffect(() => {
     let filtered = allProducts.filter((product: any) => {
+      // Stokta olmalı (extra güvenlik katmanı)
+      if (!product.in_stock || product.stock_quantity <= 0) return false
       // Önce category_slug ile ana kategoriyi kontrol et
       if (product.category_slug !== categorySlug) return false
       
