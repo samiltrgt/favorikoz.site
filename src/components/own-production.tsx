@@ -24,9 +24,21 @@ interface OwnProductionProps {
 
 export default function OwnProduction({ products }: OwnProductionProps) {
   // Favori markamız olan ürünleri filtrele
-  const ownProducts = products.filter(p => p.brand?.toLowerCase() === 'favori').slice(0, 8)
+  // Büyük/küçük harf ve boşluk farkını göz ardı et
+  const ownProducts = products.filter(p => 
+    p.brand?.toLowerCase().trim() === 'favori'
+  ).slice(0, 8)
 
-  if (ownProducts.length === 0) {
+  // Debug: Console'da kontrol et
+  console.log('Total products:', products.length)
+  console.log('Own products:', ownProducts.length)
+  console.log('Sample brands:', products.slice(0, 5).map(p => p.brand))
+
+  // Eğer Favori markalı ürün yoksa, tüm ürünlerden ilk 8'ini göster
+  const displayProducts = ownProducts.length > 0 ? ownProducts : products.slice(0, 8)
+  const hasOwnProducts = ownProducts.length > 0
+
+  if (displayProducts.length === 0) {
     return null
   }
 
@@ -47,12 +59,19 @@ export default function OwnProduction({ products }: OwnProductionProps) {
           
           {/* Main Title */}
           <h2 className="text-5xl md:text-6xl font-light tracking-tight text-gray-900">
-            Kendi <span className="font-semibold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">Üretimimiz</span>
+            {hasOwnProducts ? (
+              <>Kendi <span className="font-semibold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">Üretimimiz</span></>
+            ) : (
+              <>Öne <span className="font-semibold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">Çıkan Ürünler</span></>
+            )}
           </h2>
           
           {/* Subtitle */}
           <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Özenle tasarlanan, en kaliteli malzemelerle üretilen özel koleksiyonumuz
+            {hasOwnProducts 
+              ? 'Özenle tasarlanan, en kaliteli malzemelerle üretilen özel koleksiyonumuz'
+              : 'Sizin için özenle seçtiğimiz premium kalite ürünler'
+            }
           </p>
           
           {/* Decorative line */}
@@ -65,7 +84,7 @@ export default function OwnProduction({ products }: OwnProductionProps) {
 
         {/* Products Grid - Premium Design */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {ownProducts.map((product, index) => (
+          {displayProducts.map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} />
           ))}
         </div>
@@ -73,7 +92,7 @@ export default function OwnProduction({ products }: OwnProductionProps) {
         {/* View All Link */}
         <div className="text-center mt-12">
           <Link 
-            href="/tum-urunler?brand=favori"
+            href={hasOwnProducts ? "/tum-urunler?brand=favori" : "/tum-urunler"}
             className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300"
           >
             <span className="font-medium">Tümünü Keşfet</span>
@@ -124,10 +143,12 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           </div>
         )}
 
-        {/* Favori markası badge */}
-        <div className="absolute top-3 right-3 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-rose-600 text-white text-xs font-bold rounded-full shadow-lg">
-          Favori
-        </div>
+        {/* Favori markası badge - sadece gerçekten Favori markalı ürünlerde göster */}
+        {product.brand?.toLowerCase().trim() === 'favori' && (
+          <div className="absolute top-3 right-3 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-rose-600 text-white text-xs font-bold rounded-full shadow-lg">
+            Favori
+          </div>
+        )}
 
         {/* Quick Actions - Hover */}
         <div 
