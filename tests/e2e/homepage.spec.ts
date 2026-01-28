@@ -46,8 +46,7 @@ test.describe('Product Pages', () => {
     
     // Check if at least one product is displayed
     const productCards = page.locator('[data-testid="product-card"]')
-    await expect(productCards.first()).toBeVisible()
-    expect(await productCards.count()).toBeGreaterThanOrEqual(1)
+    await expect(productCards).toHaveCount({ min: 1 })
   })
 
   test('should navigate to product detail page', async ({ page }) => {
