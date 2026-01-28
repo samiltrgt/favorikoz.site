@@ -282,11 +282,10 @@ async function importToSupabase(products: ParsedProduct[]) {
         };
 
         // Explicitly declare the type for the update to avoid 'never' error
-        // @ts-ignore - Supabase tip sistemi karmaşık, runtime'da çalışıyor
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase
           .from('products')
-          .update(updateData)
-          .eq('id', existing.id)
+          .update(updateData as any)
+          .eq('id', existing.id) as any)
 
         if (updateError) {
           throw updateError
@@ -302,8 +301,7 @@ async function importToSupabase(products: ParsedProduct[]) {
         // Stok kontrolü: Stok 0 ise otomatik olarak in_stock = false
         const isInStock = product.stockQty > 0 ? product.inStock : false
 
-        // @ts-ignore - Supabase tip sistemi karmaşık, runtime'da çalışıyor
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase
           .from('products')
           .insert({
             id,
@@ -324,7 +322,7 @@ async function importToSupabase(products: ParsedProduct[]) {
             category_slug: product.category,
             description: product.description,
             barcode: product.barcode,
-          })
+          }) as any)
 
         if (insertError) {
           throw insertError
