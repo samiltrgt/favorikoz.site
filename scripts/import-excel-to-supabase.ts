@@ -214,7 +214,7 @@ async function importExcelToSupabase(xlsxPath: string) {
           .is('deleted_at', null)
         
         if (productsByBarcode) {
-          productsByBarcode.forEach(p => {
+          productsByBarcode.forEach((p: Database['public']['Tables']['products']['Row']) => {
             if (p.barcode) {
               const normalizedBarcode = String(p.barcode).trim()
               existingProductsMap.set(`barcode:${normalizedBarcode}`, p)
@@ -244,7 +244,7 @@ async function importExcelToSupabase(xlsxPath: string) {
           .is('deleted_at', null)
         
         if (productsByName) {
-          productsByName.forEach(p => {
+          productsByName.forEach((p: Database['public']['Tables']['products']['Row']) => {
             const normalizedName = String(p.name).trim()
             if (!existingProductsMap.has(`name:${normalizedName}`)) {
               existingProductsMap.set(`name:${normalizedName}`, p)
@@ -255,9 +255,12 @@ async function importExcelToSupabase(xlsxPath: string) {
       }
     }
 
+    const barcodeCount = [...existingProductsMap.keys()].filter(k => k.startsWith('barcode:')).length
+    const nameCount = [...existingProductsMap.keys()].filter(k => k.startsWith('name:')).length
+    
     console.log(`📦 ${existingProductsMap.size} mevcut ürün bulundu`)
-    console.log(`   - Barkod bazında: ${Array.from(existingProductsMap.keys()).filter(k => k.startsWith('barcode:')).length}`)
-    console.log(`   - İsim bazında: ${Array.from(existingProductsMap.keys()).filter(k => k.startsWith('name:')).length}\n`)
+    console.log(`   - Barkod bazında: ${barcodeCount}`)
+    console.log(`   - İsim bazında: ${nameCount}\n`)
 
     // Ürünleri Supabase formatına dönüştür ve upsert yap
     const productsToUpsert: Database['public']['Tables']['products']['Insert'][] = []

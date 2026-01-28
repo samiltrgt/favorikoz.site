@@ -1,4 +1,4 @@
-import { getFavorites, setFavorites, toggleFavorite, isFavorite } from '@/lib/favorites'
+import { getFavorites, toggleFavorite, isFavorite } from '@/lib/favorites'
 
 describe('favorites utility', () => {
   beforeEach(() => {
