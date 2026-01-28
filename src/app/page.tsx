@@ -5,6 +5,7 @@ import FeaturesSection from '@/components/features-section'
 import PromoBanner from '@/components/promo-banner'
 import HomeBanners from '@/components/home-banners'
 import FeaturedProducts from '@/components/featured-products'
+import OwnProduction from '@/components/own-production'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic' // Force dynamic rendering because we use cookies
@@ -71,6 +72,9 @@ export default async function HomePage() {
 
         {/* Promo Banner - Bottom */}
         <PromoBanner position="bottom" />
+        
+        {/* Own Production - Kendi Üretimimiz */}
+        <OwnProduction products={products} />
         
         {/* Featured Products - Best Sellers */}
         <FeaturedProducts
