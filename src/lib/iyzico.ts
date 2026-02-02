@@ -79,4 +79,33 @@ export async function createPayment(paymentRequest: any): Promise<any> {
   })
 }
 
+/** Ödeme sonucunu conversationId ile sorgula (callback sayfası için) */
+export async function retrievePayment(conversationId: string): Promise<{ status: string; paymentStatus?: string; errorMessage?: string }> {
+  const iyzipay = getIyzicoInstance()
+  if (!iyzipay) {
+    return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
+  }
+  return new Promise((resolve) => {
+    ;(iyzipay as any).payment.retrieve(
+      {
+        locale: 'tr',
+        conversationId: conversationId,
+        paymentConversationId: conversationId,
+      },
+      (err: any, result: any) => {
+        if (err) {
+          console.error('❌ Iyzico retrieve error:', err)
+          resolve({ status: 'failure', errorMessage: err?.message || 'Sorgu hatası' })
+          return
+        }
+        resolve({
+          status: result?.status === 'success' ? 'success' : 'failure',
+          paymentStatus: result?.paymentStatus,
+          errorMessage: result?.errorMessage,
+        })
+      }
+    )
+  })
+}
+
 

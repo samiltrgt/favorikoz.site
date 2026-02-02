@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',
-            payment_token: null
+            payment_token: conversationId
           })
 
         if (orderError) {

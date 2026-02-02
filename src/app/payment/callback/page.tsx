@@ -16,26 +16,17 @@ export default function PaymentCallbackPage() {
     
     if (order) setOrderNumber(order)
     
-    // Test mode - check URL parameter first
-    if (statusParam === 'success') {
-      setStatus('success')
-      return
-    }
-    
-    if (statusParam === 'failed') {
-      setStatus('failed')
-      return
-    }
-    
     if (!token) {
       setStatus('failed')
       return
     }
 
-    // Check payment status
+    // Her zaman Iyzico ile doğrula ve siparişi güncelle (token varsa)
     const run = async () => {
       try {
-        const res = await fetch(`/api/payment/status?token=${token}`)
+        const params = new URLSearchParams({ token })
+        if (order) params.set('orderNumber', order)
+        const res = await fetch(`/api/payment/status?${params.toString()}`)
         const json = await res.json()
         setStatus(json.status === 'success' ? 'success' : 'failed')
       } catch {
