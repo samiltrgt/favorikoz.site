@@ -13,6 +13,6 @@ export async function GET() {
     nesConfigured: configured,
     message: configured
       ? 'NES e-arşiv yapılandırıldı; ödeme başarılı olunca fatura kesilecek.'
-      : 'NES yapılandırılmamış (NES_API_BASE_URL + NES_API_KEY veya NES_CLIENT_ID/SECRET gerekli).',
+      : 'NES yapılandırılmamış (NES_API_BASE_URL, NES_API_KEY, NES_MARKETPLACE_ID gerekli).',
   })
 }

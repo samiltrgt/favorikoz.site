@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
 async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSupabaseServer>>, orderNumber: string | null, paymentToken: string) {
   if (!isNesConfigured()) {
-    console.warn('NES fatura atlandı: NES yapılandırılmamış (NES_API_BASE_URL + NES_API_KEY veya CLIENT_ID/SECRET kontrol edin)')
+    console.warn('NES fatura atlandı: NES yapılandırılmamış (NES_API_BASE_URL, NES_API_KEY, NES_MARKETPLACE_ID kontrol edin)')
     return
   }
   try {
@@ -92,6 +92,7 @@ async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSup
     const shipping = (orderRow.shipping_address as { address?: string; city?: string; zipcode?: string }) || {}
     const items = (orderRow.items as Array<{ name: string; price: number; quantity: number }>) || []
     const orderForInvoice = {
+      id: orderRow.id,
       order_number: orderRow.order_number,
       customer_name: orderRow.customer_name,
       customer_email: orderRow.customer_email,
@@ -102,6 +103,7 @@ async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSup
       subtotal: orderRow.subtotal,
       shipping_cost: orderRow.shipping_cost,
       total: orderRow.total,
+      created_at: orderRow.created_at,
     }
     const invoiceResult = await createEArchiveInvoice(orderForInvoice)
     if (invoiceResult.success) {

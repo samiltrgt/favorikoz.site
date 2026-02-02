@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Search, Filter, Package, Truck, CheckCircle, XCircle, Clock, Eye, Edit2, X } from 'lucide-react'
+import { Search, Filter, Package, Truck, CheckCircle, XCircle, Clock, Eye, Edit2, X, Printer } from 'lucide-react'
+import Link from 'next/link'
 
 interface Order {
   id: string
@@ -20,6 +21,8 @@ interface Order {
   payment_method: string
   created_at: string
   updated_at: string
+  tracking_number?: string | null
+  carrier?: string | null
 }
 
 const statusConfig = {
@@ -91,7 +94,9 @@ export default function AdminOrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: editStatus,
-          payment_status: editPaymentStatus
+          payment_status: editPaymentStatus,
+          tracking_number: editTrackingNumber.trim() || null,
+          carrier: 'surat'
         })
       })
 
@@ -307,6 +312,8 @@ export default function AdminOrdersPage() {
                               setSelectedOrder(order)
                               setEditStatus(order.status)
                               setEditPaymentStatus(order.payment_status)
+                              setEditTrackingNumber(order.tracking_number || '')
+                              setEditPaymentStatus(order.payment_status)
                             }}
                             className="text-black hover:text-gray-600 inline-flex items-center gap-1"
                           >
@@ -337,19 +344,30 @@ export default function AdminOrdersPage() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-2xl font-light text-gray-900">
                   Sipariş #{selectedOrder.order_number}
                 </h2>
-                <button
-                  onClick={() => {
-                    setSelectedOrder(null)
-                    setIsEditingStatus(false)
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/admin/orders/${selectedOrder.id}/shipping-label`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Sürat etiketi yazdır
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setSelectedOrder(null)
+                      setIsEditingStatus(false)
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
 
               <div className="p-6 space-y-6">
@@ -359,7 +377,12 @@ export default function AdminOrdersPage() {
                     <h3 className="font-medium text-gray-900">Sipariş Durumu</h3>
                     {!isEditingStatus ? (
                       <button
-                        onClick={() => setIsEditingStatus(true)}
+                        onClick={() => {
+                          setEditStatus(selectedOrder.status)
+                          setEditPaymentStatus(selectedOrder.payment_status)
+                          setEditTrackingNumber(selectedOrder.tracking_number || '')
+                          setIsEditingStatus(true)
+                        }}
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-800 text-sm"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -378,6 +401,7 @@ export default function AdminOrdersPage() {
                             setIsEditingStatus(false)
                             setEditStatus(selectedOrder.status)
                             setEditPaymentStatus(selectedOrder.payment_status)
+                            setEditTrackingNumber(selectedOrder.tracking_number || '')
                           }}
                           className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
                         >
@@ -407,6 +431,12 @@ export default function AdminOrdersPage() {
                            selectedOrder.payment_status === 'failed' ? 'Başarısız' : 'Beklemede'}
                         </span>
                       </div>
+                      {selectedOrder.tracking_number && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">Kargo Takip No:</span>
+                          <span className="font-mono text-sm text-gray-900">{selectedOrder.tracking_number}</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -439,6 +469,18 @@ export default function AdminOrdersPage() {
                           <option value="completed">Tamamlandı</option>
                           <option value="failed">Başarısız</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kargo Takip Numarası (Sürat Kargo)
+                        </label>
+                        <input
+                          type="text"
+                          value={editTrackingNumber}
+                          onChange={(e) => setEditTrackingNumber(e.target.value)}
+                          placeholder="Örn. 1234567890"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                        />
                       </div>
                     </div>
                   )}

@@ -93,14 +93,17 @@ export async function PUT(
     const { id } = params
     const body = await request.json()
 
-    // Update order
+    const updatePayload: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    }
+    if (body.status !== undefined) updatePayload.status = body.status
+    if (body.payment_status !== undefined) updatePayload.payment_status = body.payment_status
+    if (body.tracking_number !== undefined) updatePayload.tracking_number = body.tracking_number || null
+    if (body.carrier !== undefined) updatePayload.carrier = body.carrier || null
+
     const { data: order, error } = await supabase
       .from('orders')
-      .update({
-        status: body.status,
-        payment_status: body.payment_status,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single()

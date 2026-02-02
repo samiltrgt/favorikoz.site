@@ -163,6 +163,8 @@ export interface Database {
           invoice_uuid: string | null
           invoice_pdf_url: string | null
           invoiced_at: string | null
+          tracking_number: string | null
+          carrier: string | null
           created_at: string
           updated_at: string
         }
@@ -187,6 +189,8 @@ export interface Database {
           invoice_uuid?: string | null
           invoice_pdf_url?: string | null
           invoiced_at?: string | null
+          tracking_number?: string | null
+          carrier?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -211,6 +215,8 @@ export interface Database {
           invoice_uuid?: string | null
           invoice_pdf_url?: string | null
           invoiced_at?: string | null
+          tracking_number?: string | null
+          carrier?: string | null
           created_at?: string
           updated_at?: string
         }

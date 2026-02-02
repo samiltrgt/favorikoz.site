@@ -26,6 +26,8 @@ interface Order {
   updated_at: string
   invoice_pdf_url?: string | null
   invoice_uuid?: string | null
+  tracking_number?: string | null
+  carrier?: string | null
 }
 
 const statusConfig = {
@@ -301,6 +303,17 @@ export default function OrdersPage() {
                           Fatura İndir
                         </a>
                       )}
+                      {order.status === 'shipped' && order.tracking_number && (
+                        <a
+                          href={`https://www.suratkargo.com.tr/takip?barkod=${encodeURIComponent(order.tracking_number)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
+                        >
+                          <Truck className="w-4 h-4" />
+                          Kargoyu takip et
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -461,6 +474,23 @@ export default function OrdersPage() {
                     >
                       <FileText className="w-5 h-5" />
                       Fatura PDF İndir
+                    </a>
+                  </div>
+                )}
+
+                {/* Kargo Takip */}
+                {selectedOrder.status === 'shipped' && selectedOrder.tracking_number && (
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-2">Kargo Takip</h3>
+                    <p className="text-sm text-gray-600 mb-2">Takip no: {selectedOrder.tracking_number}</p>
+                    <a
+                      href={`https://www.suratkargo.com.tr/takip?barkod=${encodeURIComponent(selectedOrder.tracking_number)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-lg transition-colors"
+                    >
+                      <Truck className="w-5 h-5" />
+                      Kargoyu takip et
                     </a>
                   </div>
                 )}

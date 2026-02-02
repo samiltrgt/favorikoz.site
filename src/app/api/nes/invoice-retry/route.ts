@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (!isNesConfigured()) {
       return NextResponse.json({
         success: false,
-        error: 'NES yapılandırılmamış. NES_API_BASE_URL ve NES_API_KEY (veya CLIENT_ID/SECRET) kontrol edin.',
+        error: 'NES yapılandırılmamış. NES_API_BASE_URL, NES_API_KEY ve NES_MARKETPLACE_ID kontrol edin.',
       }, { status: 400 })
     }
 
@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
     const shipping = (orderRow.shipping_address as { address?: string; city?: string; zipcode?: string }) || {}
     const items = (orderRow.items as Array<{ name: string; price: number; quantity: number }>) || []
     const orderForInvoice = {
+      id: orderRow.id,
       order_number: orderRow.order_number,
       customer_name: orderRow.customer_name,
       customer_email: orderRow.customer_email,
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       subtotal: orderRow.subtotal,
       shipping_cost: orderRow.shipping_cost,
       total: orderRow.total,
+      created_at: orderRow.created_at,
     }
 
     const invoiceResult = await createEArchiveInvoice(orderForInvoice)
