@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         itemType: 'VIRTUAL',
         price: toPriceString(shipping / 10),
       })
-    })
+    }
     const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
     const priceStr = toPriceString(sumBasketTL)
 
