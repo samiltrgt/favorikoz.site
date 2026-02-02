@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
 import ProductCardModern from './product-card-modern'
@@ -12,9 +13,9 @@ interface Product {
   price: number
   original_price?: number | null
   image: string
-  rating: number
-  reviews_count: number
-  in_stock: boolean
+  rating?: number
+  reviews_count?: number
+  in_stock?: boolean
 }
 
 interface OwnProductionProps {
@@ -22,37 +23,64 @@ interface OwnProductionProps {
 }
 
 export default function OwnProduction({ products }: OwnProductionProps) {
-  // Favori markamız olan ürünleri filtrele
-  // Büyük/küçük harf ve boşluk farkını göz ardı et
-  const ownProducts = products.filter(p => 
-    p.brand?.toLowerCase().trim() === 'favori'
-  ).slice(0, 8)
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([])
+  const [brandType, setBrandType] = useState<'favori' | 'fontenay' | 'general'>('general')
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Fontenay Paris markalı ürünleri filtrele
-  const fontenayProducts = products.filter(p => 
-    p.brand?.toLowerCase().includes('fontenay')
-  ).slice(0, 8)
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch('/api/own-production')
+        const json = await res.json()
+        if (cancelled) return
+        if (json.success && json.data?.length > 0) {
+          const list = (json.data as any[])
+            .map((row: any) => row.products)
+            .filter(Boolean) as Product[]
+          setDisplayProducts(list)
+          setBrandType('general') // Admin seçimli; başlık "Öne Çıkan Ürünler" gibi genel kalır
+        } else {
+          // Fallback: markaya göre (Favori > Fontenay > ilk 8)
+          const ownProducts = products.filter(p => p.brand?.toLowerCase().trim() === 'favori').slice(0, 8)
+          const fontenayProducts = products.filter(p => p.brand?.toLowerCase().includes('fontenay')).slice(0, 8)
+          let list = products.slice(0, 8)
+          let type: 'favori' | 'fontenay' | 'general' = 'general'
+          if (ownProducts.length > 0) {
+            list = ownProducts
+            type = 'favori'
+          } else if (fontenayProducts.length > 0) {
+            list = fontenayProducts
+            type = 'fontenay'
+          }
+          setDisplayProducts(list)
+          setBrandType(type)
+        }
+      } catch {
+        if (cancelled) return
+        const ownProducts = products.filter(p => p.brand?.toLowerCase().trim() === 'favori').slice(0, 8)
+        const fontenayProducts = products.filter(p => p.brand?.toLowerCase().includes('fontenay')).slice(0, 8)
+        let list = products.slice(0, 8)
+        let type: 'favori' | 'fontenay' | 'general' = 'general'
+        if (ownProducts.length > 0) {
+          list = ownProducts
+          type = 'favori'
+        } else if (fontenayProducts.length > 0) {
+          list = fontenayProducts
+          type = 'fontenay'
+        }
+        setDisplayProducts(list)
+        setBrandType(type)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [products])
 
-  // Debug: Console'da kontrol et
-  console.log('Total products:', products.length)
-  console.log('Favori products:', ownProducts.length)
-  console.log('Fontenay products:', fontenayProducts.length)
-
-  // Öncelik sırası: Favori > Fontenay > Tüm ürünler
-  let displayProducts = products.slice(0, 8)
-  let brandType: 'favori' | 'fontenay' | 'general' = 'general'
-  
-  if (ownProducts.length > 0) {
-    displayProducts = ownProducts
-    brandType = 'favori'
-  } else if (fontenayProducts.length > 0) {
-    displayProducts = fontenayProducts
-    brandType = 'fontenay'
-  }
-
-  if (displayProducts.length === 0) {
-    return null
-  }
+  if (isLoading) return null
+  if (displayProducts.length === 0) return null
 
   return (
     <section className="relative py-20 overflow-hidden bg-gradient-to-br from-[hsl(36,33%,96%)] via-white to-[hsl(30,25%,90%)]">

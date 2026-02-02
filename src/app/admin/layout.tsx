@@ -16,6 +16,7 @@ import {
   BarChart3,
   Star,
   Sparkles,
+  Gem,
   FolderTree
 } from 'lucide-react'
 
@@ -45,6 +46,7 @@ export default function AdminLayout({
     { name: 'Ürün Yönetimi', href: '/admin/products', icon: Package },
     { name: 'Kategori Yönetimi', href: '/admin/categories', icon: FolderTree },
     { name: 'Öne Çıkan Ürünler', href: '/admin/featured-products', icon: Star },
+    { name: 'Exclusive Collection', href: '/admin/own-production', icon: Gem },
     { name: 'Hero Ürünleri', href: '/admin/hero-products', icon: Sparkles },
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
     { name: 'Promo Banner', href: '/admin/promo-banners', icon: Image },

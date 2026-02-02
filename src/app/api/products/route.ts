@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
     const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
+    const scopeAdmin = searchParams.get('scope') === 'admin' // Admin paneli: tüm ürünler (stok filtresi yok)
     
     const ids = idsParam
       ? idsParam.split(',').map((s) => s.trim()).filter(Boolean)
@@ -19,13 +20,21 @@ export async function GET(request: NextRequest) {
     
     const fetchByIds = ids.length > 0
     
+    let skipStockFilter = fetchByIds
+    if (scopeAdmin) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        if (profile?.role === 'admin') skipStockFilter = true
+      }
+    }
+    
     let query = supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
     
-    // ids=... ile çağrıldığında stok filtresi uygulanmaz (favoriler sayfası için)
-    if (!fetchByIds) {
+    if (!skipStockFilter) {
       query = query.eq('in_stock', true).gt('stock_quantity', 0)
     }
     
