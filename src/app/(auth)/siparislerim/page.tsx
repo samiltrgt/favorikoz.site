@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Package, Truck, CheckCircle, XCircle, Clock, ChevronRight, Search, Filter } from 'lucide-react'
+import { Package, Truck, CheckCircle, XCircle, Clock, ChevronRight, Search, Filter, FileText } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import Link from 'next/link'
@@ -24,6 +24,8 @@ interface Order {
   payment_method: string
   created_at: string
   updated_at: string
+  invoice_pdf_url?: string | null
+  invoice_uuid?: string | null
 }
 
 const statusConfig = {
@@ -279,8 +281,8 @@ export default function OrdersPage() {
                       </div>
                     </div>
 
-                    {/* Order Details Button */}
-                    <div className="border-t border-gray-100 pt-4 mt-4">
+                    {/* Order Details + Invoice */}
+                    <div className="border-t border-gray-100 pt-4 mt-4 flex flex-wrap items-center gap-4">
                       <button
                         onClick={() => setSelectedOrder(order)}
                         className="flex items-center gap-2 text-sm font-medium text-black hover:text-gray-600 transition-colors"
@@ -288,6 +290,17 @@ export default function OrdersPage() {
                         Sipariş Detaylarını Gör
                         <ChevronRight className="w-4 h-4" />
                       </button>
+                      {order.invoice_pdf_url && (
+                        <a
+                          href={order.invoice_pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black transition-colors"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Fatura İndir
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -435,6 +448,22 @@ export default function OrdersPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* E-arşiv Fatura */}
+                {selectedOrder.invoice_pdf_url && (
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-2">E-arşiv Fatura</h3>
+                    <a
+                      href={selectedOrder.invoice_pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg transition-colors"
+                    >
+                      <FileText className="w-5 h-5" />
+                      Fatura PDF İndir
+                    </a>
+                  </div>
+                )}
 
                 {/* Dates */}
                 <div className="text-sm text-gray-500 space-y-1">

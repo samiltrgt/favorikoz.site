@@ -149,6 +149,7 @@ export interface Database {
           customer_name: string
           customer_email: string
           customer_phone: string | null
+          customer_tc: string | null
           shipping_address: Json
           billing_address: Json | null
           items: Json
@@ -159,6 +160,9 @@ export interface Database {
           payment_method: string
           payment_status: 'pending' | 'completed' | 'failed'
           payment_token: string | null
+          invoice_uuid: string | null
+          invoice_pdf_url: string | null
+          invoiced_at: string | null
           created_at: string
           updated_at: string
         }
@@ -169,6 +173,7 @@ export interface Database {
           customer_name: string
           customer_email: string
           customer_phone?: string | null
+          customer_tc?: string | null
           shipping_address: Json
           billing_address?: Json | null
           items: Json
@@ -179,6 +184,9 @@ export interface Database {
           payment_method: string
           payment_status?: 'pending' | 'completed' | 'failed'
           payment_token?: string | null
+          invoice_uuid?: string | null
+          invoice_pdf_url?: string | null
+          invoiced_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -189,6 +197,7 @@ export interface Database {
           customer_name?: string
           customer_email?: string
           customer_phone?: string | null
+          customer_tc?: string | null
           shipping_address?: Json
           billing_address?: Json | null
           items?: Json
@@ -199,6 +208,9 @@ export interface Database {
           payment_method?: string
           payment_status?: 'pending' | 'completed' | 'failed'
           payment_token?: string | null
+          invoice_uuid?: string | null
+          invoice_pdf_url?: string | null
+          invoiced_at?: string | null
           created_at?: string
           updated_at?: string
         }

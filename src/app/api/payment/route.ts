@@ -189,6 +189,7 @@ export async function POST(request: NextRequest) {
             customer_name: customer.name || '',
             customer_email: customer.email || '',
             customer_phone: customer.phone || '',
+            customer_tc: tc || null,
             shipping_address: {
               address: customer.address || '',
               city: customer.city || '',
