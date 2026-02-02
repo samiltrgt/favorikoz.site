@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { ArrowLeft, Filter, Grid, List, Star } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import ProductCardModern from '@/components/product-card-modern'
 
 // Alt kategori isimleri mapping
 const subcategoryNames: { [key: string]: { [key: string]: string } } = {
@@ -204,17 +205,25 @@ export default function SubcategoryPage() {
                 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                 : 'grid-cols-1'
             }`}>
-              {filteredProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`group bg-white border border-gray-100 hover:shadow-lg transition-all duration-300 ${
-                    viewMode === 'list' ? 'flex gap-4 p-4' : 'p-4'
-                  }`}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className={`relative overflow-hidden bg-gray-50 ${
-                    viewMode === 'list' ? 'w-24 h-24 flex-shrink-0' : 'aspect-square'
-                  }`}>
+              {viewMode === 'grid' ? (
+                // Grid view - Modern cards
+                filteredProducts.map((product, index) => (
+                  <ProductCardModern 
+                    key={product.id} 
+                    product={product} 
+                    index={index} 
+                    showBrandBadge={false}
+                  />
+                ))
+              ) : (
+                // List view - Eski stil
+                filteredProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="group bg-white border border-gray-100 hover:shadow-lg transition-all duration-300 flex gap-4 p-4"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="relative overflow-hidden bg-gray-50 w-24 h-24 flex-shrink-0">
                     <Image
                       src={product.image}
                       alt={product.name}
@@ -286,7 +295,8 @@ export default function SubcategoryPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           ) : (
             <div className="text-center py-20">

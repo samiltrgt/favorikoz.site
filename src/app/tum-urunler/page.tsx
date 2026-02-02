@@ -16,6 +16,7 @@ import {
 // Fetch from API to reflect admin edits
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import ProductCardModern from '@/components/product-card-modern'
 
 // Breadcrumb component
 function Breadcrumbs() {
@@ -103,89 +104,15 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
     )
   }
 
-  return (
-    <div 
-      className="bg-white group cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
-    >
-      {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        
-        {/* Badges - Minimal style */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.is_new && (
-            <span className="bg-black text-white text-xs px-2 py-1 uppercase tracking-wide">New</span>
-          )}
-          {product.original_price && product.original_price > product.price && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
-              -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
-            </span>
-          )}
-        </div>
-
-        {/* Quick actions - Hidden by default, show on hover */}
-        <div className={`absolute top-3 right-3 flex flex-col gap-2 transition-all duration-300 ${
-          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-        }`}>
-          <button className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors">
-            <Heart className="w-4 h-4 text-black" />
-          </button>
-          <button className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors">
-            <ShoppingCart className="w-4 h-4 text-black" />
-          </button>
-        </div>
-
-        {/* Out of stock overlay */}
-        {!product.in_stock && (
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-            <span className="text-black text-sm font-light uppercase tracking-wide">Out of Stock</span>
-          </div>
-        )}
-      </div>
-
-      {/* Product Info - Minimal Zara style */}
-      <div className="p-3 space-y-1">
-        <Link href={`/urun/${product.slug}`}>
-          <h3 className="font-medium text-black text-sm line-clamp-2 leading-tight hover:text-gray-600 transition-colors">{product.name}</h3>
-        </Link>
-        <p className="text-gray-700 text-xs uppercase tracking-wide font-medium">{product.brand}</p>
-        
-        {/* Rating - Minimal */}
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-3 h-3 ${
-                i < product.rating ? 'text-black' : 'text-gray-300'
-              }`}
-            />
-          ))}
-          <span className="text-xs text-gray-400 ml-1">({product.reviewCount})</span>
-        </div>
-
-        {/* Price - Clean and minimal */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-light text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          {product.original_price && (
-            <span className="text-xs text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+  // Grid view - Modern card kullan
+  return <ProductCardModern product={product} index={0} showBrandBadge={false} />
 }
+
 
 function AllProductsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
+  const brandFilter = searchParams.get('brand') || ''
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
@@ -218,6 +145,13 @@ function AllProductsContent() {
     let filtered = allProducts.filter((product: any) => 
       product.in_stock && product.stock_quantity > 0
     )
+    
+    // Brand filtresi uygula
+    if (brandFilter) {
+      filtered = filtered.filter((product: any) => 
+        product.brand?.toLowerCase().includes(brandFilter.toLowerCase())
+      )
+    }
 
     // Sort
     switch (sortBy) {
@@ -246,7 +180,7 @@ function AllProductsContent() {
 
     setFilteredProducts(filtered)
     setPage(1)
-  }, [sortBy, allProducts])
+  }, [sortBy, allProducts, brandFilter])
 
   return (
     <div className="min-h-screen bg-white">
@@ -263,11 +197,16 @@ function AllProductsContent() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
             <div>
               <h1 className="text-3xl font-light text-black mb-2">
-                {searchQuery ? `"${searchQuery}" için arama sonuçları` : 'Tüm Ürünler'}
+                {searchQuery 
+                  ? `"${searchQuery}" için arama sonuçları` 
+                  : brandFilter 
+                  ? `${brandFilter.charAt(0).toUpperCase() + brandFilter.slice(1)} Ürünleri`
+                  : 'Tüm Ürünler'
+                }
               </h1>
               <p className="text-gray-600 text-sm">
                 {filteredProducts.length} ürün bulundu
-                {searchQuery && (
+                {(searchQuery || brandFilter) && (
                   <Link 
                     href="/tum-urunler" 
                     className="ml-2 text-gray-400 hover:text-black underline"
