@@ -33,13 +33,17 @@ export default function FavoritesPage() {
         return
       }
 
-      // Fetch product details
-      const response = await fetch('/api/products')
+      // Favori ürünleri ids ile çek (stokta olmasa bile listelenir)
+      const response = await fetch(`/api/products?ids=${ids.join(',')}`)
       const result = await response.json()
 
-      if (result.success) {
-        const favoriteProducts = result.data.filter((p: any) => ids.includes(p.id))
+      if (result.success && result.data) {
+        // API ids sırasını korumayabilir; favori sırasına göre sırala
+        const byId = new Map((result.data as any[]).map((p) => [p.id, p]))
+        const favoriteProducts = ids.map((id) => byId.get(id)).filter(Boolean)
         setProducts(favoriteProducts)
+      } else {
+        setProducts([])
       }
     } catch (error) {
       console.error('Error loading favorites:', error)

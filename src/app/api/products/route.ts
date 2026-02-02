@@ -11,29 +11,35 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 1000
     const category = searchParams.get('category')
     const search = searchParams.get('search')
-    const inStock = searchParams.get('inStock')
+    const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
+    
+    const ids = idsParam
+      ? idsParam.split(',').map((s) => s.trim()).filter(Boolean)
+      : []
+    
+    const fetchByIds = ids.length > 0
     
     let query = supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
-      .eq('in_stock', true) // Müşterilere sadece stokta olan ürünleri göster
-      .gt('stock_quantity', 0) // Stok miktarı 0'dan büyük olmalı
     
-    // Apply filters
-    if (category) {
-      query = query.eq('category_slug', category)
+    // ids=... ile çağrıldığında stok filtresi uygulanmaz (favoriler sayfası için)
+    if (!fetchByIds) {
+      query = query.eq('in_stock', true).gt('stock_quantity', 0)
     }
     
-    if (search) {
-      // Search in name, brand, and description fields
-      query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
+    if (fetchByIds) {
+      query = query.in('id', ids)
+    } else {
+      if (category) {
+        query = query.eq('category_slug', category)
+      }
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
+      }
+      query = query.order('created_at', { ascending: false }).limit(limit)
     }
-    
-    // inStock parametresi artık gereksiz çünkü varsayılan olarak filtrelenmiş durumda
-    
-    // Apply limit and order
-    query = query.order('created_at', { ascending: false }).limit(limit)
     
     const { data, error } = await query
     
