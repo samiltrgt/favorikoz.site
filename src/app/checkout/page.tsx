@@ -129,6 +129,11 @@ export default function CheckoutPage() {
         setError('Geçerli bir telefon numarası girin')
         return false
       }
+      const tc = (formData.tc || '').replace(/\s/g, '')
+      if (!tc || tc.length !== 11 || !/^[0-9]{11}$/.test(tc)) {
+        setError('Geçerli 11 haneli TC Kimlik No girin (ödeme için zorunludur)')
+        return false
+      }
       return true
     }
     
@@ -423,15 +428,18 @@ export default function CheckoutPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      TC Kimlik No (İsteğe bağlı)
+                      TC Kimlik No <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.tc}
-                      onChange={(e) => setFormData({ ...formData, tc: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, tc: e.target.value.replace(/\D/g, '').slice(0, 11) })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-all"
                       placeholder="11 haneli TC kimlik numaranız"
                       maxLength={11}
+                      required
                     />
                   </div>
 

@@ -30,6 +30,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Sepet boş' }, { status: 400 })
     }
 
+    const tc = (customer.tc || '').toString().replace(/\s/g, '')
+    if (!tc || tc.length !== 11 || !/^[0-9]{11}$/.test(tc)) {
+      return NextResponse.json(
+        { success: false, error: 'Geçerli 11 haneli TC Kimlik No zorunludur' },
+        { status: 400 }
+      )
+    }
+
     // Calculate subtotal (prices are in 10x format: 100 TL = 1000)
     const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
     
@@ -124,7 +132,7 @@ export async function POST(request: NextRequest) {
         surname: customer.surname || '',
         gsmNumber: customer.phone || '',
         email: customer.email || '',
-        identityNumber: customer.tc || '',
+        identityNumber: tc,
         lastLoginDate: toIyzicoDate(new Date()),
         registrationDate: toIyzicoDate(new Date()),
         registrationAddress: customer.address || '',
