@@ -76,7 +76,7 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
                     }`}
                   />
                 ))}
-                <span className="text-xs text-gray-400 ml-1">({product.reviewCount})</span>
+                <span className="text-xs text-gray-400 ml-1">({product.reviews_count ?? 0})</span>
               </div>
             </div>
             <div className="flex items-center gap-4">

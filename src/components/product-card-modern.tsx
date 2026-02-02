@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Star, Heart, ShoppingCart } from 'lucide-react'
+import { Star, Heart, ShoppingCart, Loader2 } from 'lucide-react'
+import { toggleFavorite, isFavorite } from '@/lib/favorites'
+import { addToCart } from '@/lib/cart'
 
 interface Product {
   id: string
@@ -26,7 +28,56 @@ interface ProductCardModernProps {
 
 export default function ProductCardModern({ product, index = 0, showBrandBadge = true }: ProductCardModernProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isFavorite, setIsFavorite] = useState(false)
+  const [isFavoriteState, setIsFavoriteState] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isCartLoading, setIsCartLoading] = useState(false)
+
+  // Load favorite status from API (Supabase)
+  useEffect(() => {
+    let cancelled = false
+    isFavorite(product.id).then((fav) => {
+      if (!cancelled) setIsFavoriteState(fav)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [product.id])
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsFavoriteLoading(true)
+    try {
+      const result = await toggleFavorite(product.id)
+      if (result.success) setIsFavoriteState(result.isFavorite)
+      else if (result.error?.toLowerCase().includes('giriş')) {
+        if (typeof window !== 'undefined' && confirm('Favorilere eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?'))
+          window.location.href = '/giris'
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+    } finally {
+      setIsFavoriteLoading(false)
+    }
+  }
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (product.in_stock === false) return
+    setIsCartLoading(true)
+    try {
+      // API fiyatı /10 formatında; sepette 10x (kuruş benzeri) kullanılıyor
+      addToCart({
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: product.image,
+        price: product.price * 10,
+        qty: 1,
+      })
+    } finally {
+      setIsCartLoading(false)
+    }
+  }
 
   const discount = product.original_price && product.original_price > product.price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
@@ -78,22 +129,30 @@ export default function ProductCardModern({ product, index = 0, showBrandBadge =
           }`}
         >
           <button
-            onClick={(e) => {
-              e.preventDefault()
-              setIsFavorite(!isFavorite)
-            }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur-sm rounded-xl hover:bg-[hsl(30,25%,90%)] transition-colors shadow-lg"
+            type="button"
+            onClick={handleToggleFavorite}
+            disabled={isFavoriteLoading}
+            aria-label={isFavoriteState ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur-sm rounded-xl hover:bg-[hsl(30,25%,90%)] transition-colors shadow-lg disabled:opacity-70"
           >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-[hsl(24,15%,15%)] text-[hsl(24,15%,15%)]' : 'text-[hsl(24,10%,40%)]'}`} />
+            {isFavoriteLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-[hsl(24,10%,40%)]" />
+            ) : (
+              <Heart className={`w-4 h-4 ${isFavoriteState ? 'fill-[hsl(24,15%,15%)] text-[hsl(24,15%,15%)]' : 'text-[hsl(24,10%,40%)]'}`} />
+            )}
           </button>
           <button
-            onClick={(e) => {
-              e.preventDefault()
-              // Sepete ekle fonksiyonu
-            }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[hsl(24,15%,15%)] text-white rounded-xl hover:bg-[hsl(24,15%,20%)] hover:shadow-xl transition-all"
+            type="button"
+            onClick={handleAddToCart}
+            disabled={isCartLoading || product.in_stock === false}
+            aria-label="Sepete ekle"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[hsl(24,15%,15%)] text-white rounded-xl hover:bg-[hsl(24,15%,20%)] hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <ShoppingCart className="w-4 h-4" />
+            {isCartLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ShoppingCart className="w-4 h-4" />
+            )}
           </button>
         </div>
       </Link>
