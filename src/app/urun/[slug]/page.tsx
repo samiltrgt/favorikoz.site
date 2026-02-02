@@ -24,13 +24,10 @@ export default function ProductDetailPage({ params }: { params: Params }) {
   useEffect(() => {
     const loadProduct = async () => {
       try {
-        const response = await fetch('/api/products')
+        const response = await fetch(`/api/products/by-slug/${encodeURIComponent(params.slug)}`)
         const result = await response.json()
-        if (result.success) {
-          const foundProduct = result.data.find((p: any) => p.slug === params.slug)
-          if (foundProduct) {
-            setProduct(foundProduct)
-          }
+        if (result.success && result.data) {
+          setProduct(result.data)
         }
       } catch (error) {
         console.error('Error loading product:', error)
