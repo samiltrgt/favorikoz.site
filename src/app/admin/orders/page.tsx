@@ -95,7 +95,7 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({
           status: editStatus,
           payment_status: editPaymentStatus,
-          tracking_number: editTrackingNumber.trim() || null,
+          tracking_number: (editTrackingNumber ?? '').trim() || null,
           carrier: 'surat'
         })
       })
