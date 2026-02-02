@@ -1,9 +1,21 @@
 import type { MetadataRoute } from 'next'
+import { headers } from 'next/headers'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://favorikoz.site'
+async function getBaseUrl(): Promise<string> {
+  try {
+    const headersList = await headers()
+    const host = headersList.get('host')
+    const proto = headersList.get('x-forwarded-proto') ?? headersList.get('x-url')?.split('://')[0] ?? 'https'
+    if (host) return `${proto === 'https' ? 'https' : 'http'}://${host}`
+  } catch {
+    // headers() bazen build/static ortamında yoktur
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || 'https://www.favorikozmetik.com'
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE_URL = await getBaseUrl()
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/hakkimizda`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
