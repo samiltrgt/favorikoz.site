@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { FileText, Users, ShoppingBag, Shield, Copyright, AlertTriangle, Link as LinkIcon, RefreshCw, Scale, Mail, CheckCircle } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Kullanım Koşulları | Favori Kozmetik',
+  description: 'Web sitemizi kullanmadan önce lütfen kullanım koşullarımızı okuyunuz.',
+  alternates: { canonical: '/kullanim-kosullari' },
+}
 
 export default function TermsOfServicePage() {
   return (

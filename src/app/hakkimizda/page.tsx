@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Sparkles, Target } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Hakkımızda | Favori Kozmetik',
+  description: 'Favori Kozmetik hakkında bilgi. Güzelliği bir rutin değil, bir deneyim olarak görüyoruz. Tırnak, bakım ve güzellik kategorilerinde güvenilir ürünler.',
+  alternates: { canonical: '/hakkimizda' },
+}
 
 export default function AboutPage() {
   return (

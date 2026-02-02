@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Cookie, FileText, Settings, BarChart3, Zap, Megaphone, Shield, RefreshCw, Mail, Info } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Çerez Politikası | Favori Kozmetik',
+  description: 'Web sitemizde kullanılan çerezler hakkında bilgilendirme ve tercihleriniz.',
+  alternates: { canonical: '/cerez-politikasi' },
+}
 
 export default function CookiePolicyPage() {
   return (

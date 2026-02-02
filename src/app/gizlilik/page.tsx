@@ -1,7 +1,14 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Lock, Database, Eye, Shield, Share2, Cookie, User, RefreshCw, Mail, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Gizlilik Politikası | Favori Kozmetik',
+  description: 'Kişisel bilgilerinizin korunması bizim için önceliktir. Gizlilik politikamızı inceleyin.',
+  alternates: { canonical: '/gizlilik' },
+}
 
 export default function PrivacyPolicyPage() {
   return (

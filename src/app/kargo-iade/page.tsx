@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Truck, RefreshCw, Shield, Mail, Phone, Clock, Package, CheckCircle } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Kargo ve İade | Favori Kozmetik',
+  description: 'Kargo süreleri, gönderim koşulları ve iade politikası. Siparişleriniz güvenli ve hızlı şekilde size ulaşır.',
+  alternates: { canonical: '/kargo-iade' },
+}
 
 export default function ShippingReturnsPage() {
   return (

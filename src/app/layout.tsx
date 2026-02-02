@@ -16,14 +16,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://favorikozmetik.com'),
+  metadataBase: new URL('https://www.favorikozmetik.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
     description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
-    url: 'https://favorikozmetik.com',
+    url: 'https://www.favorikozmetik.com',
     siteName: 'Favori Kozmetik',
     locale: 'tr_TR',
     type: 'website',
@@ -46,6 +46,27 @@ export const metadata: Metadata = {
   },
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.favorikozmetik.com/#organization',
+      name: 'Favori Kozmetik',
+      url: 'https://www.favorikozmetik.com',
+      logo: { '@type': 'ImageObject', url: 'https://www.favorikozmetik.com/logo.png' },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.favorikozmetik.com/#website',
+      url: 'https://www.favorikozmetik.com',
+      name: 'Favori Kozmetik',
+      publisher: { '@id': 'https://www.favorikozmetik.com/#organization' },
+      inLanguage: 'tr-TR',
+    },
+  ],
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -54,6 +75,10 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {children}
       </body>
     </html>

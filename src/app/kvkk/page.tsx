@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Shield, FileText, Eye, Lock, Mail, Building, Database, Users, Share2, Clock, CheckCircle } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'KVKK Aydınlatma Metni | Favori Kozmetik',
+  description: 'Kişisel Verilerin Korunması Kanunu kapsamında aydınlatma metni ve bilgilendirme.',
+  alternates: { canonical: '/kvkk' },
+}
 
 export default function KVKKPage() {
   return (
