@@ -28,6 +28,8 @@ npm run build
 npm start
 ```
 
+**Not:** `npm install` sırasında `rimraf`, `glob`, `inflight`, `eslint` vb. için “deprecated” uyarıları görebilirsiniz. Bunlar Next.js ve ESLint’in kullandığı dolaylı bağımlılıklardan gelir; projeyi bozmaz. Uyarıları yok sayabilir veya ileride Next.js / ESLint güncellemeleriyle azalmasını bekleyebilirsiniz.
+
 ## 🔧 Konfigürasyon
 
 ### Environment Variables

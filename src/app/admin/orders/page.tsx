@@ -43,6 +43,8 @@ export default function AdminOrdersPage() {
   const [isEditingStatus, setIsEditingStatus] = useState(false)
   const [editStatus, setEditStatus] = useState('')
   const [editPaymentStatus, setEditPaymentStatus] = useState('')
+  const [editTrackingNumber, setEditTrackingNumber] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     loadOrders()
@@ -87,7 +89,9 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder) return
+    if (isSaving) return
 
+    setIsSaving(true)
     try {
       const response = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
         method: 'PUT',
@@ -108,11 +112,13 @@ export default function AdminOrdersPage() {
         setIsEditingStatus(false)
         alert('Sipariş durumu güncellendi')
       } else {
-        alert('Hata: ' + result.error)
+        alert('Hata: ' + (result.error || response.statusText))
       }
     } catch (error) {
       console.error('Error updating order:', error)
       alert('Sipariş güncellenirken bir hata oluştu')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -391,10 +397,16 @@ export default function AdminOrdersPage() {
                     ) : (
                       <div className="flex gap-2">
                         <button
-                          onClick={handleUpdateStatus}
-                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleUpdateStatus()
+                          }}
+                          disabled={isSaving}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                         >
-                          Kaydet
+                          {isSaving ? 'Kaydediliyor…' : 'Kaydet'}
                         </button>
                         <button
                           onClick={() => {
