@@ -40,8 +40,30 @@ export async function POST(request: NextRequest) {
     
     // Total price in 10x format
     const totalPrice = subtotal + shipping
-    // Convert to TL for Iyzico (divide by 10 to get actual TL)
-    const priceStr = toPriceString(totalPrice / 10)
+
+    // Iyzico: Gönderilen tutar = tüm kırılımların toplamı olmalı. Basket kalemleri satır toplamı + kargo.
+    const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = items.map(item => {
+      const qty = item.quantity || 1
+      const lineTotalTL = ((item.price || 0) * qty) / 10 // satır toplamı TL
+      return {
+        id: item.id,
+        name: item.name,
+        category1: item.category || 'Genel',
+        itemType: 'PHYSICAL',
+        price: toPriceString(lineTotalTL),
+      }
+    })
+    if (shipping > 0) {
+      basketItemsForIyzico.push({
+        id: 'shipping',
+        name: 'Kargo',
+        category1: 'Kargo',
+        itemType: 'VIRTUAL',
+        price: toPriceString(shipping / 10),
+      })
+    })
+    const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
+    const priceStr = toPriceString(sumBasketTL)
 
     // Detect current domain dynamically
     const getBaseUrl = () => {
@@ -125,13 +147,7 @@ export async function POST(request: NextRequest) {
         address: customer.address || '',
         zipCode: customer.zipCode || ''
       },
-      basketItems: items.map(item => ({
-        id: item.id,
-        name: item.name,
-        category1: item.category || 'Genel',
-        itemType: 'PHYSICAL',
-        price: toPriceString(item.price / 10) // Convert from 10x format to TL
-      })),
+      basketItems: basketItemsForIyzico,
       callbackUrl,
       options: {
         currency: 'TRY'
