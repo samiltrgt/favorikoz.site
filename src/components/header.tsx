@@ -225,19 +225,24 @@ export default function Header() {
     return () => { isMounted = false }
   }, [])
 
-  // Load category counts dynamically from API so edits reflect in header
+  // Load category/subcategory counts from API (stokta olan ürünler; navbar’da güncel sayı)
   useEffect(() => {
     let isMounted = true
     const loadCounts = async () => {
       try {
         const res = await fetch('/api/products', { cache: 'no-store' })
         const json = await res.json()
-        if (json.success) {
+        if (json.success && Array.isArray(json.data)) {
           const counts: Record<string, number> = {}
           for (const p of json.data as any[]) {
-            const key = p.category
-            if (!key) continue
-            counts[key] = (counts[key] || 0) + 1
+            const catSlug = p.category_slug || p.category
+            const subSlug = p.subcategory_slug
+            if (subSlug) {
+              counts[subSlug] = (counts[subSlug] || 0) + 1
+            }
+            if (catSlug) {
+              counts[catSlug] = (counts[catSlug] || 0) + 1
+            }
           }
           if (!isMounted) return
           setCategoryCounts(counts)
