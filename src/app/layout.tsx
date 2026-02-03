@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL('https://www.favorikozmetik.com'),
   alternates: {
-    canonical: '/',
+    canonical: 'https://www.favorikozmetik.com/',
   },
   openGraph: {
     title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',

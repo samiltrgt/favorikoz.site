@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next'
 import { headers } from 'next/headers'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+const FALLBACK_BASE = 'https://www.favorikozmetik.com'
+
 async function getBaseUrl(): Promise<string> {
   try {
     const headersList = await headers()
@@ -11,11 +13,19 @@ async function getBaseUrl(): Promise<string> {
   } catch {
     // headers() bazen build/static ortamında yoktur
   }
-  return process.env.NEXT_PUBLIC_BASE_URL || 'https://www.favorikozmetik.com'
+  return process.env.NEXT_PUBLIC_BASE_URL || FALLBACK_BASE
 }
 
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE_URL = await getBaseUrl()
+  let BASE_URL: string
+  try {
+    BASE_URL = await getBaseUrl()
+    if (!BASE_URL || !BASE_URL.startsWith('http')) BASE_URL = FALLBACK_BASE
+  } catch {
+    BASE_URL = FALLBACK_BASE
+  }
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/hakkimizda`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
@@ -82,6 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticPages, ...categoryEntries, ...productEntries]
   } catch {
+    // Supabase/DB hata verirse en azından statik sayfalar dönsün; Google her zaman geçerli XML alır
     return staticPages
   }
 }
