@@ -32,6 +32,20 @@
 - ✅ "Beni hatırla" (Supabase session)
 - ✅ Başarılı girişte `/hesabim` sayfasına yönlendirme
 - ✅ Header'da kullanıcı adı görünür
+- ✅ **E-posta doğrulanmamış** hatası: Supabase "Confirm email" açıksa, kullanıcı kayıt sonrası e-postadaki bağlantıyı tıklayana kadar giriş yapamaz. Bu durumda sitede Türkçe mesaj gösterilir (gelen kutusu ve spam kontrolü önerilir). E-posta doğrulama istemiyorsanız: **Supabase Dashboard → Authentication → Providers → Email** içinde **"Confirm email"** seçeneğini kapatın.
+- ✅ **Şifremi unuttum** linki (şifre alanının yanında) → `/sifremi-unuttum`
+
+---
+
+### 2b. **Şifremi Unuttum / Şifre Sıfırlama** ✅
+**Sayfalar:** `/sifremi-unuttum` (e-posta girişi), `/sifre-yenile` (maildeki link ile yeni şifre)  
+**API:** `POST /api/auth/forgot-password` (body: `{ "email": "..." }`)
+
+**Özellikler:**
+- ✅ Giriş sayfasında "Şifremi unuttum" linki
+- ✅ E-posta girilir → Supabase şifre sıfırlama maili gönderir (Reset password şablonu)
+- ✅ Maildeki buton `/sifre-yenile` sayfasına yönlendirir; kullanıcı yeni şifre belirler
+- **Supabase ayarı:** Dashboard → Authentication → URL Configuration → Redirect URLs listesine `https://www.favorikozmetik.com/sifre-yenile` ve (geliştirme için) `http://localhost:3000/sifre-yenile` ekleyin. Production için `.env.local` içinde `NEXT_PUBLIC_SITE_URL=https://www.favorikozmetik.com` tanımlı olmalı.
 
 ---
 

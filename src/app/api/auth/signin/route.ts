@@ -25,6 +25,16 @@ export async function POST(request: NextRequest) {
     
     if (authError) {
       console.error('Auth error:', authError)
+      const msg = (authError.message || '').toLowerCase()
+      if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'E-posta adresinizi henüz doğrulamadınız. Kayıt sonrası size gönderilen e-postadaki bağlantıya tıklayın. Gelen kutusu ve spam klasörünü kontrol edin.',
+          },
+          { status: 403 }
+        )
+      }
       return NextResponse.json(
         { success: false, error: 'Email veya şifre hatalı' },
         { status: 401 }

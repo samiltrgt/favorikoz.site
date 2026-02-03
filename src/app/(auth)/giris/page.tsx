@@ -16,9 +16,11 @@ export default function SignInPage() {
     email: '',
     password: '',
   })
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMessage(null)
     setIsLoading(true)
 
     try {
@@ -43,11 +45,11 @@ export default function SignInPage() {
         alert('Giriş başarılı!')
         router.push('/hesabim')
       } else {
-        alert('Hata: ' + result.error)
+        setErrorMessage(result.error || 'Giriş yapılamadı.')
       }
     } catch (error) {
       console.error('Signin error:', error)
-      alert('Giriş sırasında bir hata oluştu.')
+      setErrorMessage('Giriş sırasında bir hata oluştu.')
     } finally {
       setIsLoading(false)
     }
@@ -66,6 +68,11 @@ export default function SignInPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errorMessage && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                  {errorMessage}
+                </div>
+              )}
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -86,9 +93,14 @@ export default function SignInPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Şifre
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Şifre
+                  </label>
+                  <Link href="/sifremi-unuttum" className="text-sm text-gray-600 hover:text-black">
+                    Şifremi unuttum
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
