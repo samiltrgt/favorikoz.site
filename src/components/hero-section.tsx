@@ -137,6 +137,7 @@ export default function HeroSection() {
             alt="hero-bg"
             fill
             priority={i === 0}
+            sizes="100vw"
             className={`object-cover transition-opacity duration-700 ${i === currentSlide ? 'opacity-20' : 'opacity-0'}`}
           />
         ))}
@@ -197,6 +198,7 @@ export default function HeroSection() {
                                     src={product.image}
                                     alt={product.name}
                                     fill
+                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 400px"
                                     className="object-cover"
                                   />
                                 ) : (

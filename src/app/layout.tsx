@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
@@ -67,6 +67,13 @@ const jsonLd = {
   ],
 }
 
+function SupabasePreconnect() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const origin = url ? new URL(url).origin : null
+  if (!origin) return null
+  return <link rel="preconnect" href={origin} />
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -74,6 +81,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <SupabasePreconnect />
+      </head>
       <body className={inter.className}>
         <script
           type="application/ld+json"
