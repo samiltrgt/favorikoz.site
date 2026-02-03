@@ -18,6 +18,7 @@ export default function SignUpPage() {
     password: '',
     confirmPassword: '',
   })
+  const [signupSuccess, setSignupSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,8 +50,7 @@ export default function SignUpPage() {
       const result = await response.json()
 
       if (result.success) {
-        alert('Kayıt başarılı! Giriş yapabilirsiniz.')
-        router.push('/giris')
+        setSignupSuccess(true)
       } else {
         alert('Hata: ' + result.error)
       }
@@ -74,6 +74,22 @@ export default function SignUpPage() {
               <p className="text-gray-600">Favori Kozmetik'e hoş geldiniz</p>
             </div>
 
+            {signupSuccess ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                  <p className="font-semibold text-green-800 mb-2">Kayıt başarılı!</p>
+                  <p className="text-sm text-green-700 leading-relaxed">
+                    E-posta adresinizi doğrulamanız gerekiyor. <strong>{formData.email}</strong> adresine gönderdiğimiz e-postadaki bağlantıya tıklayın. Gelen kutusu ve spam klasörünü kontrol edin. Doğrulama sonrası giriş yapabilirsiniz.
+                  </p>
+                </div>
+                <Link
+                  href="/giris"
+                  className="block w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 text-center transition-colors"
+                >
+                  Giriş sayfasına git
+                </Link>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
@@ -180,6 +196,7 @@ export default function SignUpPage() {
                 {isLoading ? 'Kaydediliyor...' : 'Hesap Oluştur'}
               </button>
             </form>
+            )}
 
             {/* Sign In Link */}
             <div className="mt-6 text-center">
