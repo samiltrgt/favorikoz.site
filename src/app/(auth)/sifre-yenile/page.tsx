@@ -17,35 +17,70 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [sessionReady, setSessionReady] = useState<boolean | null>(null)
 
-  // Maildeki linkten gelen token'ları hash'ten okuyup session kur
+  // Maildeki linkten gelen token'ları hash veya query'den okuyup session kur
   useEffect(() => {
     const supabase = createSupabaseClient()
-    const hash = typeof window !== 'undefined' ? window.location.hash : ''
-    const params = hash ? new URLSearchParams(hash.slice(1)) : null
-    const accessToken = params?.get('access_token')
-    const refreshToken = params?.get('refresh_token')
-    const type = params?.get('type')
+    const isClient = typeof window !== 'undefined'
+    const hash = isClient ? window.location.hash : ''
+    const search = isClient ? window.location.search : ''
+    const hashParams = hash ? new URLSearchParams(hash.slice(1)) : null
+    const queryParams = search ? new URLSearchParams(search) : null
 
-    if (type === 'recovery' && accessToken && refreshToken) {
+    const accessToken = hashParams?.get('access_token')
+    const refreshToken = hashParams?.get('refresh_token')
+    const typeFromHash = hashParams?.get('type')
+    const tokenHash = queryParams?.get('token_hash') || hashParams?.get('token_hash')
+    const typeFromQuery = queryParams?.get('type')
+
+    const clearUrl = () => {
+      if (isClient) window.history.replaceState(null, '', window.location.pathname)
+    }
+
+    // 1) Hash'te access_token + refresh_token (klasik redirect)
+    if (typeFromHash === 'recovery' && accessToken && refreshToken) {
       supabase.auth
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(() => {
           setSessionReady(true)
-          // Hash'i temizle (güvenlik, sayfayı yenileyince tekrar kullanılmasın)
-          if (typeof window !== 'undefined') window.history.replaceState(null, '', window.location.pathname)
+          clearUrl()
         })
         .catch((err) => {
           console.error('Session set error:', err)
           setSessionReady(false)
           setError('Bağlantı geçersiz veya süresi dolmuş. Lütfen şifre sıfırlama talebini tekrarlayın.')
         })
-    } else {
-      // Zaten session varsa (sayfa yenilendi) formu göster
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSessionReady(!!session)
-        if (!session) setError('Bu sayfa yalnızca e-postadaki şifre sıfırlama bağlantısı ile açılır. Lütfen yeni bir sıfırlama talebi gönderin.')
-      })
+      return
     }
+
+    // 2) Query'de token_hash (Supabase bazen böyle yönlendirir)
+    if ((typeFromQuery === 'recovery' || typeFromHash === 'recovery') && tokenHash) {
+      supabase.auth
+        .verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+        .then(({ data, error: err }) => {
+          if (err) {
+            console.error('verifyOtp error:', err)
+            setSessionReady(false)
+            setError('Bağlantı geçersiz veya süresi dolmuş. Lütfen şifre sıfırlama talebini tekrarlayın.')
+            return
+          }
+          setSessionReady(true)
+          clearUrl()
+        })
+        .catch((err) => {
+          console.error('verifyOtp error:', err)
+          setSessionReady(false)
+          setError('Bağlantı geçersiz veya süresi dolmuş. Lütfen şifre sıfırlama talebini tekrarlayın.')
+        })
+      return
+    }
+
+    // 3) Hiç token yok; mevcut session var mı kontrol et (sayfa yenilendi vb.)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessionReady(!!session)
+      if (!session) {
+        setError('Bu sayfa yalnızca e-postadaki şifre sıfırlama bağlantısı ile açılır. Lütfen yeni bir sıfırlama talebi gönderin.')
+      }
+    })
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
