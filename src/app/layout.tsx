@@ -74,6 +74,21 @@ function SupabasePreconnect() {
   return <link rel="preconnect" href={origin} />
 }
 
+const FIRST_HERO_IMAGE_URL =
+  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&h=900&fit=crop'
+
+function HeroImagePreload() {
+  const preloadHref = `/_next/image?url=${encodeURIComponent(FIRST_HERO_IMAGE_URL)}&w=1920&q=75`
+  return (
+    <link
+      rel="preload"
+      as="image"
+      href={preloadHref}
+      fetchPriority="high"
+    />
+  )
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -84,6 +99,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <SupabasePreconnect />
+        <HeroImagePreload />
       </head>
       <body className={inter.className}>
         <script
