@@ -266,7 +266,6 @@ export default function Header() {
             <div className="hidden md:flex items-center space-x-4">
               <Link href="/hakkimizda" className="hover:text-gray-900">Hakkımızda</Link>
               <Link href="/iletisim" className="hover:text-gray-900">İletişim</Link>
-              <Link href="/admin/login" className="hover:text-gray-900 font-medium text-gray-800">Admin</Link>
             </div>
           </div>
         </div>

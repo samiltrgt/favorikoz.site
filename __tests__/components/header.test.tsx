@@ -195,12 +195,11 @@ describe('Header Component', () => {
   })
 
   describe('Admin Link', () => {
-    it('should show admin link in top bar', () => {
+    it('should not show admin link in top bar (admin only via direct URL)', () => {
       render(<Header />)
       
-      const adminLink = screen.getByText('Admin')
-      expect(adminLink).toBeInTheDocument()
-      expect(adminLink).toHaveAttribute('href', '/admin/login')
+      const adminLink = screen.queryByText('Admin')
+      expect(adminLink).not.toBeInTheDocument()
     })
   })
 

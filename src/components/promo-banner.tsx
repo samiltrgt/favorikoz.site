@@ -52,8 +52,12 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     return null
   }
 
+  // TIRNAK ÜRÜNLERİMİZ / bannertirnak.jpg banner'ı her zaman tırnak kategorisine gitsin
+  const isTirnakBanner = (banner.image?.includes('bannertirnak') ?? false) || (banner.title?.toUpperCase() === 'TIRNAK ÜRÜNLERİMİZ')
+  const effectiveLink = isTirnakBanner ? '/kategori/tirnak' : (banner.link?.trim() || '')
+
   // Banner'ın tıklanabilir olup olmadığını kontrol et
-  const hasLink = banner.link && banner.link.trim() !== ''
+  const hasLink = effectiveLink !== ''
   
   // Banner içeriği
   const bannerContent = (
@@ -76,7 +80,7 @@ export default function PromoBanner({ position }: PromoBannerProps) {
     <section className="relative bg-white border-t border-gray-100">
       {hasLink ? (
         <Link 
-          href={banner.link} 
+          href={effectiveLink} 
           className="block group cursor-pointer transition-opacity duration-300 hover:opacity-90"
           aria-label={banner.title}
         >

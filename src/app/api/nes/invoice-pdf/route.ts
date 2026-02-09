@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getNesInvoicePdfUrl, isNesConfigured } from '@/lib/nes'
 
 /**
  * GET /api/nes/invoice-pdf?uuid=...
- * NES Swagger: GET /v1/outgoing/invoices/{uuid}/pdf
+ * NES Portal: GET /earchive/v1/invoices/{uuid}/pdf (e-arşiv faturaları için)
+ * Swagger: https://apitest.nes.com.tr/earchive/index.html
+ * https://developertest.nes.com.tr/docs/
  * Bearer token ile NES'ten PDF alır ve stream eder.
  */
 export async function GET(request: NextRequest) {
@@ -10,13 +13,14 @@ export async function GET(request: NextRequest) {
   if (!uuid) {
     return NextResponse.json({ error: 'uuid gerekli' }, { status: 400 })
   }
-  const NES_BASE = (process.env.NES_API_BASE_URL || '').replace(/\/$/, '')
-  const NES_EINVOICE_PATH = process.env.NES_EINVOICE_PATH || '/einvoice'
-  const NES_API_KEY = process.env.NES_API_KEY || ''
-  if (!NES_BASE || !NES_API_KEY) {
+  if (!isNesConfigured()) {
     return NextResponse.json({ error: 'NES yapılandırılmamış' }, { status: 503 })
   }
-  const url = `${NES_BASE}${NES_EINVOICE_PATH}/v1/outgoing/invoices/${encodeURIComponent(uuid)}/pdf`
+  const url = getNesInvoicePdfUrl(uuid)
+  if (!url) {
+    return NextResponse.json({ error: 'NES yapılandırılmamış' }, { status: 503 })
+  }
+  const NES_API_KEY = process.env.NES_API_KEY || ''
   try {
     const res = await fetch(url, {
       method: 'GET',

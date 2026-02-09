@@ -97,25 +97,14 @@ export default function OwnProduction({ products }: OwnProductionProps) {
             <span className="text-sm font-medium text-[hsl(24,15%,20%)] tracking-wide">Exclusive Collection</span>
           </div>
           
-          {/* Main Title - Site renkleri: Dark cocoa to warm taupe */}
+          {/* Main Title - Fontenay Paris */}
           <h2 className="text-5xl md:text-6xl font-light tracking-tight text-[hsl(24,15%,15%)]">
-            {brandType === 'favori' ? (
-              <>Kendi <span className="font-semibold bg-gradient-to-r from-[hsl(24,15%,15%)] via-[hsl(24,15%,35%)] to-[hsl(20,15%,50%)] bg-clip-text text-transparent">Üretimimiz</span></>
-            ) : brandType === 'fontenay' ? (
-              <><span className="font-semibold bg-gradient-to-r from-[hsl(24,15%,15%)] via-[hsl(24,15%,35%)] to-[hsl(20,15%,50%)] bg-clip-text text-transparent">Fontenay Paris</span></>
-            ) : (
-              <>Öne <span className="font-semibold bg-gradient-to-r from-[hsl(24,15%,15%)] via-[hsl(24,15%,35%)] to-[hsl(20,15%,50%)] bg-clip-text text-transparent">Çıkan Ürünler</span></>
-            )}
+            <span className="font-semibold bg-gradient-to-r from-[hsl(24,15%,15%)] via-[hsl(24,15%,35%)] to-[hsl(20,15%,50%)] bg-clip-text text-transparent">Fontenay Paris</span>
           </h2>
           
           {/* Subtitle */}
           <p className="text-lg text-[hsl(24,10%,40%)] max-w-2xl mx-auto leading-relaxed">
-            {brandType === 'favori' 
-              ? 'Özenle tasarlanan, en kaliteli malzemelerle üretilen özel koleksiyonumuz'
-              : brandType === 'fontenay'
-              ? 'Sizin için özenle ürettiğimiz profesyonel ürünler'
-              : 'Sizin için özenle seçtiğimiz premium kalite ürünler'
-            }
+            Sizin için özenle ürettiğimiz profesyonel kalite ürünlerimiz
           </p>
           
           {/* Decorative line - Site accent color */}

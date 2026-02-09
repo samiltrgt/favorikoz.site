@@ -102,26 +102,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Newsletter */}
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <div className="max-w-md">
-            <h4 className="text-lg font-semibold mb-3">Bültenimize Katılın</h4>
-            <p className="text-gray-300 text-sm mb-4">
-              Yeni ürünler ve kampanyalardan haberdar olun.
-            </p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="E-posta adresiniz"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
-              />
-              <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-r-lg transition-colors">
-                Katıl
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
