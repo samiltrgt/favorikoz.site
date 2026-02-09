@@ -39,7 +39,7 @@ export default function FeaturesSection() {
             </div>
             <div>
               <h3 className="font-light text-black mb-1">Güvenli Ödeme</h3>
-              <p className="text-gray-500 text-sm">SSL korumalı ödeme sistemi</p>
+              <p className="text-gray-500 text-sm">iyzico ile güvenli ödeme</p>
             </div>
           </div>
         </div>

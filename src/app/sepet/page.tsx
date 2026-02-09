@@ -340,9 +340,15 @@ export default function CartPage() {
               </Link>
 
               {/* Security Info */}
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Shield className="w-4 h-4" />
-                <span>256-bit SSL ile korunuyor</span>
+              <div className="space-y-3 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <span className="text-sm font-semibold text-blue-900">iyzico</span>
+                  <span className="text-xs text-blue-700">ile güvenli ödeme</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
+                  <Shield className="w-3 h-3" />
+                  <span>256-bit SSL ile korunuyor</span>
+                </div>
               </div>
             </div>
           </div>

@@ -131,7 +131,7 @@ export default function CheckoutPage() {
       }
       const tc = (formData.tc || '').replace(/\s/g, '')
       if (!tc || tc.length !== 11 || !/^[0-9]{11}$/.test(tc)) {
-        setError('Geçerli 11 haneli TC Kimlik No girin (ödeme için zorunludur)')
+        setError('Geçerli 11 haneli TC Kimlik No girin (iyzico güvenli ödeme sistemi için zorunludur)')
         return false
       }
       return true
@@ -441,6 +441,10 @@ export default function CheckoutPage() {
                       maxLength={11}
                       required
                     />
+                    <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      TC kimlik numaranız iyzico güvenli ödeme sistemi tarafından istenmektedir
+                    </p>
                   </div>
 
                   <button
@@ -592,14 +596,30 @@ export default function CheckoutPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold text-black mb-2">Ödeme Bilgileri</h2>
-                    <p className="text-gray-600 text-sm">Güvenli ödeme için kart bilgilerinizi girin</p>
+                    <p className="text-gray-600 text-sm">iyzico güvenli ödeme sistemi ile kart bilgilerinizi girin</p>
                   </div>
 
-                  {/* Security Badge */}
-                  <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  {/* iyzico Badge */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                          <span className="text-xl font-bold text-blue-600">iyzico</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Güvenli Ödeme</p>
+                          <p className="text-xs text-gray-600">256-bit SSL ile korunuyor</p>
+                        </div>
+                      </div>
+                      <Shield className="w-8 h-8 text-blue-600" />
+                    </div>
+                  </div>
+
+                  {/* Security Info */}
+                  <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <Shield className="w-5 h-5 text-green-600" />
-                    <span className="text-sm text-green-800 font-medium">
-                      256-bit SSL ile güvenli ödeme
+                    <span className="text-sm text-green-800">
+                      Ödemeniz iyzico güvenli ödeme altyapısı ile işlenmektedir
                     </span>
                   </div>
 
@@ -827,7 +847,11 @@ export default function CheckoutPage() {
           </div>
 
               {/* Security Icons */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <span className="text-sm font-semibold text-blue-900">iyzico</span>
+                  <span className="text-xs text-blue-700">ile güvenli ödeme</span>
+                </div>
                 <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
                   <div className="flex items-center gap-1">
                     <Shield className="w-4 h-4" />
