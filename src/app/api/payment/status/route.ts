@@ -6,19 +6,18 @@ import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
 /**
  * GET /api/payment/status?token=...&orderNumber=...
  * Callback sayfasından çağrılır. Token = Iyzico conversationId.
- * Iyzico'dan ödeme sonucunu sorgular; başarılıysa siparişi paid/completed günceller, NES e-arşiv fatura keser.
+ * (Callback sayfası "token" veya "conversationId" ile çağırır.)
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const token = searchParams.get('token')
+    const token = searchParams.get('token') || searchParams.get('conversationId')
     const orderNumber = searchParams.get('orderNumber')
 
     if (!token) {
       return NextResponse.json({ success: false, status: 'failed', error: 'Missing token' }, { status: 400 })
     }
 
-    // Test/mock token (Iyzico yokken)
     if (token.startsWith('test-token-')) {
       if (orderNumber) {
         try {
@@ -34,7 +33,6 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await retrievePayment(token)
-
     if (result.status !== 'success') {
       return NextResponse.json({
         success: false,
@@ -61,8 +59,7 @@ export async function GET(request: NextRequest) {
     const { error } = await query
     if (error) console.error('Order update error:', error)
 
-    const targetOrderNumber = orderNumber || null
-    await tryCreateNesInvoice(supabase, targetOrderNumber, token)
+    await tryCreateNesInvoice(supabase, orderNumber || null, token)
 
     return NextResponse.json({ success: true, status: 'success' })
   } catch (error: any) {
@@ -75,10 +72,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSupabaseServer>>, orderNumber: string | null, paymentToken: string) {
-  if (!isNesConfigured()) {
-    console.warn('NES fatura atlandı: NES yapılandırılmamış (NES_API_BASE_URL, NES_API_KEY, NES_MARKETPLACE_ID kontrol edin)')
-    return
-  }
+  if (!isNesConfigured()) return
   try {
     let orderRow: any = null
     if (orderNumber) {
@@ -91,7 +85,7 @@ async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSup
     if (!orderRow || orderRow.invoice_uuid) return
     const shipping = (orderRow.shipping_address as { address?: string; city?: string; zipcode?: string }) || {}
     const items = (orderRow.items as Array<{ name: string; price: number; quantity: number }>) || []
-    const orderForInvoice = {
+    const invoiceResult = await createEArchiveInvoice({
       id: orderRow.id,
       order_number: orderRow.order_number,
       customer_name: orderRow.customer_name,
@@ -104,8 +98,7 @@ async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSup
       shipping_cost: orderRow.shipping_cost,
       total: orderRow.total,
       created_at: orderRow.created_at,
-    }
-    const invoiceResult = await createEArchiveInvoice(orderForInvoice)
+    })
     if (invoiceResult.success) {
       await supabase
         .from('orders')

@@ -10,18 +10,14 @@ export default function PaymentCallbackPage() {
   const [orderNumber, setOrderNumber] = useState<string>('')
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    const statusParam = searchParams.get('status')
+    // Iyzico bazen "token" bazen "conversationId" gönderir; ikisini de kabul et
+    const token = searchParams.get('token') || searchParams.get('conversationId')
     const order = searchParams.get('orderNumber')
-    
     if (order) setOrderNumber(order)
-    
     if (!token) {
       setStatus('failed')
       return
     }
-
-    // Her zaman Iyzico ile doğrula ve siparişi güncelle (token varsa)
     const run = async () => {
       try {
         const params = new URLSearchParams({ token })
