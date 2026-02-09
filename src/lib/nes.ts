@@ -15,6 +15,11 @@ const NES_EINVOICE_PATH = (process.env.NES_EINVOICE_PATH || '/einvoice').replace
 const NES_EARCHIVE_PATH = (process.env.NES_EARCHIVE_PATH || '/earchive').replace(/^\/+|\/+$/g, '') || 'earchive'
 const NES_MARKETPLACE_ID = (process.env.NES_MARKETPLACE_ID || '').trim()
 const NES_INVOICE_ENABLED = process.env.NES_INVOICE_ENABLED !== 'false'
+// NES createinvoice zorunlu alanlar (Portal'da tanımlı değerler kullanılmalı; isteğe bağlı override)
+const NES_ORDER_STATUS = (process.env.NES_ORDER_STATUS || 'Completed').trim()
+const NES_ADDRESS_TITLE = (process.env.NES_ADDRESS_TITLE || 'Teslimat Adresi').trim()
+const NES_DOCUMENT_SERIE = (process.env.NES_DOCUMENT_SERIE || 'EAR').trim()
+const NES_DOCUMENT_TEMPLATE = (process.env.NES_DOCUMENT_TEMPLATE || 'Default').trim()
 
 /** NES yapılandırması tam mı? (Portal’da tanımlı base URL, API key ve marketplace id gerekli) */
 export function isNesConfigured(): boolean {
@@ -44,18 +49,23 @@ export type OrderForInvoice = {
 
 /**
  * NES Portal – CreateInvoicesFromMarketPlaceOrdersDto uyumlu istek gövdesi.
+ * Zorunlu alanlar: OrderStatus, AddressTitle, Orders[].DocumentSerie, Orders[].DocumentTemplate
  * Dokümantasyon: https://developertest.nes.com.tr/docs/ (E-Fatura / E-Arşiv API)
  */
 interface NesCreateInvoiceRequest {
-  beginDate: string   // ISO 8601
-  endDate: string    // ISO 8601
+  beginDate: string
+  endDate: string
   page: number
   pageSize: number
+  /** NES zorunlu: sipariş durumu (örn. Completed) */
+  orderStatus: string
+  /** NES zorunlu: adres başlığı (örn. Teslimat Adresi) */
+  addressTitle: string
   orders: Array<{
     orderId: string | null
     orderNumber: string
-    documentSerie: string | null
-    documentTemplate: string | null
+    documentSerie: string
+    documentTemplate: string
     receiverAlias: string | null
     isEArchive: boolean
   }>
@@ -78,12 +88,14 @@ function buildNesPayload(order: OrderForInvoice): NesCreateInvoiceRequest {
     endDate: iso,
     page: 1,
     pageSize: 1,
+    orderStatus: NES_ORDER_STATUS,
+    addressTitle: NES_ADDRESS_TITLE,
     orders: [
       {
         orderId: order.id ?? null,
         orderNumber: order.order_number,
-        documentSerie: null,
-        documentTemplate: null,
+        documentSerie: NES_DOCUMENT_SERIE,
+        documentTemplate: NES_DOCUMENT_TEMPLATE,
         receiverAlias: null,
         isEArchive: true,
       },
@@ -114,6 +126,23 @@ export async function createEArchiveInvoice(order: OrderForInvoice): Promise<Cre
   const url = `${NES_BASE}/${path.replace(/^\/+/, '')}`
 
   const payload = buildNesPayload(order)
+  // NES API bazen PascalCase bekliyor; hem camelCase hem PascalCase ile dene
+  const body = {
+    beginDate: payload.beginDate,
+    endDate: payload.endDate,
+    page: payload.page,
+    pageSize: payload.pageSize,
+    OrderStatus: payload.orderStatus,
+    AddressTitle: payload.addressTitle,
+    orders: payload.orders.map((o) => ({
+      orderId: o.orderId,
+      orderNumber: o.orderNumber,
+      DocumentSerie: o.documentSerie,
+      DocumentTemplate: o.documentTemplate,
+      receiverAlias: o.receiverAlias,
+      isEArchive: o.isEArchive,
+    })),
+  }
 
   try {
     const res = await fetch(url, {
@@ -122,7 +151,7 @@ export async function createEArchiveInvoice(order: OrderForInvoice): Promise<Cre
         'Content-Type': 'application/json',
         Authorization: `Bearer ${NES_API_KEY}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     })
 
     const text = await res.text()
