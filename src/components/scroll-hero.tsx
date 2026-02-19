@@ -52,8 +52,13 @@ function getImageUrls(products: { image?: string | null }[]): string[] {
   return result
 }
 
-export default function ScrollHero({ products = [] }: { products?: { image?: string | null }[] }) {
-  const productList = Array.isArray(products) ? products : []
+const EMPTY_PRODUCTS: { image?: string | null }[] = []
+
+export default function ScrollHero({ products }: { products?: { image?: string | null }[] }) {
+  const productList = useMemo(
+    () => (products && Array.isArray(products) ? products : EMPTY_PRODUCTS),
+    [products]
+  )
   const imageUrls = useMemo(() => getImageUrls(productList), [productList])
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -68,8 +73,6 @@ export default function ScrollHero({ products = [] }: { products?: { image?: str
   const mousePosRef = useRef({ x: 0, y: 0, canvasX: 0, canvasY: 0 })
   const introProgressRef = useRef(0)
   const isMobileRef = useRef(typeof window !== 'undefined' && window.innerWidth < 768)
-  const isInViewRef = useRef(true)
-  const startLoopRef = useRef<(() => void) | null>(null)
   const animationFrameIdRef = useRef(0)
   const yieldTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | 0>(0)
 
@@ -182,24 +185,6 @@ export default function ScrollHero({ products = [] }: { products?: { image?: str
       })
     }
 
-    // Hero görünürken animasyon çalışsın, ekrandan çıkınca dursun (performans)
-    const io = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry) return
-        isInViewRef.current = entry.isIntersecting
-        if (!entry.isIntersecting) {
-          if (yieldTimeoutIdRef.current) clearTimeout(yieldTimeoutIdRef.current)
-          cancelAnimationFrame(animationFrameIdRef.current)
-          yieldTimeoutIdRef.current = 0
-        } else {
-          startLoopRef.current?.()
-        }
-      },
-      { threshold: 0, rootMargin: '0px' }
-    )
-    io.observe(container)
-
     window.addEventListener('scroll', handleScroll, { passive: true })
     container.addEventListener('wheel', handleWheel, { passive: false })
     container.addEventListener('mousemove', handleMouseMove)
@@ -210,7 +195,6 @@ export default function ScrollHero({ products = [] }: { products?: { image?: str
     const timer2 = setTimeout(() => setPhase('arc'), 2500)
 
     return () => {
-      io.disconnect()
       ro.disconnect()
       cancelAnimationFrame(sizeRafId)
       cancelAnimationFrame(mouseRafId)
@@ -246,7 +230,6 @@ export default function ScrollHero({ products = [] }: { products?: { image?: str
     const YIELD_EVERY_N_FRAMES = 4
 
     const render = () => {
-      if (!isInViewRef.current) return
       const w = canvasRef.current!.width
       const h = canvasRef.current!.height
       const isMobile = w < 768
@@ -346,17 +329,15 @@ export default function ScrollHero({ products = [] }: { products?: { image?: str
         frameCount = 0
         yieldTimeoutIdRef.current = setTimeout(() => {
           yieldTimeoutIdRef.current = 0
-          if (isInViewRef.current) animationFrameIdRef.current = requestAnimationFrame(render)
+          animationFrameIdRef.current = requestAnimationFrame(render)
         }, 0)
       } else {
-        if (isInViewRef.current) animationFrameIdRef.current = requestAnimationFrame(render)
+        animationFrameIdRef.current = requestAnimationFrame(render)
       }
     }
 
-    startLoopRef.current = () => render()
     render()
     return () => {
-      startLoopRef.current = null
       if (yieldTimeoutIdRef.current) clearTimeout(yieldTimeoutIdRef.current)
       cancelAnimationFrame(animationFrameIdRef.current)
     }
