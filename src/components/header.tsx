@@ -57,18 +57,22 @@ export default function Header() {
     }
   }, [pathname, searchParams])
 
-  // Calculate header height for mobile menu positioning
+  // Calculate header height for mobile menu positioning (rAF ile reflow'u kritik yoldan çıkarır)
   useEffect(() => {
+    let rafId = 0
     const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight)
-      }
+      rafId = requestAnimationFrame(() => {
+        if (headerRef.current) {
+          setHeaderHeight(headerRef.current.offsetHeight)
+        }
+      })
     }
-    
+
     updateHeaderHeight()
     window.addEventListener('resize', updateHeaderHeight)
-    
+
     return () => {
+      cancelAnimationFrame(rafId)
       window.removeEventListener('resize', updateHeaderHeight)
     }
   }, [])

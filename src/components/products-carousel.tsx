@@ -32,8 +32,12 @@ export default function ProductsCarousel({
   const updateArrows = () => {
     const el = scrollRef.current
     if (!el) return
-    setCanScrollLeft(el.scrollLeft > 4)
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+    requestAnimationFrame(() => {
+      if (!scrollRef.current) return
+      const e = scrollRef.current
+      setCanScrollLeft(e.scrollLeft > 4)
+      setCanScrollRight(e.scrollLeft < e.scrollWidth - e.clientWidth - 4)
+    })
   }
 
   useEffect(() => {

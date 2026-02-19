@@ -38,7 +38,9 @@ export default function HomeProductsBryhel({
 
   const halfWidthRef = useRef(0)
   const updateHalfWidth = useCallback(() => {
-    if (innerRef.current) halfWidthRef.current = innerRef.current.offsetWidth / 2
+    requestAnimationFrame(() => {
+      if (innerRef.current) halfWidthRef.current = innerRef.current.offsetWidth / 2
+    })
   }, [])
 
   useEffect(() => {

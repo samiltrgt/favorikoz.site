@@ -1,12 +1,22 @@
 import type { Metadata } from 'next'
+import nextDynamic from 'next/dynamic'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import ScrollHero from '@/components/scroll-hero'
 import ProductsCarousel from '@/components/products-carousel'
 import FeaturesSection from '@/components/features-section'
-import PromoBannerCarousel from '@/components/promo-banner-carousel'
-import HomeProductsBryhel from '@/components/home-products-bryhel'
 import { createSupabaseServer } from '@/lib/supabase/server'
+
+// Ağır client bileşenleri kritik yoldan çıkarmak için dynamic import (LCP/FCP iyileştirmesi)
+const ScrollHero = nextDynamic(() => import('@/components/scroll-hero'), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full h-full min-h-[100vh] flex items-center justify-center bg-black/30" aria-hidden>
+      <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+    </div>
+  ),
+})
+const PromoBannerCarousel = nextDynamic(() => import('@/components/promo-banner-carousel'), { ssr: false })
+const HomeProductsBryhel = nextDynamic(() => import('@/components/home-products-bryhel'), { ssr: false })
 
 const BASE_URL = 'https://www.favorikozmetik.com'
 
@@ -74,9 +84,9 @@ export default async function HomePage() {
       <Header />
       
       <main>
-        {/* 1. Scroll animasyonlu hero - mobilde 5 viewport scroll, sticky hero */}
+        {/* 1. Scroll animasyonlu hero - mobilde 1.5 viewport scroll, sticky hero */}
         <section className="relative w-full">
-          <div className="min-h-[500vh] md:min-h-0 md:h-[100vh]">
+          <div className="min-h-[150vh] md:min-h-0 md:h-[100vh]">
             <div className="sticky top-0 h-[100vh] w-full">
               <ScrollHero />
             </div>
