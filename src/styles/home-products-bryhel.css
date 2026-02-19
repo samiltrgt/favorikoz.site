@@ -1,0 +1,325 @@
+/* Bryhel "Our Products" section - site renklerine uyumlu */
+
+.home-products {
+  --bryhel-font-primary: 'Georgia', 'Times New Roman', serif;
+  /* Site paleti: ana sayfa bg-gray-50, kartlar beyaz */
+  --bryhel-bg: #f9fafb;       /* gray-50 - section arka plan */
+  --bryhel-card: #ffffff;     /* beyaz kart */
+  --bryhel-black: #1c1917;    /* foreground / başlık */
+  --bryhel-medium: #e7e5e4;   /* buton hover vb - stone-200 */
+  --bryhel-border: #e5e7eb;   /* gray-200 - kart çerçeve */
+  --bryhel-radius: 0.5vw;
+  --bryhel-expoOut: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-products .bryhel-container {
+  position: relative;
+  width: 80vw;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home-products {
+  padding-top: 10vw;
+  padding-bottom: 10vw;
+  text-align: center;
+  position: relative;
+  overflow-x: hidden;
+  background-color: var(--bryhel-bg);
+}
+
+/* Headline - birebir */
+.home-products .headline {
+  font-family: var(--bryhel-font-primary);
+  font-weight: 300;
+  font-size: 6vw;
+  line-height: 1.1;
+  color: var(--bryhel-black);
+  margin-bottom: 0;
+}
+
+.home-products .headline.--large {
+  font-size: 9.027vw;
+}
+
+.home-products .headline .line {
+  display: block;
+  text-align: center;
+  position: relative;
+}
+
+.home-products .headline .line p {
+  margin: 0;
+}
+
+.home-products .headline .word {
+  position: relative;
+  display: inline-block;
+  perspective: 1000px;
+}
+
+.home-products .headline .word .char {
+  position: relative;
+  display: inline-block;
+}
+
+.home-products .home-products__subtitle {
+  margin: 2vw auto 2.5vw;
+  max-width: 40em;
+  font-family: var(--bryhel-font-primary);
+  font-size: 1.25vw;
+  font-weight: 300;
+  line-height: 1.4;
+  color: var(--bryhel-black);
+  opacity: 0.9;
+  text-align: center;
+}
+
+/* Carousel */
+.home-products .carousel {
+  margin-top: -3.75vw;
+  margin-bottom: 5vw;
+  width: 120vw;
+  height: 22.5vw;
+  left: 50%;
+  transform: translateX(-50%);
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  user-select: none;
+}
+
+/* Marquee: hareket JS ile (dur + sürükle mümkün) */
+.home-products .carousel--marquee .carousel__inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+}
+
+.home-products .carousel--marquee.is-dragging {
+  cursor: grabbing;
+}
+
+.home-products .carousel__inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+}
+
+.home-products .carousel__item {
+  flex-shrink: 0;
+  margin-right: 2.5vw;
+  overflow: hidden;
+}
+
+.home-products .carousel__item:last-child {
+  margin-right: 0;
+}
+
+/* Product card - yuvarlak kart */
+.home-products .product--card {
+  position: relative;
+  overflow: hidden;
+  width: 20vw;
+  height: 22.5vw;
+  border-radius: 10vw 10vw var(--bryhel-radius) var(--bryhel-radius);
+  border: 1px solid var(--bryhel-border);
+  background-color: var(--bryhel-card);
+}
+
+.home-products .product--card .product__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5vw;
+  box-sizing: border-box;
+}
+
+.home-products .product--card .product__image .image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.home-products .product--card .product__image .image a {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.home-products .product--card .product__image .image img {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
+  object-position: center !important;
+  pointer-events: none;
+}
+
+/* Button - View all */
+.home-products .bryhel-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: auto;
+  border: 0;
+  box-shadow: none;
+  height: 3.5vw;
+  line-height: 3.5vw;
+  padding: 0 2vw 0 4.5vw;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  margin-top: 0;
+}
+
+.home-products .bryhel-button::before {
+  content: "";
+  position: absolute;
+  display: block;
+  width: 3.5vw;
+  height: 3.5vw;
+  border-radius: 50%;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+  transform: scale(1);
+  background-color: var(--bryhel-black);
+  transition: all 0.7s var(--bryhel-expoOut);
+  will-change: transform;
+}
+
+.home-products .bryhel-button .dot {
+  position: absolute;
+  overflow: hidden;
+  background-color: transparent;
+  left: 0.5vw;
+  top: 50%;
+  width: 2.5vw;
+  height: 2.5vw;
+  transform: translateY(-50%) translateX(0) scale(1);
+  box-shadow: 0 0 0 1px var(--bryhel-medium);
+  border-radius: 50%;
+  transition: all 0.7s var(--bryhel-expoOut);
+}
+
+.home-products .bryhel-button .dot::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 1;
+  transform: translateX(0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFEF2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M12 5l7 7-7 7'/%3E%3C/svg%3E");
+  background-size: 50% auto;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: all 0.7s var(--bryhel-expoOut);
+}
+
+.home-products .bryhel-button .text {
+  position: relative;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.25vw;
+  transform: translateX(0);
+  transition: all 0.7s var(--bryhel-expoOut);
+}
+
+.home-products .bryhel-button:hover .text {
+  color: #ffffff;
+  transform: translateX(-0.5vw);
+}
+
+.home-products .bryhel-button:hover::before {
+  width: 100%;
+  transform: scale(0.9);
+}
+
+.home-products .bryhel-button:hover .dot {
+  background-color: var(--bryhel-medium);
+  transform: translateY(-50%) translateX(0.5vw) scale(0.3225);
+}
+
+.home-products .bryhel-button:hover .dot::before {
+  opacity: 0.0001;
+  transform: translateX(100%);
+}
+
+/* Mobile */
+@media all and (max-width: 1100px) {
+  .home-products .headline.--large {
+    font-size: 12.8vw;
+  }
+
+  .home-products .carousel {
+    height: 55vw;
+  }
+
+  .home-products .carousel__item {
+    margin-right: 5vw;
+  }
+
+  .home-products .product--card {
+    border-radius: 25vw 25vw var(--bryhel-radius) var(--bryhel-radius);
+    width: 50vw;
+    height: 55vw;
+  }
+
+  .home-products .bryhel-button {
+    height: 14vw;
+    width: 14vw;
+    min-width: 14vw;
+    line-height: 14vw;
+    padding: 0;
+    margin-top: 5vw;
+  }
+
+  .home-products .bryhel-button::before {
+    width: 14vw;
+    height: 14vw;
+    border-radius: 14vw;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+  }
+
+  .home-products .bryhel-button .text {
+    display: none;
+  }
+
+  .home-products .bryhel-button .dot {
+    width: 10vw;
+    height: 10vw;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    margin: 0;
+  }
+
+  .home-products .home-products__subtitle {
+    font-size: 4.2vw;
+  }
+}

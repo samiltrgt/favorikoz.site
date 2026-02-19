@@ -11,6 +11,7 @@ interface PromoBanner {
   title: string
   description: string
   image: string
+  image_mobile?: string
   link: string
   button_text: string
   position: 'top' | 'bottom' | 'footer'
@@ -104,6 +105,7 @@ export default function PromoBannersPage() {
         title: banner.title,
         description: banner.description || '',
         image: banner.image,
+        image_mobile: banner.image_mobile ?? '',
         link: banner.link || defaultLink,
         button_text: banner.button_text || 'Tüm Ürünleri Keşfet',
         position: banner.position,
@@ -181,6 +183,7 @@ export default function PromoBannersPage() {
             title: '',
             description: '',
             image: '',
+            image_mobile: '',
             link: defaultLink,
             button_text: 'Tüm Ürünleri Keşfet',
             position: pos.value as 'top' | 'bottom' | 'footer',
@@ -230,6 +233,29 @@ export default function PromoBannersPage() {
                       <ImageUpload
                         onUpload={(url) =>
                           handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'image', url)
+                        }
+                        folder="banners"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mobil görsel URL (isteğe bağlı)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={banner.image_mobile ?? ''}
+                        onChange={(e) =>
+                          handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'image_mobile', e.target.value)
+                        }
+                        className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                        placeholder="Mobilde gösterilecek banner (boşsa masaüstü görsel kullanılır)"
+                      />
+                      <ImageUpload
+                        onUpload={(url) =>
+                          handleInputChange(pos.value as 'top' | 'bottom' | 'footer', 'image_mobile', url)
                         }
                         folder="banners"
                       />

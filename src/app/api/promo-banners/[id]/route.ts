@@ -42,19 +42,22 @@ export async function PUT(
 
     const body = await request.json()
 
+    const updatePayload: Record<string, unknown> = {
+      title: body.title,
+      description: body.description,
+      image: body.image,
+      link: body.link,
+      button_text: body.button_text,
+      position: body.position,
+      is_active: body.is_active,
+      display_order: body.display_order,
+      updated_at: new Date().toISOString(),
+    }
+    if (body.image_mobile !== undefined) updatePayload.image_mobile = body.image_mobile
+
     const { data, error } = await supabase
       .from('promo_banners')
-      .update({
-        title: body.title,
-        description: body.description,
-        image: body.image,
-        link: body.link,
-        button_text: body.button_text,
-        position: body.position,
-        is_active: body.is_active,
-        display_order: body.display_order,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', params.id)
       .select()
       .single()

@@ -117,18 +117,20 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         // Update existing instead of creating new
+        const updatePayload: Record<string, unknown> = {
+          title: body.title,
+          description: body.description,
+          image: body.image,
+          link: body.link || '/tum-urunler',
+          button_text: body.button_text || 'Tüm Ürünleri Keşfet',
+          is_active: body.is_active ?? true,
+          display_order: body.display_order || 0,
+          updated_at: new Date().toISOString(),
+        }
+        if (body.image_mobile !== undefined) updatePayload.image_mobile = body.image_mobile
         const { data, error } = await supabase
           .from('promo_banners')
-          .update({
-            title: body.title,
-            description: body.description,
-            image: body.image,
-            link: body.link || '/tum-urunler',
-            button_text: body.button_text || 'Tüm Ürünleri Keşfet',
-            is_active: body.is_active ?? true,
-            display_order: body.display_order || 0,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updatePayload)
           .eq('id', existing.id)
           .select()
           .single()
@@ -145,18 +147,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const insertPayload: Record<string, unknown> = {
+      title: body.title,
+      description: body.description,
+      image: body.image,
+      link: body.link || '/tum-urunler',
+      button_text: body.button_text || 'Tüm Ürünleri Keşfet',
+      position: body.position || 'top',
+      is_active: body.is_active ?? true,
+      display_order: body.display_order || 0,
+    }
+    if (body.image_mobile !== undefined) insertPayload.image_mobile = body.image_mobile
     const { data, error } = await supabase
       .from('promo_banners')
-      .insert({
-        title: body.title,
-        description: body.description,
-        image: body.image,
-        link: body.link || '/tum-urunler',
-        button_text: body.button_text || 'Tüm Ürünleri Keşfet',
-        position: body.position || 'top',
-        is_active: body.is_active ?? true,
-        display_order: body.display_order || 0,
-      })
+      .insert(insertPayload)
       .select()
       .single()
 

@@ -1,11 +1,10 @@
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import HeroSection from '@/components/hero-section'
+import ScrollHero from '@/components/scroll-hero'
+import ProductsCarousel from '@/components/products-carousel'
 import FeaturesSection from '@/components/features-section'
-import PromoBanner from '@/components/promo-banner'
-import HomeBanners from '@/components/home-banners'
-import FeaturedProducts from '@/components/featured-products'
-import OwnProduction from '@/components/own-production'
+import PromoBannerCarousel from '@/components/promo-banner-carousel'
+import HomeProductsBryhel from '@/components/home-products-bryhel'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic' // Force dynamic rendering because we use cookies
@@ -54,39 +53,41 @@ export default async function HomePage() {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-gray-50">
       <Header />
       
       <main>
-        {/* Hero Section */}
-        <HeroSection />
-        
-        {/* Features Section */}
+        {/* 1. Scroll animasyonlu hero - mobilde 5 viewport scroll, sticky hero */}
+        <section className="relative w-full">
+          <div className="min-h-[500vh] md:min-h-0 md:h-[100vh]">
+            <div className="sticky top-0 h-[100vh] w-full">
+              <ScrollHero />
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Ürünler carousel (oklarla) - mobilde üstte karartma gradient */}
+        <section className="relative">
+          <div
+            className="absolute top-0 left-0 right-0 z-10 h-48 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-transparent md:hidden"
+            aria-hidden
+          />
+          <ProductsCarousel products={products} title="ÜRÜNLER" viewAllLink="/tum-urunler" />
+        </section>
+
+        {/* 2b. Features Section (4 ikon) */}
         <FeaturesSection />
 
-        {/* Promo Banner - Top */}
-        <PromoBanner position="top" />
+        {/* 3. Banner carousel */}
+        <PromoBannerCarousel products={products} />
 
-        {/* Editorial Banners */}
-        <HomeBanners />
-
-        {/* Promo Banner - Bottom */}
-        <PromoBanner position="bottom" />
-        
-        {/* Own Production - Kendi Üretimimiz */}
-        <OwnProduction products={products} />
-        
-        {/* Featured Products - Best Sellers */}
-        <FeaturedProducts
-          title="Çok Satanlar"
-          subtitle="Müşterilerimizin favorisi olan ve olağanüstü sonuçlar veren ürünler"
+        {/* 4. Bryhel tarzı Our Products */}
+        <HomeProductsBryhel
           products={products}
+          title="Fontenay Paris"
           viewAllLink="/tum-urunler"
-          section="bestSellers"
+          viewAllText="Tümünü Gör"
         />
-
-        {/* Promo Banner - Footer */}
-        <PromoBanner position="footer" />
       </main>
       
       <Footer />

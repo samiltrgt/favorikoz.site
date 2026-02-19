@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
@@ -42,6 +43,8 @@ export default function Header() {
   const [headerHeight, setHeaderHeight] = useState(0)
   const headerRef = useRef<HTMLElement>(null)
   const [categories, setCategories] = useState<Category[]>([])
+  const [mobileMenuClosing, setMobileMenuClosing] = useState(false)
+  const [mobileMenuAnimated, setMobileMenuAnimated] = useState(false)
 
   // Sync search query from URL when on tum-urunler page
   useEffect(() => {
@@ -70,16 +73,16 @@ export default function Header() {
     }
   }, [])
 
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll when mobile menu is open + trigger slide-down animation
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden'
+      setMobileMenuAnimated(false)
+      const t = setTimeout(() => setMobileMenuAnimated(true), 50)
+      return () => clearTimeout(t)
     } else {
       document.body.style.overflow = ''
-    }
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = ''
+      setMobileMenuAnimated(false)
     }
   }, [isMenuOpen])
 
@@ -253,90 +256,164 @@ export default function Header() {
     return () => { isMounted = false }
   }, [])
 
+  const closeMobileMenu = () => {
+    setMobileMenuClosing(true)
+    setTimeout(() => {
+      setIsMenuOpen(false)
+      setMobileMenuClosing(false)
+    }, 300)
+  }
+
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      {/* Top bar */}
-      <div className="bg-gray-50 py-2">
-        <div className="container">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center space-x-4">
-              <span>📞 0537 647 07 10</span>
-              <span>📧 mervesaat@gmail.com</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <Link href="/hakkimizda" className="hover:text-gray-900">Hakkımızda</Link>
-              <Link href="/iletisim" className="hover:text-gray-900">İletişim</Link>
-            </div>
-          </div>
+    <header ref={headerRef} className="sticky top-0 z-[100] bg-black/20 backdrop-blur-md">
+      {/* Gradient orbs – clipped inside this wrapper so header has no overflow (mobile menu can show) */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute -right-60 -top-10 flex flex-col items-end blur-xl">
+          <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#2c2520] to-[#f5f0e8] blur-3xl" />
+          <div className="h-40 w-[90rem] rounded-full bg-gradient-to-b from-[#c4a090] to-[#e8dfd4] blur-3xl" />
+          <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#d4c4b0] to-[#f5f0e8] blur-3xl" />
         </div>
       </div>
 
-      {/* Main header */}
-      <div className="container py-4">
-        <div className="flex items-center justify-between">
-                     {/* Logo */}
-           <Link href="/" className="flex items-center">
-             <h1 className="text-2xl font-light text-black tracking-wide">Favori Kozmetik</h1>
-           </Link>
+      <div className="relative z-10">
+        <nav className="container mx-auto flex items-center justify-between px-4 py-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
+              <span className="text-sm font-bold">F</span>
+            </div>
+            <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
+          </Link>
 
-                     {/* Search bar - Desktop */}
-           <form className="hidden lg:flex flex-1 max-w-md mx-8" onSubmit={handleSearch}>
-             <div className="relative w-full">
-               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-               <input
-                 type="text"
-                 placeholder="Ürün ara..."
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 onKeyDown={handleSearchKeyDown}
-                 className="w-full pl-10 pr-4 py-2 border-b border-gray-300 bg-transparent focus:outline-none focus:border-black text-sm tracking-wide"
-               />
-             </div>
-           </form>
+          {/* Desktop: Nav links + Search + Actions */}
+          <div className="hidden lg:flex items-center gap-8">
+            {staticMenuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+              >
+                {item.name}
+              </Link>
+            ))}
+            {categories.map((category) => (
+              <div key={category.name} className="relative">
+                {category.hasDropdown ? (
+                  <div
+                    className="flex items-center gap-1 cursor-pointer"
+                    onMouseEnter={() => setHoveredCategory(category.name)}
+                  >
+                    <Link
+                      href={category.href}
+                      className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                    >
+                      {category.name}
+                    </Link>
+                    <ChevronDown
+                      className={`w-4 h-4 text-white/80 transition-transform ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
+                    />
+                  </div>
+                ) : (
+                  <Link
+                    href={category.href}
+                    className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                )}
+                {category.hasDropdown && hoveredCategory === category.name && (
+                  <div
+                    className="absolute left-1/2 top-full -translate-x-1/2 mt-1 w-56 rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
+                    onMouseLeave={() => setHoveredCategory(null)}
+                  >
+                    {category.subcategories?.map((sub: Subcategory) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                        onClick={() => setHoveredCategory(null)}
+                      >
+                        <span>{sub.name}</span>
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
+                          {categoryCounts[sub.key] ?? 0}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-6">
-            <button 
-              onClick={handleSearch}
-              className="hidden lg:flex text-gray-600 hover:text-gray-900"
-              aria-label="Ara"
+          <div className="hidden lg:flex items-center gap-4">
+            <form className="flex flex-1 max-w-[200px]" onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+                <input
+                  type="text"
+                  placeholder="Ürün ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  className="w-full rounded-full border border-white/20 bg-white/5 py-2 pl-8 pr-3 text-sm text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
+                />
+              </div>
+            </form>
+            <Link
+              href="/favorilerim"
+              className="relative text-white/90 hover:text-white transition-colors"
+              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`}
             >
-              <Search className="w-5 h-5" />
-            </button>
-            
-            {/* User Menu */}
+              <Heart className="h-5 w-5" />
+              {favoritesCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/sepet"
+              className="relative text-white/90 hover:text-white transition-colors"
+              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount})` : ''}`}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </Link>
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors"
                 >
-                  <User className="w-5 h-5" />
-                  <span className="hidden md:inline text-sm font-medium">
-                    {user.name?.split(' ')[0] || 'Hesabım'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 hidden md:inline" />
+                  {user.name?.split(' ')[0] || 'Hesabım'}
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                 </button>
-                
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                  <div
+                    className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-gray-900/95 py-2 shadow-xl backdrop-blur-sm"
+                    onMouseLeave={() => setShowUserMenu(false)}
+                  >
                     <Link
                       href="/hesabim"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white"
                       onClick={() => setShowUserMenu(false)}
                     >
                       Hesabım
                     </Link>
                     <Link
                       href="/siparislerim"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white"
                       onClick={() => setShowUserMenu(false)}
                     >
                       Siparişlerim
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/10"
                     >
                       Çıkış Yap
                     </button>
@@ -344,167 +421,97 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/giris" className="text-gray-600 hover:text-gray-900" data-testid="user-icon">
-                <User className="w-5 h-5" />
+              <Link
+                href="/giris"
+                className="rounded-full bg-white px-6 py-2.5 text-sm font-medium text-black hover:bg-white/90 transition-colors"
+                data-testid="user-icon"
+              >
+                Giriş Yap
               </Link>
             )}
-            
-            <Link
-              href="/favorilerim"
-              className="text-gray-600 hover:text-gray-900 relative"
-              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount} ürün)` : ''}`}
-              title="Favorilerim"
-            >
-              <Heart className="w-5 h-5" />
-              {favoritesCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-4 h-4 flex items-center justify-center px-1">
-                  {favoritesCount > 99 ? '99+' : favoritesCount}
-                </span>
-              )}
-            </Link>
-            
-            <Link
-              href="/sepet"
-              className="text-gray-600 hover:text-gray-900 relative"
-              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount} ürün)` : ''}`}
-              title="Sepet"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-4 h-4 flex items-center justify-center px-1">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
-              aria-label="Menüyü aç/kapat"
-              aria-expanded={isMenuOpen}
-              aria-controls="mobile-menu"
-              data-testid="mobile-menu-button"
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
-        </div>
+
+          {/* Mobile menu button */}
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isMenuOpen ? closeMobileMenu() : setIsMenuOpen(true); }}
+            className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
+            aria-label="Menüyü aç/kapat"
+            aria-expanded={isMenuOpen}
+            data-testid="mobile-menu-button"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </nav>
       </div>
 
-             {/* Navigation */}
-       <nav className="border-t border-gray-200">
-         <div className="container">
-           <div className="hidden lg:flex items-center justify-center space-x-8 py-4">
-            {staticMenuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2"
+      {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
+      {typeof document !== 'undefined' &&
+        (isMenuOpen || mobileMenuClosing) &&
+        createPortal(
+          <div
+            id="mobile-menu"
+            data-testid="mobile-menu"
+            className="fixed inset-0 z-[100] flex flex-col bg-black lg:hidden"
+            style={{
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              minHeight: '100dvh',
+              height: '100dvh',
+              transform: mobileMenuClosing ? 'translateY(-100%)' : mobileMenuAnimated ? 'translateY(0)' : 'translateY(-100%)',
+              transition: 'transform 0.3s ease-out',
+              willChange: 'transform',
+            }}
+          >
+            {/* Aynı gradient orblar – header ile aynı renk / görünüm */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -right-60 -top-10 flex flex-col items-end blur-xl">
+                <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#2c2520] to-[#f5f0e8] blur-3xl" />
+                <div className="h-40 w-[90rem] rounded-full bg-gradient-to-b from-[#c4a090] to-[#e8dfd4] blur-3xl" />
+                <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#d4c4b0] to-[#f5f0e8] blur-3xl" />
+              </div>
+            </div>
+            <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 overscroll-contain" style={{ minHeight: 0 }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
+                  <span className="text-sm font-bold">F</span>
+                </div>
+                <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeMobileMenu(); }}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
+                aria-label="Menüyü kapat"
               >
-                {item.name}
-              </Link>
-            ))}
-            {categories.map((category) => (
-               <div 
-                 key={category.name}
-                 className="relative"
-               >
-                 {category.hasDropdown ? (
-                   <div className="flex items-center gap-1">
-                     <Link
-                       href={category.href}
-                       className="text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2"
-                     >
-                       {category.name}
-                     </Link>
-                     <button 
-                       onClick={() => setHoveredCategory(hoveredCategory === category.name ? null : category.name)}
-                       className="p-1 hover:bg-gray-100 rounded transition-colors"
-                       aria-label="Alt kategorileri göster"
-                     >
-                       <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${hoveredCategory === category.name ? 'rotate-180' : ''}`} />
-                     </button>
-                   </div>
-                 ) : (
-                   <Link
-                     href={category.href}
-                     className="text-sm font-light text-black hover:text-gray-600 active:scale-95 transition-all duration-200 tracking-wide py-2"
-                   >
-                     {category.name}
-                   </Link>
-                 )}
-                 
-                 {/* Dropdown Menu with connecting bridge */}
-                 {category.hasDropdown && hoveredCategory === category.name && (
-                   <>
-                     {/* Invisible bridge to prevent gap */}
-                     <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 h-2 bg-transparent"></div>
-                     
-                     <div 
-                       className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50 animate-slide-in-up"
-                       onMouseLeave={() => setHoveredCategory(null)}
-                     >
-                       <div className="grid grid-cols-1 gap-1">
-                         {category.subcategories?.map((subcategory: Subcategory, index: number) => (
-                           <Link
-                             key={subcategory.href}
-                             href={subcategory.href}
-                             className="text-sm text-gray-700 hover:text-black hover:bg-gray-50 active:scale-95 px-3 py-2.5 rounded transition-all duration-200 animate-fade-in-up flex items-center justify-between"
-                             style={{ animationDelay: `${index * 50}ms` }}
-                             onClick={() => setHoveredCategory(null)}
-                           >
-                             <span>{subcategory.name}</span>
-                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                               {categoryCounts[subcategory.key as string] || 0}
-                             </span>
-                           </Link>
-                         ))}
-                       </div>
-                     </div>
-                   </>
-                 )}
-               </div>
-             ))}
-           </div>
-         </div>
-       </nav>
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div 
-          id="mobile-menu" 
-          className="lg:hidden bg-white border-t border-gray-200 fixed inset-x-0 bottom-0 overflow-y-auto z-50" 
-          data-testid="mobile-menu" 
-          style={{ 
-            top: `${headerHeight}px`,
-            maxHeight: `calc(100vh - ${headerHeight}px)`
-          }}
-        >
-          <div className="container py-4">
-            {/* Mobile search */}
-            <form className="mb-4" onSubmit={handleSearch}>
+            <form className="mt-6 mb-4" onSubmit={handleSearch}>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" />
                 <input
                   type="text"
                   placeholder="Ürün, kategori veya marka ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchKeyDown}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full rounded-xl border border-white/20 bg-white/10 py-3 pl-10 pr-4 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
                 />
               </div>
             </form>
 
-            {/* Mobile categories */}
-            <div className="space-y-2 pb-4">
+            <nav className="flex flex-col space-y-1">
               {staticMenuItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                  onClick={closeMobileMenu}
                 >
                   {item.name}
                 </Link>
@@ -515,27 +522,30 @@ export default function Header() {
                   return (
                     <div key={category.name}>
                       <button
-                        onClick={() => setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })}
-                        className="flex items-center justify-between w-full py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
+                        type="button"
+                        onClick={() =>
+                          setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })
+                        }
+                        className="flex w-full items-center justify-between rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
                       >
                         <span>{category.name}</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {isOpen && category.subcategories && (
-                        <div className="pl-4 space-y-1 mt-2">
-                          {category.subcategories.map((subcategory: Subcategory) => (
+                        <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
+                          {category.subcategories.map((sub: Subcategory) => (
                             <Link
-                              key={subcategory.href}
-                              href={subcategory.href}
-                              className="flex items-center justify-between py-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
+                              key={sub.href}
+                              href={sub.href}
+                              className="flex items-center justify-between py-2 text-sm text-white/70 hover:text-white transition-colors"
                               onClick={() => {
-                                setIsMenuOpen(false)
+                                closeMobileMenu()
                                 setMobileCategoriesOpen({})
                               }}
                             >
-                              <span>{subcategory.name}</span>
-                              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                                {categoryCounts[subcategory.key] || 0}
+                              <span>{sub.name}</span>
+                              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
+                                {categoryCounts[sub.key] ?? 0}
                               </span>
                             </Link>
                           ))}
@@ -548,62 +558,68 @@ export default function Header() {
                   <Link
                     key={category.href}
                     href={category.href}
-                    className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                    onClick={closeMobileMenu}
                   >
                     {category.name}
                   </Link>
                 )
               })}
-              {/* Extra pages for mobile (not shown in desktop nav) */}
               <Link
                 href="/hakkimizda"
-                className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
+                className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                onClick={closeMobileMenu}
               >
                 Hakkımızda
               </Link>
               <Link
                 href="/iletisim"
-                className="block py-2 text-sm text-gray-700 hover:text-purple-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
+                className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                onClick={closeMobileMenu}
               >
                 İletişim
               </Link>
-            </div>
+            </nav>
 
-            {/* Mobile actions */}
-            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+            <div className="mt-6 border-t border-white/10 pt-6 space-y-3">
               <Link
                 href="/favorilerim"
-                className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
-                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
+                onClick={closeMobileMenu}
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="h-5 w-5" />
                 <span>Favoriler{favoritesCount > 0 ? ` (${favoritesCount})` : ''}</span>
+              </Link>
+              <Link
+                href="/sepet"
+                className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
+                onClick={closeMobileMenu}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <span>Sepet{cartCount > 0 ? ` (${cartCount})` : ''}</span>
               </Link>
               {user ? (
                 <Link
                   href="/hesabim"
-                  className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
-                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
+                  onClick={closeMobileMenu}
                 >
-                  <User className="w-5 h-5" />
+                  <User className="h-5 w-5" />
                   <span>Hesabım</span>
                 </Link>
               ) : (
                 <Link
                   href="/giris"
-                  className="flex items-center space-x-2 w-full py-2 text-sm text-gray-700 hover:text-purple-600"
-                  onClick={() => setIsMenuOpen(false)}
+                  className="flex h-12 items-center justify-center rounded-full bg-white text-base font-medium text-black hover:bg-white/90 transition-colors"
+                  onClick={closeMobileMenu}
                 >
-                  <User className="w-5 h-5" />
-                  <span>Giriş Yap</span>
+                  Giriş Yap
                 </Link>
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   )
