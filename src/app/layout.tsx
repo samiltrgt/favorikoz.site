@@ -33,6 +33,7 @@ export const metadata: Metadata = {
     siteName: 'Favori Kozmetik',
     locale: 'tr_TR',
     type: 'website',
+    images: [{ url: '/logo.png', width: 1200, height: 630, alt: 'Favori Kozmetik' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -69,6 +70,11 @@ const jsonLd = {
       name: 'Favori Kozmetik',
       publisher: { '@id': 'https://www.favorikozmetik.com/#organization' },
       inLanguage: 'tr-TR',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.favorikozmetik.com/tum-urunler?q={search_term_string}' },
+        'query-input': 'required name=search_term_string',
+      },
     },
   ],
 }
@@ -78,21 +84,6 @@ function SupabasePreconnect() {
   const origin = url ? new URL(url).origin : null
   if (!origin) return null
   return <link rel="preconnect" href={origin} />
-}
-
-const FIRST_HERO_IMAGE_URL =
-  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&h=900&fit=crop'
-
-function HeroImagePreload() {
-  const preloadHref = `/_next/image?url=${encodeURIComponent(FIRST_HERO_IMAGE_URL)}&w=1920&q=75`
-  return (
-    <link
-      rel="preload"
-      as="image"
-      href={preloadHref}
-      fetchPriority="high"
-    />
-  )
 }
 
 export default function RootLayout({
@@ -105,7 +96,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <SupabasePreconnect />
-        <HeroImagePreload />
       </head>
       <body className={inter.className}>
         <script

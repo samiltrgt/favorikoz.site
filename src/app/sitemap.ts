@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/giris`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE_URL}/kayit`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE_URL}/sifremi-unuttum`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${BASE_URL}/sifre-yenile`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.2 },
     { url: `${BASE_URL}/checkout`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.5 },
   ]
 

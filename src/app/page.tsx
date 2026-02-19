@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ScrollHero from '@/components/scroll-hero'
@@ -6,6 +7,22 @@ import FeaturesSection from '@/components/features-section'
 import PromoBannerCarousel from '@/components/promo-banner-carousel'
 import HomeProductsBryhel from '@/components/home-products-bryhel'
 import { createSupabaseServer } from '@/lib/supabase/server'
+
+const BASE_URL = 'https://www.favorikozmetik.com'
+
+export const metadata: Metadata = {
+  title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
+  description:
+    'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım, Fontenay Paris ve daha fazlası için güvenilir adresiniz.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
+    description:
+      'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
+    url: BASE_URL,
+    type: 'website',
+  },
+}
 
 export const dynamic = 'force-dynamic' // Force dynamic rendering because we use cookies
 export const revalidate = 10 // Revalidate every 10 seconds (for admin changes to show faster)
