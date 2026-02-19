@@ -266,16 +266,16 @@ export default function ScrollHero({ products }: { products?: { image?: string |
           const lineRot = 0
 
           const scrollProgress = clamp(scrollRef.current / MAX_SCROLL, 0, 1)
-          const arcRadius = isMobile ? w * 1.0 : w * 0.7
+          const arcRadius = isMobile ? w * 1.3 : w * 0.7
           const spreadAngle = 240
           const startAngle = isMobile ? 45 + 180 : -90 - spreadAngle / 2
           const step = spreadAngle / (isMobile ? displayCount - 1 : TOTAL_IMAGES - 1)
           const shuffleOffset = isMobile
-            ? -scrollProgress * 360
+            ? -scrollProgress * 180
             : -scrollProgress * spreadAngle * 0.6
           const currentArcAngle = startAngle + i * step + shuffleOffset
           const arcRad = (currentArcAngle * Math.PI) / 180
-          const arcCenterY = isMobile ? h * 0.28 : h * 1.08
+          const arcCenterY = isMobile ? h * 0.5 : h * 1.08
           const arcX = Math.cos(arcRad) * arcRadius + mousePosRef.current.x * 25
           const arcY = Math.sin(arcRad) * arcRadius + arcCenterY
           const arcRot = currentArcAngle + 90
@@ -357,7 +357,7 @@ export default function ScrollHero({ products }: { products?: { image?: string |
       </div>
       <canvas ref={canvasRef} className="relative z-10 block w-full h-full cursor-default" />
       <div
-        className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none px-4"
+        className="absolute inset-0 z-20 flex items-center justify-center pt-[18vh] md:pt-0 pointer-events-none px-4"
         aria-hidden
       >
         <SplitText
