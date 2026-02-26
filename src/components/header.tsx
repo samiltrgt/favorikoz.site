@@ -435,17 +435,43 @@ export default function Header() {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isMenuOpen ? closeMobileMenu() : setIsMenuOpen(true); }}
-            className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
-            aria-label="Menüyü aç/kapat"
-            aria-expanded={isMenuOpen}
-            data-testid="mobile-menu-button"
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Mobile: Favoriler + Sepet + menu button */}
+          <div className="flex items-center gap-1 lg:hidden">
+            <Link
+              href="/favorilerim"
+              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center text-white/90 hover:text-white touch-manipulation"
+              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`}
+            >
+              <Heart className="h-5 w-5" />
+              {favoritesCount > 0 && (
+                <span className="absolute right-0 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/sepet"
+              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center text-white/90 hover:text-white touch-manipulation"
+              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount})` : ''}`}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute right-0 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); isMenuOpen ? closeMobileMenu() : setIsMenuOpen(true); }}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
+              aria-label="Menüyü aç/kapat"
+              aria-expanded={isMenuOpen}
+              data-testid="mobile-menu-button"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </nav>
       </div>
 

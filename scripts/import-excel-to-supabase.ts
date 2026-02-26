@@ -4,10 +4,11 @@
  * Excel to Supabase Import & Update Script
  * 
  * Bu script Excel dosyasından ürünleri okuyup Supabase'e ekler/günceller:
- * - Barcode varsa → Fiyat ve stok günceller
+ * - Barcode varsa → Fiyat, stok ve kategori (alt kategori kodu) günceller
  * - Barcode yoksa → Yeni ürün ekler
- * 
- * Kullanım: npx tsx scripts/import-excel-to-supabase.ts "C:\path\to\file.xlsx"
+ * - "Alt kategori kodu" sütunu: her harf bir alt kategoriye eşlenir (a, b, ç, ğ, ı, ...)
+ *
+ * Kullanım: npx tsx scripts/import-excel-to-supabase.ts "C:\Users\Lenovo\Desktop\enyeni.xlsx"
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -96,6 +97,57 @@ function normalizeCategory(cat: string): string {
   return 'kisisel-bakim'
 }
 
+// Alt kategori kodu (harf) → subcategory_slug. Sütun adı: "alt kategori kodu"
+const LETTER_TO_SUBCATEGORY: Record<string, string> = {
+  a: 'diger-ipek-kirpik-urunleri',
+  b: 'ipek-kirpikler',
+  c: 'cilt-bakimi',
+  ç: 'kisisel-bakim-alt',
+  d: 'diger-kuafor-malzemeleri',
+  e: 'fon-makineleri',
+  f: 'tiras-makineleri',
+  g: 'sac-bakim',
+  ğ: 'sac-fircasi-ve-tarak',
+  h: 'sac-sekillendiriciler',
+  ı: 'sac-topik',
+  i: 'cihazlar',
+  j: 'freze-uclari',
+  k: 'jeller',
+  l: 'kalici-oje',
+  m: 'protez-tirnak-malzemeleri',
+  n: 'tirnak-fircalari',
+}
+// subcategory_slug → category_slug (parent)
+const SUBCATEGORY_TO_CATEGORY: Record<string, string> = {
+  'diger-ipek-kirpik-urunleri': 'ipek-kirpik',
+  'ipek-kirpikler': 'ipek-kirpik',
+  'cilt-bakimi': 'kisisel-bakim',
+  'kisisel-bakim-alt': 'kisisel-bakim',
+  'diger-kuafor-malzemeleri': 'kuafor-malzemeleri',
+  'fon-makineleri': 'kuafor-malzemeleri',
+  'tiras-makineleri': 'kuafor-malzemeleri',
+  'sac-bakim': 'sac-bakimi',
+  'sac-fircasi-ve-tarak': 'sac-bakimi',
+  'sac-sekillendiriciler': 'sac-bakimi',
+  'sac-topik': 'sac-bakimi',
+  'cihazlar': 'tirnak',
+  'freze-uclari': 'tirnak',
+  'jeller': 'tirnak',
+  'kalici-oje': 'tirnak',
+  'protez-tirnak-malzemeleri': 'tirnak',
+  'tirnak-fircalari': 'tirnak',
+}
+
+function getCategoryFromLetter(letter: string): { subcategorySlug: string; categorySlug: string } | null {
+  const key = String(letter).trim().toLowerCase()
+  if (!key) return null
+  const sub = LETTER_TO_SUBCATEGORY[key]
+  if (!sub) return null
+  const cat = SUBCATEGORY_TO_CATEGORY[sub]
+  if (!cat) return null
+  return { subcategorySlug: sub, categorySlug: cat }
+}
+
 function ensureHttps(url: string): string {
   if (!url) return ''
   const s = String(url).trim()
@@ -113,6 +165,8 @@ interface ParsedProduct {
   price: number
   originalPrice?: number
   category: string
+  subcategorySlug?: string
+  categorySlugFromSub?: string
   description: string
   stockQty: number
   inStock: boolean
@@ -153,6 +207,10 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
   ]))
   const categoryRaw = pick(row, ['Kategori İsmi', 'kategori', 'category', 'kategori adı'])
   const category = normalizeCategory(categoryRaw)
+  const altKategoriKodu = pick(row, ['alt kategori kodu', 'alt kategori', 'kategori kodu'])
+  const letterMap = altKategoriKodu != null && altKategoriKodu !== '' ? getCategoryFromLetter(String(altKategoriKodu).trim()) : null
+  const subcategorySlug = letterMap?.subcategorySlug
+  const categorySlugFromSub = letterMap?.categorySlug
   const description = pick(row, ['Ürün Açıklaması', 'açıklama', 'aciklama', 'description', 'detay']) || ''
   const stockQty = toNumber(pick(row, ['Ürün Stok Adedi', 'stok', 'stok miktarı', 'stok adedi', 'quantity', 'qty']))
   const inStock = stockQty > 0 || String(pick(row, ['stokta', 'stok durumu', 'in stock'])).toLowerCase().includes('var')
@@ -197,6 +255,8 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     price,
     originalPrice: originalPrice || undefined,
     category,
+    subcategorySlug,
+    categorySlugFromSub,
     description,
     stockQty,
     inStock,
@@ -273,16 +333,21 @@ async function importToSupabase(products: ParsedProduct[]) {
           stock_quantity: number;
           in_stock: boolean;
           updated_at: string;
+          category_slug?: string | null;
+          subcategory_slug?: string | null;
         } = {
           price: Math.round(product.price * 100), // TL → kuruş
           original_price: product.originalPrice ? Math.round(product.originalPrice * 100) : null,
           discount: product.discount ?? null,
           stock_quantity: product.stockQty,
-          in_stock: isInStock, // Stok 0 ise otomatik false, >0 ise Excel'deki değer
+          in_stock: isInStock,
           updated_at: new Date().toISOString(),
-        };
+        }
+        if (product.subcategorySlug != null && product.categorySlugFromSub != null) {
+          updateData.category_slug = product.categorySlugFromSub
+          updateData.subcategory_slug = product.subcategorySlug
+        }
 
-        // Explicitly declare the type for the update to avoid 'never' error
         const { error: updateError } = await (supabase
           .from('products')
           .update(updateData as any)
@@ -302,6 +367,8 @@ async function importToSupabase(products: ParsedProduct[]) {
         // Stok kontrolü: Stok 0 ise otomatik olarak in_stock = false
         const isInStock = product.stockQty > 0 ? product.inStock : false
 
+        const categorySlug = product.categorySlugFromSub ?? product.category
+        const subcategorySlug = product.subcategorySlug ?? null
         const { error: insertError } = await (supabase
           .from('products')
           .insert({
@@ -318,9 +385,10 @@ async function importToSupabase(products: ParsedProduct[]) {
             reviews_count: product.reviews,
             is_new: product.isNew,
             is_best_seller: product.isBestSeller,
-            in_stock: isInStock, // Stok 0 ise otomatik false, >0 ise Excel'deki değer
+            in_stock: isInStock,
             stock_quantity: product.stockQty,
-            category_slug: product.category,
+            category_slug: categorySlug,
+            subcategory_slug: subcategorySlug,
             description: product.description,
             barcode: product.barcode,
           }) as any)

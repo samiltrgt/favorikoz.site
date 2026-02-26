@@ -11,8 +11,9 @@ const noindexNofollow = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 module.exports = {
   trailingSlash: false,
   images: {
-    // Speed up local dev and avoid optimizer timeouts
-    unoptimized: process.env.NODE_ENV !== 'production',
+    loader: 'custom',
+    loaderFile: './src/lib/cloudinary-loader.ts',
+    unoptimized: false,
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {

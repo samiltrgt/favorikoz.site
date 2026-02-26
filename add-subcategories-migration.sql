@@ -29,7 +29,8 @@ VALUES
   ('cihazlar', 'Cihazlar', 'tirnak', 'Tırnak bakım cihazları', NOW(), NOW()),
   ('freze-uclari', 'Freze Uçları', 'tirnak', 'Freze uçları ve aksesuarları', NOW(), NOW()),
   ('kalici-oje', 'Kalıcı Oje', 'tirnak', 'Kalıcı oje ürünleri', NOW(), NOW()),
-  ('protez-tirnak-malzemeleri', 'Protez Tırnak Malzemeleri', 'tirnak', 'Protez tırnak malzemeleri', NOW(), NOW())
+  ('protez-tirnak-malzemeleri', 'Protez Tırnak Malzemeleri', 'tirnak', 'Protez tırnak malzemeleri', NOW(), NOW()),
+  ('tirnak-fircalari', 'Tırnak Fırçaları', 'tirnak', 'Tırnak fırçası ürünleri', NOW(), NOW())
 ON CONFLICT (slug) DO NOTHING;
 
 -- Saç Bakımı alt kategorileri
