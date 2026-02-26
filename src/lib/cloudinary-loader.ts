@@ -15,6 +15,14 @@ export default function cloudinaryLoader({
   // Relative or data URLs: return as-is (no Cloudinary)
   if (src.startsWith('/') || src.startsWith('data:')) return src
 
+  // CDN'ler fetch'i 401 ile reddediyor; Cloudinary'den geçirme, doğrudan kullan
+  try {
+    const u = new URL(src)
+    if (u.hostname.includes('dsmcdn.com')) return src
+  } catch {
+    // URL parse hatası
+  }
+
   const params = ['f_auto', 'q_auto', `w_${width}`]
   const paramsStr = params.join(',')
   return `https://res.cloudinary.com/${cloudName}/image/fetch/${paramsStr}/${encodeURIComponent(src)}`
