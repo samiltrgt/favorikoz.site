@@ -146,6 +146,10 @@ function getCategoryFromLetter(letter: string): { subcategorySlug: string; categ
   if (!key) return null
   // Excel/JS: "İ".toLowerCase() → "i̇" (i + combining dot). Cihazlar için "i" kabul et.
   if (key === 'i̇' || key === '\u0069\u0307') key = 'i'
+  // Tam genişlik veya j benzeri karakter → j (freze-uclari)
+  if (key === '\uFF4A' || key.charCodeAt(0) === 0xFF4A) key = 'j'
+  // "c" + birleşen cedilla (ç) veya Excel varyantı → ç (kisisel-bakim-alt)
+  if (key === 'c\u0327' || key === '\u0063\u0327') key = 'ç'
   const sub = LETTER_TO_SUBCATEGORY[key]
   if (!sub) {
     if (!_warnedUnmappedLetter.has(key)) {
