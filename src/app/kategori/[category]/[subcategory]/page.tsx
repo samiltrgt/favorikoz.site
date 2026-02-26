@@ -17,6 +17,7 @@ const subcategoryNames: { [key: string]: { [key: string]: string } } = {
     'freze-uclari': 'Freze Uçları',
     'kalici-oje': 'Kalıcı Oje',
     'protez-tirnak-malzemeleri': 'Protez Tırnak Malzemeleri',
+    'tirnak-fircalari': 'Tırnak Fırçaları',
   },
   'sac-bakimi': {
     'sac-bakim': 'Saç Bakım',
@@ -25,7 +26,7 @@ const subcategoryNames: { [key: string]: { [key: string]: string } } = {
     'sac-fircasi-ve-tarak': 'Saç Fırçası ve Tarak',
   },
   'kisisel-bakim': {
-    'kisisel-bakim': 'Kişisel Bakım',
+    'kisisel-bakim-alt': 'Kişisel Bakım',
     'cilt-bakimi': 'Cilt Bakımı',
   },
   'ipek-kirpik': {
@@ -34,6 +35,7 @@ const subcategoryNames: { [key: string]: { [key: string]: string } } = {
   },
   'kuafor-malzemeleri': {
     'tiras-makineleri': 'Tıraş Makineleri',
+    'fon-makineleri': 'Fön Makineleri',
     'diger-kuafor-malzemeleri': 'Diğer Kuaför Malzemeleri',
   },
 }

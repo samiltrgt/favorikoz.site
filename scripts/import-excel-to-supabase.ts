@@ -138,11 +138,22 @@ const SUBCATEGORY_TO_CATEGORY: Record<string, string> = {
   'tirnak-fircalari': 'tirnak',
 }
 
+let _warnedUnmappedLetter: Set<string> = new Set()
+
 function getCategoryFromLetter(letter: string): { subcategorySlug: string; categorySlug: string } | null {
-  const key = String(letter).trim().toLowerCase()
+  const raw = String(letter).trim()
+  let key = (raw.charAt(0) || raw).toLowerCase()
   if (!key) return null
+  // Excel/JS: "İ".toLowerCase() → "i̇" (i + combining dot). Cihazlar için "i" kabul et.
+  if (key === 'i̇' || key === '\u0069\u0307') key = 'i'
   const sub = LETTER_TO_SUBCATEGORY[key]
-  if (!sub) return null
+  if (!sub) {
+    if (!_warnedUnmappedLetter.has(key)) {
+      _warnedUnmappedLetter.add(key)
+      console.warn(`⚠️ Alt kategori kodu eşleşmedi: "${key}" (ham: "${raw}") – Bu harf map'te yok.`)
+    }
+    return null
+  }
   const cat = SUBCATEGORY_TO_CATEGORY[sub]
   if (!cat) return null
   return { subcategorySlug: sub, categorySlug: cat }
@@ -207,8 +218,16 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
   ]))
   const categoryRaw = pick(row, ['Kategori İsmi', 'kategori', 'category', 'kategori adı'])
   const category = normalizeCategory(categoryRaw)
-  const altKategoriKodu = pick(row, ['alt kategori kodu', 'alt kategori', 'kategori kodu'])
-  const letterMap = altKategoriKodu != null && altKategoriKodu !== '' ? getCategoryFromLetter(String(altKategoriKodu).trim()) : null
+  let altKategoriKodu = pick(row, ['alt kategori kodu', 'alt kategori', 'kategori kodu'])
+  if (altKategoriKodu == null || altKategoriKodu === '') {
+    const rowKeys = Object.keys(row || {})
+    const altKey = rowKeys.find((k) => {
+      const lower = String(k).toLowerCase().trim()
+      return lower.includes('alt') && lower.includes('kategori') && (lower.includes('kod') || lower.includes('code'))
+    })
+    if (altKey) altKategoriKodu = row[altKey]
+  }
+  const letterMap = altKategoriKodu != null && String(altKategoriKodu).trim() !== '' ? getCategoryFromLetter(String(altKategoriKodu).trim()) : null
   const subcategorySlug = letterMap?.subcategorySlug
   const categorySlugFromSub = letterMap?.categorySlug
   const description = pick(row, ['Ürün Açıklaması', 'açıklama', 'aciklama', 'description', 'detay']) || ''
@@ -288,6 +307,13 @@ function readExcelFile(xlsxPath: string): ParsedProduct[] {
   })
 
   console.log(`✅ Parsed ${products.length} valid products\n`)
+  const withSub = products.filter((p) => p.subcategorySlug != null).length
+  console.log(`📁 Alt kategori kodu okunan satır: ${withSub} / ${products.length}\n`)
+  if (products.length > 0 && products[0].subcategorySlug) {
+    console.log(`   Örnek: "${products[0].name?.slice(0, 40)}..." → ${products[0].categorySlugFromSub} / ${products[0].subcategorySlug}\n`)
+  } else if (products.length > 0 && withSub === 0) {
+    console.log(`   ⚠️ Hiçbir satırda alt kategori kodu eşleşmedi. Excel sütun adı "alt kategori kodu" mı? İlk satırda harf var mı?\n`)
+  }
   return products
 }
 
@@ -301,6 +327,7 @@ async function importToSupabase(products: ParsedProduct[]) {
   let newCount = 0
   let updateCount = 0
   let errorCount = 0
+  let withSubcategoryCount = 0
   const errors: Array<{ name: string; error: string }> = []
 
   for (const product of products) {
@@ -346,6 +373,7 @@ async function importToSupabase(products: ParsedProduct[]) {
         if (product.subcategorySlug != null && product.categorySlugFromSub != null) {
           updateData.category_slug = product.categorySlugFromSub
           updateData.subcategory_slug = product.subcategorySlug
+          withSubcategoryCount++
         }
 
         const { error: updateError } = await (supabase
@@ -369,6 +397,7 @@ async function importToSupabase(products: ParsedProduct[]) {
 
         const categorySlug = product.categorySlugFromSub ?? product.category
         const subcategorySlug = product.subcategorySlug ?? null
+        if (product.subcategorySlug != null) withSubcategoryCount++
         const { error: insertError } = await (supabase
           .from('products')
           .insert({
@@ -414,6 +443,7 @@ async function importToSupabase(products: ParsedProduct[]) {
   console.log(`   Total products:  ${products.length}`)
   console.log(`   ✨ New added:     ${newCount}`)
   console.log(`   🔄 Updated:       ${updateCount}`)
+  console.log(`   📁 Alt kategori atanan: ${withSubcategoryCount}`)
   console.log(`   ❌ Errors:        ${errorCount}`)
   console.log('='.repeat(60))
 
