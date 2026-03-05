@@ -252,10 +252,13 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     })
     if (altKey) altKategoriKodu = row[altKey]
   }
-  const letterMap = altKategoriKodu != null && String(altKategoriKodu).trim() !== '' ? getCategoryFromLetter(String(altKategoriKodu).trim()) : null
-  const nameMap = getCategoryFromCategoryName(categoryRaw)
-  const subcategorySlug = letterMap?.subcategorySlug ?? nameMap?.subcategorySlug
-  const categorySlugFromSub = letterMap?.categorySlug ?? nameMap?.categorySlug
+  const altKodStr = altKategoriKodu != null ? String(altKategoriKodu).trim() : ''
+  // Eğer sütunda tek harf varsa → harf eşlemesi, birden fazla karakter varsa → metin eşlemesi
+  const letterMap = altKodStr.length === 1 ? getCategoryFromLetter(altKodStr) : null
+  const nameMapFromAlt = altKodStr.length > 1 ? getCategoryFromCategoryName(altKodStr) : null
+  const nameMapFromCat = getCategoryFromCategoryName(categoryRaw)
+  const subcategorySlug = letterMap?.subcategorySlug ?? nameMapFromAlt?.subcategorySlug ?? nameMapFromCat?.subcategorySlug
+  const categorySlugFromSub = letterMap?.categorySlug ?? nameMapFromAlt?.categorySlug ?? nameMapFromCat?.categorySlug
   const description = pick(row, ['Ürün Açıklaması', 'açıklama', 'aciklama', 'description', 'detay']) || ''
   const stockQty = toNumber(pick(row, ['Ürün Stok Adedi', 'stok', 'stok miktarı', 'stok adedi', 'quantity', 'qty']))
   const inStock = stockQty > 0 || String(pick(row, ['stokta', 'stok durumu', 'in stock'])).toLowerCase().includes('var')
