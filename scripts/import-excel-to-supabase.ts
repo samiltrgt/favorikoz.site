@@ -138,6 +138,25 @@ const SUBCATEGORY_TO_CATEGORY: Record<string, string> = {
   'tirnak-fircalari': 'tirnak',
 }
 
+// A sütunundaki kategori metni (örn. "saç topik", "protez tırnak malzemeleri") → slug eşlemesi.
+// Uzun slug önce kontrol edilir ki "saç" tek başına "sac-bakim"e gitmesin.
+const SUBCATEGORY_SLUGS_BY_LENGTH = Object.keys(SUBCATEGORY_TO_CATEGORY).sort(
+  (a, b) => b.length - a.length
+)
+
+function getCategoryFromCategoryName(categoryRaw: string): { subcategorySlug: string; categorySlug: string } | null {
+  if (!categoryRaw || String(categoryRaw).trim() === '') return null
+  const slugified = slugify(String(categoryRaw).trim())
+  if (!slugified) return null
+  for (const subSlug of SUBCATEGORY_SLUGS_BY_LENGTH) {
+    if (slugified === subSlug || slugified.includes(subSlug)) {
+      const catSlug = SUBCATEGORY_TO_CATEGORY[subSlug]
+      if (catSlug) return { subcategorySlug: subSlug, categorySlug: catSlug }
+    }
+  }
+  return null
+}
+
 let _warnedUnmappedLetter: Set<string> = new Set()
 
 function getCategoryFromLetter(letter: string): { subcategorySlug: string; categorySlug: string } | null {
@@ -220,7 +239,9 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     'eski fiyat',
     'original price'
   ]))
-  const categoryRaw = pick(row, ['Kategori İsmi', 'kategori', 'category', 'kategori adı'])
+  const categoryRaw =
+    pick(row, ['Kategori İsmi', 'kategori', 'category', 'kategori adı']) ??
+    (Object.keys(row || {}).length > 0 ? row[Object.keys(row)[0]] : undefined)
   const category = normalizeCategory(categoryRaw)
   let altKategoriKodu = pick(row, ['alt kategori kodu', 'alt kategori', 'kategori kodu'])
   if (altKategoriKodu == null || altKategoriKodu === '') {
@@ -232,8 +253,9 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     if (altKey) altKategoriKodu = row[altKey]
   }
   const letterMap = altKategoriKodu != null && String(altKategoriKodu).trim() !== '' ? getCategoryFromLetter(String(altKategoriKodu).trim()) : null
-  const subcategorySlug = letterMap?.subcategorySlug
-  const categorySlugFromSub = letterMap?.categorySlug
+  const nameMap = getCategoryFromCategoryName(categoryRaw)
+  const subcategorySlug = letterMap?.subcategorySlug ?? nameMap?.subcategorySlug
+  const categorySlugFromSub = letterMap?.categorySlug ?? nameMap?.categorySlug
   const description = pick(row, ['Ürün Açıklaması', 'açıklama', 'aciklama', 'description', 'detay']) || ''
   const stockQty = toNumber(pick(row, ['Ürün Stok Adedi', 'stok', 'stok miktarı', 'stok adedi', 'quantity', 'qty']))
   const inStock = stockQty > 0 || String(pick(row, ['stokta', 'stok durumu', 'in stock'])).toLowerCase().includes('var')
