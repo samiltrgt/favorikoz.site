@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 1000
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 5000
     const category = searchParams.get('category')
     const search = searchParams.get('search')
     const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       if (search) {
         query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
       }
-      query = query.order('created_at', { ascending: false }).limit(limit)
+      query = query.order('created_at', { ascending: false }).limit(limit || 5000)
     }
     
     const { data, error } = await query
