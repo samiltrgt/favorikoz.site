@@ -68,18 +68,18 @@ export default function SubcategoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
 
-  // Load products from API
+  // Load products from API - direkt subcategory ile filtrele (1000 satır limitini aş)
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/products', { cache: 'no-store' })
+        const res = await fetch(`/api/products?subcategory=${subcategorySlug}`, { cache: 'no-store' })
         const json = await res.json()
         if (json.success) setAllProducts(json.data || [])
       } catch {}
       setIsLoading(false)
     }
     load()
-  }, [])
+  }, [subcategorySlug])
 
   // Alt kategoriye göre filtrele
   useEffect(() => {

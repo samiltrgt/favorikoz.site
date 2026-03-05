@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     // Parse query parameters
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 5000
     const category = searchParams.get('category')
+    const subcategory = searchParams.get('subcategory')
     const search = searchParams.get('search')
     const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
     const scopeAdmin = searchParams.get('scope') === 'admin' // Admin paneli: tüm ürünler (stok filtresi yok)
@@ -41,7 +42,9 @@ export async function GET(request: NextRequest) {
     if (fetchByIds) {
       query = query.in('id', ids)
     } else {
-      if (category) {
+      if (subcategory) {
+        query = query.eq('subcategory_slug', subcategory)
+      } else if (category) {
         query = query.eq('category_slug', category)
       }
       if (search) {
