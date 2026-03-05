@@ -1,29 +1,16 @@
 /**
- * Next.js custom image loader: Supabase (and other external) images are served
- * via Cloudinary fetch (resize, f_auto, q_auto). Vercel Image Optimization
- * quota is not used.
+ * Next.js custom image loader.
+ *
+ * Tüm ürün görselleri Cloudinary'e upload edildikten sonra,
+ * bu loader sadece src'yi geri döndürür. Böylece:
+ * - Vercel Image Optimization kullanılmaz (kota harcanmaz),
+ * - Cloudinary URL'leri doğrudan kullanılır (transform'lar Cloudinary tarafında).
  */
-type ImageLoaderParams = { src: string; width: number; quality?: number } // quality unused; Cloudinary uses q_auto
+type ImageLoaderParams = { src: string; width: number; quality?: number }
 
-export default function cloudinaryLoader({
-  src,
-  width,
-}: ImageLoaderParams): string {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-  if (!cloudName) return src
-
-  // Relative or data URLs: return as-is (no Cloudinary)
-  if (src.startsWith('/') || src.startsWith('data:')) return src
-
-  // CDN'ler fetch'i 401 ile reddediyor; Cloudinary'den geçirme, doğrudan kullan
-  try {
-    const u = new URL(src)
-    if (u.hostname.includes('dsmcdn.com')) return src
-  } catch {
-    // URL parse hatası
-  }
-
-  const params = ['f_auto', 'q_auto', `w_${width}`]
-  const paramsStr = params.join(',')
-  return `https://res.cloudinary.com/${cloudName}/image/fetch/${paramsStr}/${encodeURIComponent(src)}`
+export default function cloudinaryLoader({ src }: ImageLoaderParams): string {
+  // Relative, data veya harici URL fark etmeksizin src olduğu gibi döner.
+  // Ürün görselleri için src artık Cloudinary URL olduğu için
+  // ekstra image/fetch kullanılmasına gerek yok.
+  return src
 }
