@@ -308,6 +308,32 @@ export interface Database {
           updated_at?: string
         }
       }
+      promo_banner_products: {
+        Row: {
+          id: string
+          banner_id: string
+          product_id: string
+          display_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          banner_id: string
+          product_id: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          banner_id?: string
+          product_id?: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+      }
       featured_products: {
         Row: {
           id: string

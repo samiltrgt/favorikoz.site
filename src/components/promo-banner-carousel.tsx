@@ -42,16 +42,39 @@ const MOBILE_BANNER_FALLBACKS = [
 
 export default function PromoBannerCarousel({ products = [] }: { products?: any[] }) {
   const [banners, setBanners] = useState<PromoBannerData[]>([])
+  const [managedProductsByBanner, setManagedProductsByBanner] = useState<Record<string, any[]>>({})
   const [current, setCurrent] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/promo-banners?position=carousel', { cache: 'no-store' })
-        const result = await res.json()
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-          setBanners(result.data)
+        const [carouselRes, legacyRes, managedRes] = await Promise.all([
+          fetch('/api/promo-banners?position=carousel', { cache: 'no-store' }),
+          fetch('/api/promo-banners', { cache: 'no-store' }),
+          fetch('/api/promo-banner-products', { cache: 'no-store' }),
+        ])
+
+        const carouselJson = await carouselRes.json()
+        const legacyJson = await legacyRes.json()
+        const managedJson = await managedRes.json()
+
+        if (managedJson.success && Array.isArray(managedJson.data)) {
+          const grouped: Record<string, any[]> = {}
+          ;(managedJson.data as any[]).forEach((row) => {
+            if (!row.banner_id || !row.products) return
+            if (!grouped[row.banner_id]) grouped[row.banner_id] = []
+            grouped[row.banner_id].push(row.products)
+          })
+          setManagedProductsByBanner(grouped)
+        }
+
+        if (carouselJson.success && Array.isArray(carouselJson.data) && carouselJson.data.length > 0) {
+          setBanners(carouselJson.data)
+          setCurrent(0)
+        } else if (legacyJson.success && Array.isArray(legacyJson.data) && legacyJson.data.length > 0) {
+          // Geriye donuk uyumluluk: carousel kaydi yoksa mevcut aktif bannerlardan devam et
+          setBanners(legacyJson.data)
           setCurrent(0)
         }
       } catch (e) {
@@ -75,12 +98,14 @@ export default function PromoBannerCarousel({ products = [] }: { products?: any[
 
   const getProductsForBanner = useCallback(
     (b: PromoBannerData) => {
+      const managed = managedProductsByBanner[b.id]
+      if (managed && managed.length > 0) return managed.slice(0, MAX_PROMO_PRODUCTS)
       const link = getBannerLink(b)
       const slug = getCategorySlugFromLink(link) || (b.image?.includes('bannertirnak') || b.title?.toUpperCase() === 'TIRNAK ÜRÜNLERİMİZ' ? 'tirnak' : null)
       const list = slug ? products.filter((p: any) => p.category_slug === slug) : products
       return (list.length > 0 ? list : products).slice(0, MAX_PROMO_PRODUCTS)
     },
-    [products, getBannerLink]
+    [products, getBannerLink, managedProductsByBanner]
   )
 
   const productsByBanner = useMemo(

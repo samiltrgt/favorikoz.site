@@ -19,6 +19,20 @@ interface PromoCarouselItem {
   display_order: number
 }
 
+interface Product {
+  id: string
+  name: string
+  brand: string
+  image: string
+}
+
+interface BannerProductItem {
+  id: string
+  banner_id: string
+  product_id: string
+  products: Product | null
+}
+
 const emptyItem = (order: number): PromoCarouselItem => ({
   title: '',
   description: '',
@@ -35,6 +49,9 @@ export default function PromoCarouselAdminPage() {
   const [items, setItems] = useState<PromoCarouselItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | number | null>(null)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [bannerProducts, setBannerProducts] = useState<Record<string, BannerProductItem[]>>({})
+  const [searchByBanner, setSearchByBanner] = useState<Record<string, string>>({})
 
   useEffect(() => {
     loadItems()
@@ -43,10 +60,28 @@ export default function PromoCarouselAdminPage() {
   const loadItems = async () => {
     try {
       setIsLoading(true)
-      const res = await fetch('/api/promo-banners?scope=admin&position=carousel', { cache: 'no-store' })
-      const json = await res.json()
-      if (json.success) {
-        const data = (json.data || []) as PromoCarouselItem[]
+      const [bannerRes, productsRes, mapRes] = await Promise.all([
+        fetch('/api/promo-banners?scope=admin&position=carousel', { cache: 'no-store' }),
+        fetch('/api/products?scope=admin'),
+        fetch('/api/promo-banner-products?scope=admin'),
+      ])
+      const bannerJson = await bannerRes.json()
+      const productsJson = await productsRes.json()
+      const mapJson = await mapRes.json()
+
+      if (productsJson.success) setAllProducts(productsJson.data || [])
+
+      if (mapJson.success && Array.isArray(mapJson.data)) {
+        const grouped: Record<string, BannerProductItem[]> = {}
+        ;(mapJson.data as BannerProductItem[]).forEach((row) => {
+          if (!grouped[row.banner_id]) grouped[row.banner_id] = []
+          grouped[row.banner_id].push(row)
+        })
+        setBannerProducts(grouped)
+      }
+
+      if (bannerJson.success) {
+        const data = (bannerJson.data || []) as PromoCarouselItem[]
         setItems(data.length > 0 ? data : [emptyItem(1), emptyItem(2), emptyItem(3)])
       }
     } catch (e) {
@@ -112,6 +147,28 @@ export default function PromoCarouselAdminPage() {
     }
   }
 
+  const addProductToBanner = async (bannerId: string, productId: string) => {
+    try {
+      const res = await fetch('/api/promo-banner-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ banner_id: bannerId, product_id: productId }),
+      })
+      if (res.ok) await loadItems()
+    } catch (e) {
+      console.error('addProductToBanner error:', e)
+    }
+  }
+
+  const removeProductFromBanner = async (mappingId: string) => {
+    try {
+      const res = await fetch(`/api/promo-banner-products/${mappingId}`, { method: 'DELETE' })
+      if (res.ok) await loadItems()
+    } catch (e) {
+      console.error('removeProductFromBanner error:', e)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -157,6 +214,76 @@ export default function PromoCarouselAdminPage() {
                 Aktif
               </label>
             </div>
+
+            {item.id ? (
+              <div className="space-y-3 border-t border-gray-100 pt-4">
+                <p className="text-sm font-medium text-gray-800">Banner Alti Urunleri</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-lg border border-gray-200 p-3">
+                    <p className="text-xs text-gray-500 mb-2">Secili urunler</p>
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
+                      {(bannerProducts[item.id] || []).map((bp) => (
+                        <div key={bp.id} className="flex items-center justify-between gap-2 rounded border border-gray-100 p-2">
+                          <span className="text-sm truncate">{bp.products?.name || bp.product_id}</span>
+                          <button
+                            onClick={() => removeProductFromBanner(bp.id)}
+                            className="text-red-600 hover:text-red-800 text-xs"
+                          >
+                            Kaldir
+                          </button>
+                        </div>
+                      ))}
+                      {(bannerProducts[item.id] || []).length === 0 && (
+                        <p className="text-xs text-gray-400">Henuz secili urun yok</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-200 p-3">
+                    <input
+                      type="text"
+                      value={searchByBanner[item.id] || ''}
+                      onChange={(e) =>
+                        setSearchByBanner((prev) => ({ ...prev, [item.id as string]: e.target.value }))
+                      }
+                      placeholder="Urun ara..."
+                      className="mb-2 w-full rounded border border-gray-200 px-2 py-1.5 text-sm"
+                    />
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
+                      {allProducts
+                        .filter((p) => {
+                          const q = (searchByBanner[item.id as string] || '').toLowerCase()
+                          if (!q) return true
+                          return p.name.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q)
+                        })
+                        .slice(0, 50)
+                        .map((p) => {
+                          const selectedIds = new Set((bannerProducts[item.id as string] || []).map((x) => x.product_id))
+                          const alreadySelected = selectedIds.has(p.id)
+                          return (
+                            <button
+                              key={p.id}
+                              disabled={alreadySelected}
+                              onClick={() => addProductToBanner(item.id as string, p.id)}
+                              className={`w-full text-left rounded border px-2 py-1.5 text-sm ${
+                                alreadySelected
+                                  ? 'border-gray-100 text-gray-400 bg-gray-50 cursor-not-allowed'
+                                  : 'border-gray-200 hover:bg-gray-50'
+                              }`}
+                            >
+                              {p.name}
+                            </button>
+                          )
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                Once bu banneri kaydet, sonra altina urun secimi acilir.
+              </p>
+            )}
 
             {item.image && (
               <div className="relative w-full aspect-[1910/250] rounded-lg overflow-hidden border border-gray-200">
