@@ -40,7 +40,7 @@ const emptyItem = (order: number): PromoCarouselItem => ({
   image_mobile: '',
   link: '/kategori/tirnak',
   button_text: 'Urunleri Gor',
-  position: 'carousel',
+  position: order === 1 ? 'top' : order === 2 ? 'bottom' : 'footer',
   is_active: true,
   display_order: order,
 })
@@ -61,7 +61,7 @@ export default function PromoCarouselAdminPage() {
     try {
       setIsLoading(true)
       const [bannerRes, productsRes, mapRes] = await Promise.all([
-        fetch('/api/promo-banners?scope=admin&position=carousel', { cache: 'no-store' }),
+        fetch('/api/promo-banners?scope=admin', { cache: 'no-store' }),
         fetch('/api/products?scope=admin'),
         fetch('/api/promo-banner-products?scope=admin'),
       ])
@@ -81,7 +81,9 @@ export default function PromoCarouselAdminPage() {
       }
 
       if (bannerJson.success) {
-        const data = (bannerJson.data || []) as PromoCarouselItem[]
+        const data = ((bannerJson.data || []) as PromoCarouselItem[])
+          .filter((x) => ['top', 'bottom', 'footer'].includes(x.position))
+          .sort((a, b) => a.display_order - b.display_order)
         setItems(data.length > 0 ? data : [emptyItem(1), emptyItem(2), emptyItem(3)])
       }
     } catch (e) {
@@ -113,7 +115,6 @@ export default function PromoCarouselAdminPage() {
     try {
       const body = {
         ...item,
-        position: 'carousel',
         display_order: index + 1,
       }
       const res = await fetch(item.id ? `/api/promo-banners/${item.id}` : '/api/promo-banners', {

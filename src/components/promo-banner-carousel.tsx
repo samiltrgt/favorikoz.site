@@ -49,13 +49,11 @@ export default function PromoBannerCarousel({ products = [] }: { products?: any[
   useEffect(() => {
     const load = async () => {
       try {
-        const [carouselRes, legacyRes, managedRes] = await Promise.all([
-          fetch('/api/promo-banners?position=carousel', { cache: 'no-store' }),
+        const [legacyRes, managedRes] = await Promise.all([
           fetch('/api/promo-banners', { cache: 'no-store' }),
           fetch('/api/promo-banner-products', { cache: 'no-store' }),
         ])
 
-        const carouselJson = await carouselRes.json()
         const legacyJson = await legacyRes.json()
         const managedJson = await managedRes.json()
 
@@ -69,11 +67,7 @@ export default function PromoBannerCarousel({ products = [] }: { products?: any[
           setManagedProductsByBanner(grouped)
         }
 
-        if (carouselJson.success && Array.isArray(carouselJson.data) && carouselJson.data.length > 0) {
-          setBanners(carouselJson.data)
-          setCurrent(0)
-        } else if (legacyJson.success && Array.isArray(legacyJson.data) && legacyJson.data.length > 0) {
-          // Geriye donuk uyumluluk: carousel kaydi yoksa mevcut aktif bannerlardan devam et
+        if (legacyJson.success && Array.isArray(legacyJson.data) && legacyJson.data.length > 0) {
           setBanners(legacyJson.data)
           setCurrent(0)
         }
