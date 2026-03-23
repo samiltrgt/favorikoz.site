@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getIyzicoCredentials, createPayment } from '@/lib/iyzico'
+import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
@@ -93,11 +93,14 @@ export async function POST(request: NextRequest) {
     const envCallback = process.env.IYZICO_CALLBACK_URL?.trim()
     const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
     const host = request.headers.get('host') || 'localhost:1700'
-    const callbackUrl = envCallback
+    const callbackBase = envCallback
       ? envCallback
       : envBase
       ? `${stripTrailingSlash(envBase)}/payment/callback`
       : `https://${host}/payment/callback`
+    const callbackUrl = callbackBase.endsWith('/payment/callback')
+      ? callbackBase.replace(/\/payment\/callback$/, '/api/payment/3ds-callback')
+      : callbackBase
 
     if (!callbackUrl.startsWith('http://') && !callbackUrl.startsWith('https://')) {
       return NextResponse.json(
@@ -255,12 +258,12 @@ export async function POST(request: NextRequest) {
         throw new Error('Iyzico credentials not available')
       }
 
-      // Call Iyzico REST API
-      const result = await createPayment(iyzipayRequest)
+      // Canlıda zorunlu 3DS için initialize akışı
+      const result = await initialize3DSPayment(iyzipayRequest)
 
       if (result.status === 'success') {
-        // Handle 3DS authentication
-        if (result.threeDSHtmlContent) {
+        // 3DS sayfası açılmalı
+        if (result.threeDSHtmlContent || result.threeDSHtmlContent?.length > 0) {
           return NextResponse.json({
             success: true,
             requires3DS: true,
@@ -268,16 +271,11 @@ export async function POST(request: NextRequest) {
             conversationId: result.conversationId || conversationId,
             orderNumber
           })
-        } else {
-          // Direct success - redirect to callback
-          return NextResponse.json({
-            success: true,
-            paymentPageUrl: `${callbackUrl}?token=${result.conversationId || conversationId}&status=success&orderNumber=${orderNumber}`,
-            token: result.conversationId || conversationId,
-            paymentId: result.paymentId,
-            orderNumber
-          })
         }
+        return NextResponse.json({
+          success: false,
+          error: '3DS başlatılamadı',
+        }, { status: 400 })
       } else {
         return NextResponse.json({
           success: false,
