@@ -216,7 +216,17 @@ export default function CheckoutPage() {
         if (result.requires3DS && result.threeDSHtmlContent) {
           const newWindow = window.open('', '_blank')
           if (newWindow) {
-            newWindow.document.write(result.threeDSHtmlContent)
+            const raw = String(result.threeDSHtmlContent || '')
+            let html = raw
+            // Iyzico bazen 3DS içeriğini base64 gönderir.
+            if (!raw.includes('<html') && !raw.includes('<form')) {
+              try {
+                html = decodeURIComponent(escape(window.atob(raw)))
+              } catch {
+                html = raw
+              }
+            }
+            newWindow.document.write(html)
             newWindow.document.close()
           }
         } else if (result.paymentPageUrl) {
