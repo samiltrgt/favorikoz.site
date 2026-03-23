@@ -354,6 +354,29 @@ export interface Database {
           created_at?: string
         }
       }
+      home_carousel_products: {
+        Row: {
+          id: string
+          product_id: string
+          display_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+      }
       scroll_hero_products: {
         Row: {
           id: string

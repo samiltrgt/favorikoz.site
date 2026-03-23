@@ -48,6 +48,7 @@ export default function AdminLayout({
     { name: 'Kategori Yönetimi', href: '/admin/categories', icon: FolderTree },
     { name: 'Öne Çıkan Ürünler', href: '/admin/featured-products', icon: Star },
     { name: 'Exclusive Collection', href: '/admin/own-production', icon: Gem },
+    { name: 'Ana Sayfa Ürün Sliderı', href: '/admin/home-carousel-products', icon: Star },
     { name: 'Hero Ürünleri', href: '/admin/hero-products', icon: Sparkles },
     { name: 'Scroll Hero Kartları', href: '/admin/scroll-hero-cards', icon: ImageIcon },
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },

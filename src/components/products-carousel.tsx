@@ -16,11 +16,34 @@ export default function ProductsCarousel({
   title = 'ÜRÜNLER',
   viewAllLink = '/tum-urunler',
 }: ProductsCarouselProps) {
+  const [managedProducts, setManagedProducts] = useState<any[] | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  const displayProducts = products.slice(0, 20)
+  useEffect(() => {
+    let cancelled = false
+    const loadManaged = async () => {
+      try {
+        const res = await fetch('/api/home-carousel-products', { cache: 'no-store' })
+        const json = await res.json()
+        if (cancelled) return
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const mapped = (json.data as any[]).map((row) => row.products).filter(Boolean)
+          setManagedProducts(mapped)
+          return
+        }
+      } catch {}
+      if (!cancelled) setManagedProducts([])
+    }
+    loadManaged()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const sourceProducts = managedProducts && managedProducts.length > 0 ? managedProducts : products
+  const displayProducts = sourceProducts.slice(0, 20)
 
   const scroll = (dir: 'left' | 'right') => {
     const el = scrollRef.current
