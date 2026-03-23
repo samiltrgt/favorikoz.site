@@ -30,10 +30,33 @@ export default function HomeProductsBryhel({
   const [translateX, setTranslateX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; startTranslate: number } | null>(null)
+  const [managedProducts, setManagedProducts] = useState<any[] | null>(null)
 
   translateXRef.current = translateX
 
-  const displayProducts = products.slice(0, 12)
+  useEffect(() => {
+    let cancelled = false
+    async function loadManaged() {
+      try {
+        const res = await fetch('/api/own-production', { cache: 'no-store' })
+        const json = await res.json()
+        if (cancelled) return
+        if (json.success && json.data?.length > 0) {
+          const list = (json.data as any[]).map((row) => row.products).filter(Boolean)
+          setManagedProducts(list)
+          return
+        }
+      } catch {}
+      if (!cancelled) setManagedProducts([])
+    }
+    loadManaged()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const sourceProducts = managedProducts && managedProducts.length > 0 ? managedProducts : products
+  const displayProducts = sourceProducts.slice(0, 12)
   const duplicatedProducts = [...displayProducts, ...displayProducts]
 
   const halfWidthRef = useRef(0)

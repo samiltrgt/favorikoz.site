@@ -48,7 +48,7 @@ export default function PromoBannerCarousel({ products = [] }: { products?: any[
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/promo-banners', { cache: 'no-store' })
+        const res = await fetch('/api/promo-banners?position=carousel', { cache: 'no-store' })
         const result = await res.json()
         if (result.success && Array.isArray(result.data) && result.data.length > 0) {
           setBanners(result.data)

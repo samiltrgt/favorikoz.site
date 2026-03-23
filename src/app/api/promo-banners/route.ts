@@ -106,8 +106,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Check if banner already exists for this position
-    if (body.position) {
+    // Carousel pozisyonunda coklu kayda izin ver.
+    // Diger pozisyonlarda (top/bottom/footer) tek aktif kayit upsert edilir.
+    if (body.position && body.position !== 'carousel') {
       const { data: existing } = await supabase
         .from('promo_banners')
         .select('id')

@@ -53,6 +53,7 @@ export default function AdminLayout({
     { name: 'Scroll Hero Kartları', href: '/admin/scroll-hero-cards', icon: ImageIcon },
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
     { name: 'Promo Banner', href: '/admin/promo-banners', icon: Image },
+    { name: 'Promo Carousel', href: '/admin/promo-carousel', icon: Image },
     { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Müşteriler', href: '/admin/customers', icon: Users },
     { name: 'Raporlar', href: '/admin/reports', icon: BarChart3 },
