@@ -17,7 +17,8 @@ import {
   Star,
   Sparkles,
   Gem,
-  FolderTree
+  FolderTree,
+  Images
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -48,6 +49,7 @@ export default function AdminLayout({
     { name: 'Öne Çıkan Ürünler', href: '/admin/featured-products', icon: Star },
     { name: 'Exclusive Collection', href: '/admin/own-production', icon: Gem },
     { name: 'Hero Ürünleri', href: '/admin/hero-products', icon: Sparkles },
+    { name: 'Scroll Hero Kartları', href: '/admin/scroll-hero-cards', icon: Images },
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
     { name: 'Promo Banner', href: '/admin/promo-banners', icon: Image },
     { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
