@@ -20,6 +20,10 @@ function toIyzicoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
+function stripTrailingSlash(url: string): string {
+  return url.replace(/\/+$/, '')
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -42,9 +46,18 @@ export async function POST(request: NextRequest) {
     const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
     
     // Calculate shipping: free if >= 1499 TL (14990 in 10x format), otherwise 100 TL (1000 in 10x format)
+    // Optional one-time test override via env:
+    // TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
     const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL (10x formatında)
     const SHIPPING_COST = 1000 // 100 TL (10x formatında)
-    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+    const testFreeShippingEmail = (process.env.TEST_FREE_SHIPPING_EMAIL || '').trim().toLowerCase()
+    const customerEmail = (customer.email || '').toString().trim().toLowerCase()
+    const isOneTimeTestShippingFree = !!testFreeShippingEmail && customerEmail === testFreeShippingEmail
+    const shipping = isOneTimeTestShippingFree
+      ? 0
+      : subtotal >= FREE_SHIPPING_THRESHOLD
+      ? 0
+      : SHIPPING_COST
     
     // Total price in 10x format
     const totalPrice = subtotal + shipping
@@ -73,21 +86,25 @@ export async function POST(request: NextRequest) {
     const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
     const priceStr = toPriceString(sumBasketTL)
 
-    // Detect current domain dynamically
-    const getBaseUrl = () => {
-      if (typeof window !== 'undefined') {
-        // Client-side
-        return window.location.origin
-      }
-      // Server-side - try to get from request or use default
-      const host = request.headers.get('host')
-      if (host) {
-        return `https://${host}`
-      }
-      return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:1700'
+    // 3DS callback URL:
+    // 1) IYZICO_CALLBACK_URL (explicit)
+    // 2) NEXT_PUBLIC_BASE_URL + /payment/callback
+    // 3) request host fallback
+    const envCallback = process.env.IYZICO_CALLBACK_URL?.trim()
+    const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
+    const host = request.headers.get('host') || 'localhost:1700'
+    const callbackUrl = envCallback
+      ? envCallback
+      : envBase
+      ? `${stripTrailingSlash(envBase)}/payment/callback`
+      : `https://${host}/payment/callback`
+
+    if (!callbackUrl.startsWith('http://') && !callbackUrl.startsWith('https://')) {
+      return NextResponse.json(
+        { success: false, error: 'IYZICO callback URL geçersiz. IYZICO_CALLBACK_URL veya NEXT_PUBLIC_BASE_URL kontrol edin.' },
+        { status: 500 }
+      )
     }
-    
-    const callbackUrl = `${getBaseUrl()}/payment/callback`
 
     // Generate order number and conversation ID (Iyzico requires unique random string starting with letter)
     const timestamp = Date.now()

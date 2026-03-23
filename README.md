@@ -42,6 +42,20 @@ NEXT_PUBLIC_CLOUDINARY_API_KEY=your_api_key
 NEXT_PUBLIC_CLOUDINARY_API_SECRET=your_api_secret
 ```
 
+Iyzico (canli/sandbox) icin ek olarak:
+
+```env
+IYZICO_API_KEY=your_iyzico_key
+IYZICO_SECRET_KEY=your_iyzico_secret
+IYZICO_BASE_URL=https://api.iyzipay.com
+NEXT_PUBLIC_BASE_URL=https://www.favorikozmetik.com
+IYZICO_CALLBACK_URL=https://www.favorikozmetik.com/payment/callback
+TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
+```
+
+Not: `IYZICO_CALLBACK_URL` ayarlanirsa callback adresi dogrudan bundan okunur.
+Not: `TEST_FREE_SHIPPING_EMAIL` sadece belirtilen mail ile verilen siparislerde kargoyu 0 yapar (test amacli).
+
 ### Cloudinary Setup
 
 1. [Cloudinary](https://cloudinary.com) hesabı oluşturun
