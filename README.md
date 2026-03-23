@@ -51,10 +51,12 @@ IYZICO_BASE_URL=https://api.iyzipay.com
 NEXT_PUBLIC_BASE_URL=https://www.favorikozmetik.com
 IYZICO_CALLBACK_URL=https://www.favorikozmetik.com/payment/callback
 TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
+NEXT_PUBLIC_TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
 ```
 
 Not: `IYZICO_CALLBACK_URL` ayarlanirsa callback adresi dogrudan bundan okunur.
 Not: `TEST_FREE_SHIPPING_EMAIL` sadece belirtilen mail ile verilen siparislerde kargoyu 0 yapar (test amacli).
+Not: Checkout ekraninda kargo tutarinin da dogru gorunmesi icin `NEXT_PUBLIC_TEST_FREE_SHIPPING_EMAIL` ayni mail olmali.
 
 ### Cloudinary Setup
 
