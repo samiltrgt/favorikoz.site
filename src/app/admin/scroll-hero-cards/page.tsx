@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Plus, Trash2, Search, Package, Images } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Search, Package, ImageIcon } from 'lucide-react'
 
 interface Product {
   id: string
@@ -247,7 +247,7 @@ export default function ScrollHeroCardsAdminPage() {
                       <p className="text-xs text-gray-500">{product.brand}</p>
                     </div>
                     {isSelected ? (
-                      <Images className="h-5 w-5 text-blue-600" />
+                      <ImageIcon className="h-5 w-5 text-blue-600" />
                     ) : (
                       <Plus className="h-5 w-5 text-gray-400" />
                     )}
