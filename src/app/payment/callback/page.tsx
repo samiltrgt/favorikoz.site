@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 export default function PaymentCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'pending' | 'success' | 'failed'>('loading')
+  const [status, setStatus] = useState<'loading' | 'pending' | 'pending_timeout' | 'success' | 'failed'>('loading')
   const [orderNumber, setOrderNumber] = useState<string>('')
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function PaymentCallbackPage() {
         if (paymentId) params.set('paymentId', paymentId)
         const url = `/api/payment/status?${params.toString()}`
         // Bazı bankalarda 3DS dönüşü sonrası provizyon birkaç saniye gecikebilir.
-        for (let i = 0; i < 10; i += 1) {
+        for (let i = 0; i < 20; i += 1) {
           const res = await fetch(url)
           const json = await res.json()
           console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error, try: i + 1 })
@@ -59,7 +59,7 @@ export default function PaymentCallbackPage() {
 
           if (json.status === 'pending') {
             setStatus('pending')
-            await sleep(1500)
+            await sleep(2000)
             continue
           }
 
@@ -67,7 +67,7 @@ export default function PaymentCallbackPage() {
           return
         }
 
-        setStatus('failed')
+        setStatus('pending_timeout')
       } catch (err) {
         console.error('[Ödeme callback] API hatası:', err)
         setStatus('failed')
@@ -91,6 +91,34 @@ export default function PaymentCallbackPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
             <h1 className="text-2xl font-bold text-amber-600 mb-2">Ödeme İşleniyor</h1>
             <p className="text-gray-600 mb-6">3D doğrulama alındı, banka provizyonu tamamlanıyor. Lütfen bekleyin...</p>
+          </div>
+        </div>
+      )}
+
+      {status === 'pending_timeout' && (
+        <div className="text-center max-w-md mx-auto">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-amber-600 mb-2">Banka Onayı Gecikiyor</h1>
+            <p className="text-gray-600 mb-6">
+              3D doğrulama alındı ancak banka provizyon sonucu henüz dönmedi. Lütfen 1-2 dakika sonra tekrar kontrol edin.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 mr-3"
+            >
+              Durumu Yenile
+            </button>
+            <button
+              onClick={() => router.push('/siparislerim')}
+              className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300"
+            >
+              Siparişlerim
+            </button>
           </div>
         </div>
       )}
