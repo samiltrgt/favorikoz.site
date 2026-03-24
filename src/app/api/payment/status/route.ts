@@ -54,12 +54,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, status: 'success', message: 'Test payment' })
     }
 
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
     const result = token ? await retrievePayment(token) : await retrievePaymentByPaymentId(paymentId as string)
-    const maybeByPaymentId =
+    let finalResult =
       paymentId && result.status === 'success' && result.paymentStatus === 'CALLBACK_THREEDS'
         ? await retrievePaymentByPaymentId(paymentId)
-        : null
-    const finalResult = maybeByPaymentId || result
+        : result
+
+    // 3DS callback sonrasında bankanın provizyon sonucu birkaç saniye gecikebilir.
+    // Bu yüzden kısa bir sunucu tarafı yeniden deneme penceresi uyguluyoruz.
+    if (finalResult.status === 'success' && finalResult.paymentStatus === 'CALLBACK_THREEDS') {
+      for (let i = 0; i < 5; i += 1) {
+        await sleep(1500)
+        finalResult = paymentId ? await retrievePaymentByPaymentId(paymentId) : await retrievePayment(token as string)
+        if (finalResult.status === 'success' && finalResult.paymentStatus === 'SUCCESS') {
+          break
+        }
+      }
+    }
     console.log('[payment/status] Iyzico sonucu', {
       status: finalResult.status,
       paymentStatus: finalResult.paymentStatus || '-',
