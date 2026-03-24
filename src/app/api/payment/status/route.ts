@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     if (error) console.error('[payment/status] Order update error:', error)
     else console.log('[payment/status] Sipariş güncellendi (ödendi)', orderNumber || '(token ile bulundu)')
 
-    await tryCreateNesInvoice(supabase, orderNumber || null, token)
+    await tryCreateNesInvoice(supabase, orderNumber || null, token || '')
 
     return NextResponse.json({ success: true, status: 'success' })
   } catch (error: any) {
