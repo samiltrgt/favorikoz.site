@@ -53,12 +53,22 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await retrievePayment(token)
-    console.log('[payment/status] Iyzico sonucu', { status: result.status, errorMessage: result.errorMessage || '-' })
-    if (result.status !== 'success') {
+    console.log('[payment/status] Iyzico sonucu', {
+      status: result.status,
+      paymentStatus: result.paymentStatus || '-',
+      errorMessage: result.errorMessage || '-',
+    })
+
+    // Yalnizca gerçek ödeme tamamlandıysa siparişi "paid" yap.
+    // 3DS dönüş durumları (örn: CALLBACK_THREEDS / INIT_THREEDS) henüz final değildir.
+    if (result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
       return NextResponse.json({
         success: false,
         status: 'failed',
-        error: result.errorMessage || 'Ödeme başarısız veya bulunamadı',
+        error:
+          result.paymentStatus && result.paymentStatus !== 'SUCCESS'
+            ? `Ödeme henüz tamamlanmadı (${result.paymentStatus})`
+            : (result.errorMessage || 'Ödeme başarısız veya bulunamadı'),
       })
     }
 

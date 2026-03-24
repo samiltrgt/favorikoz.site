@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
       conversationIdFromGoreq ||
       ''
 
+    console.log('[3ds-callback][POST] incoming payload', {
+      hasPaymentId: !!paymentId,
+      hasConversationData: !!conversationData,
+      hasConversationIdFromForm: !!conversationIdFromForm,
+      hasConversationIdFromGoreq: !!conversationIdFromGoreq,
+      mdStatus: mdStatus || '-',
+      formKeys: Object.keys(formObj),
+      queryKeys: Array.from(params.keys()),
+    })
+
     // Bazı banka/3DS dönüşlerinde paymentId/conversationData gelmeyebilir.
     // Elimizde conversationId varsa status endpoint üzerinden doğrulamaya devam et.
     if (!paymentId || !conversationData) {
@@ -149,6 +159,12 @@ export async function GET(request: NextRequest) {
     const goreq = params.get('goreq') || ''
     const conversationIdFromGoreq = goreq ? tryExtractConversationIdFromGoreq(goreq) : ''
     const token = (conversationId || conversationIdFromGoreq || '').trim()
+
+    console.log('[3ds-callback][GET] incoming query', {
+      hasConversationId: !!conversationId,
+      hasConversationIdFromGoreq: !!conversationIdFromGoreq,
+      queryKeys: Array.from(params.keys()),
+    })
 
     if (!token) {
       return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=missing_callback_token`, {
