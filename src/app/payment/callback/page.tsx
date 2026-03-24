@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 export default function PaymentCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading')
+  const [status, setStatus] = useState<'loading' | 'pending' | 'success' | 'failed'>('loading')
   const [orderNumber, setOrderNumber] = useState<string>('')
 
   useEffect(() => {
@@ -24,11 +24,16 @@ export default function PaymentCallbackPage() {
     const order =
       searchParams.get('orderNumber') ||
       (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('orderNumber') : null)
+    const paymentId =
+      searchParams.get('paymentId') ||
+      (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('paymentId') : null)
     if (order) setOrderNumber(order)
 
     // Debug: Tarayıcıda F12 → Console'da görünür
     const urlParams = { token: token ? `${token.slice(0, 12)}...` : null, orderNumber: order }
     console.log('[Ödeme callback] Sayfa açıldı, URL parametreleri:', urlParams)
+
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
     const run = async () => {
       try {
@@ -39,11 +44,30 @@ export default function PaymentCallbackPage() {
         }
         const params = new URLSearchParams({ token })
         if (order) params.set('orderNumber', order)
+        if (paymentId) params.set('paymentId', paymentId)
         const url = `/api/payment/status?${params.toString()}`
-        const res = await fetch(url)
-        const json = await res.json()
-        console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error })
-        setStatus(json.status === 'success' ? 'success' : 'failed')
+        // Bazı bankalarda 3DS dönüşü sonrası provizyon birkaç saniye gecikebilir.
+        for (let i = 0; i < 10; i += 1) {
+          const res = await fetch(url)
+          const json = await res.json()
+          console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error, try: i + 1 })
+
+          if (json.status === 'success') {
+            setStatus('success')
+            return
+          }
+
+          if (json.status === 'pending') {
+            setStatus('pending')
+            await sleep(1500)
+            continue
+          }
+
+          setStatus('failed')
+          return
+        }
+
+        setStatus('failed')
       } catch (err) {
         console.error('[Ödeme callback] API hatası:', err)
         setStatus('failed')
@@ -58,6 +82,16 @@ export default function PaymentCallbackPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p>Ödeme durumu kontrol ediliyor...</p>
+        </div>
+      )}
+
+      {status === 'pending' && (
+        <div className="text-center max-w-md mx-auto">
+          <div className="mb-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold text-amber-600 mb-2">Ödeme İşleniyor</h1>
+            <p className="text-gray-600 mb-6">3D doğrulama alındı, banka provizyonu tamamlanıyor. Lütfen bekleyin...</p>
+          </div>
         </div>
       )}
       

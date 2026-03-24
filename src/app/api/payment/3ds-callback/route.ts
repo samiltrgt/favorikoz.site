@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         const qs = new URLSearchParams({
           token: conversationId,
         })
+        if (paymentId) qs.set('paymentId', paymentId)
         return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
       }
       return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=missing_3ds_payload`, {

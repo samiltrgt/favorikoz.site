@@ -173,4 +173,34 @@ export async function retrievePayment(conversationId: string): Promise<{ status:
   })
 }
 
+/** Ödeme sonucunu paymentId ile sorgula (conversationData gelmediğinde fallback) */
+export async function retrievePaymentByPaymentId(
+  paymentId: string
+): Promise<{ status: string; paymentStatus?: string; errorMessage?: string }> {
+  const iyzipay = getIyzicoInstance()
+  if (!iyzipay) {
+    return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
+  }
+  return new Promise((resolve) => {
+    ;(iyzipay as any).payment.retrieve(
+      {
+        locale: 'tr',
+        paymentId,
+      },
+      (err: any, result: any) => {
+        if (err) {
+          console.error('❌ Iyzico retrieve-by-paymentId error:', err)
+          resolve({ status: 'failure', errorMessage: err?.message || 'Sorgu hatası' })
+          return
+        }
+        resolve({
+          status: result?.status === 'success' ? 'success' : 'failure',
+          paymentStatus: result?.paymentStatus,
+          errorMessage: result?.errorMessage,
+        })
+      }
+    )
+  })
+}
+
 

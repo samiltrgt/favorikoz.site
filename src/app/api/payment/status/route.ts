@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { retrievePayment } from '@/lib/iyzico'
+import { retrievePayment, retrievePaymentByPaymentId } from '@/lib/iyzico'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
 
@@ -13,16 +13,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token') || searchParams.get('conversationId')
     const orderNumber = searchParams.get('orderNumber')
+    const paymentId = searchParams.get('paymentId')
 
     // Debug: sunucu loglarında görünür (Vercel Logs veya npm run dev terminali)
     console.log('[payment/status] İstek alındı', {
       hasToken: !!token,
+      hasPaymentId: !!paymentId,
       tokenPrefix: token ? `${token.slice(0, 8)}...` : '-',
       orderNumber: orderNumber || '-',
     })
 
-    if (!token) {
-      return NextResponse.json({ success: false, status: 'failed', error: 'Missing token' }, { status: 400 })
+    if (!token && !paymentId) {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Missing token/paymentId' }, { status: 400 })
     }
 
     // Önce DB'de zaten completed ise direkt başarılı dön
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
       }
     } catch {}
 
-    if (token.startsWith('test-token-')) {
+    if (token?.startsWith('test-token-')) {
       if (orderNumber) {
         try {
           const supabase = await createSupabaseServer()
@@ -52,23 +54,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, status: 'success', message: 'Test payment' })
     }
 
-    const result = await retrievePayment(token)
+    const result = token ? await retrievePayment(token) : await retrievePaymentByPaymentId(paymentId as string)
+    const maybeByPaymentId =
+      paymentId && result.status === 'success' && result.paymentStatus === 'CALLBACK_THREEDS'
+        ? await retrievePaymentByPaymentId(paymentId)
+        : null
+    const finalResult = maybeByPaymentId || result
     console.log('[payment/status] Iyzico sonucu', {
-      status: result.status,
-      paymentStatus: result.paymentStatus || '-',
-      errorMessage: result.errorMessage || '-',
+      status: finalResult.status,
+      paymentStatus: finalResult.paymentStatus || '-',
+      errorMessage: finalResult.errorMessage || '-',
     })
 
     // Yalnizca gerçek ödeme tamamlandıysa siparişi "paid" yap.
     // 3DS dönüş durumları (örn: CALLBACK_THREEDS / INIT_THREEDS) henüz final değildir.
-    if (result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
+    if (finalResult.status !== 'success' || finalResult.paymentStatus !== 'SUCCESS') {
+      if (finalResult.status === 'success' && finalResult.paymentStatus === 'CALLBACK_THREEDS') {
+        return NextResponse.json({
+          success: false,
+          status: 'pending',
+          error: '3D doğrulama tamamlandı, banka provizyon onayı bekleniyor',
+        })
+      }
       return NextResponse.json({
         success: false,
         status: 'failed',
         error:
-          result.paymentStatus && result.paymentStatus !== 'SUCCESS'
-            ? `Ödeme henüz tamamlanmadı (${result.paymentStatus})`
-            : (result.errorMessage || 'Ödeme başarısız veya bulunamadı'),
+          finalResult.paymentStatus && finalResult.paymentStatus !== 'SUCCESS'
+            ? `Ödeme henüz tamamlanmadı (${finalResult.paymentStatus})`
+            : (finalResult.errorMessage || 'Ödeme başarısız veya bulunamadı'),
       })
     }
 
@@ -85,7 +99,7 @@ export async function GET(request: NextRequest) {
     if (orderNumber) {
       query = query.eq('order_number', orderNumber)
     } else {
-      query = query.eq('payment_token', token)
+      query = query.eq('payment_token', token as string)
     }
     const { error } = await query
     if (error) console.error('[payment/status] Order update error:', error)
