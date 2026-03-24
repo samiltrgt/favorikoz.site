@@ -68,8 +68,10 @@ export async function POST(request: NextRequest) {
     console.log('[3ds-callback][POST] incoming payload', {
       hasPaymentId: !!paymentId,
       hasConversationData: !!conversationData,
+      conversationDataLength: conversationData ? conversationData.length : 0,
       hasConversationIdFromForm: !!conversationIdFromForm,
       hasConversationIdFromGoreq: !!conversationIdFromGoreq,
+      conversationIdPrefix: conversationId ? `${conversationId.slice(0, 8)}...` : '-',
       mdStatus: mdStatus || '-',
       formKeys: Object.keys(formObj),
       queryKeys: Array.from(params.keys()),

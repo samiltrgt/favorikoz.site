@@ -10,22 +10,33 @@ export default function PaymentCallbackPage() {
   const [orderNumber, setOrderNumber] = useState<string>('')
 
   useEffect(() => {
-    const token = searchParams.get('token') || searchParams.get('conversationId')
-    const order = searchParams.get('orderNumber')
+    const parseTokenFromUrl = () => {
+      const fromParams = searchParams.get('token') || searchParams.get('conversationId') || searchParams.get('paymentConversationId')
+      if (fromParams) return fromParams
+      if (typeof window !== 'undefined') {
+        const raw = new URLSearchParams(window.location.search)
+        return raw.get('token') || raw.get('conversationId') || raw.get('paymentConversationId')
+      }
+      return null
+    }
+
+    const token = parseTokenFromUrl()
+    const order =
+      searchParams.get('orderNumber') ||
+      (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('orderNumber') : null)
     if (order) setOrderNumber(order)
 
     // Debug: Tarayıcıda F12 → Console'da görünür
     const urlParams = { token: token ? `${token.slice(0, 12)}...` : null, orderNumber: order }
     console.log('[Ödeme callback] Sayfa açıldı, URL parametreleri:', urlParams)
 
-    if (!token) {
-      console.warn('[Ödeme callback] Token yok – Iyzico bu sayfaya token/conversationId eklemeden yönlendirmiş olabilir. Mevcut URL:', typeof window !== 'undefined' ? window.location.href : '')
-      setStatus('failed')
-      return
-    }
-
     const run = async () => {
       try {
+        if (!token) {
+          console.warn('[Ödeme callback] Token yok – Iyzico bu sayfaya token/conversationId eklemeden yönlendirmiş olabilir. Mevcut URL:', typeof window !== 'undefined' ? window.location.href : '')
+          setStatus('failed')
+          return
+        }
         const params = new URLSearchParams({ token })
         if (order) params.set('orderNumber', order)
         const url = `/api/payment/status?${params.toString()}`
