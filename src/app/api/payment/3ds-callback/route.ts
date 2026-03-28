@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
 import { buildIyzicoPaidPriceFromOrder } from '@/lib/iyzico-payment-amount'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAdmin } from '@/lib/supabase/server'
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
@@ -38,6 +38,16 @@ function tryExtractConversationIdFromGoreq(goreq: string): string {
 
 export async function POST(request: NextRequest) {
   const baseUrl = getBaseUrl(request)
+  let supabase: ReturnType<typeof createSupabaseAdmin>
+  try {
+    supabase = createSupabaseAdmin()
+  } catch (e) {
+    console.error('[3ds-callback] SUPABASE_SERVICE_ROLE_KEY gerekli (Iyzico POST’ta RLS misafir siparişi okuyamaz)', e)
+    return NextResponse.redirect(
+      `${baseUrl}/payment/callback?status=failed&error=supabase_service_role_missing`,
+      { status: 302 }
+    )
+  }
   try {
     const form = await request.formData()
     const params = new URL(request.url).searchParams
@@ -86,7 +96,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createSupabaseServer()
     const { data: order } = await supabase
       .from('orders')
       .select('order_number, iyzico_basket_id, items, shipping_cost')

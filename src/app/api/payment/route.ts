@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 
 type BasketItem = {
   id: string
@@ -198,10 +198,18 @@ export async function POST(request: NextRequest) {
       console.error('Supabase auth error:', error)
     }
 
+    // Sipariş: RLS misafir/kayıtlı ayrımı 3DS callback'te okumayı bozmasın diye service role tercih
+    let ordersClient = supabase
+    try {
+      ordersClient = createSupabaseAdmin()
+    } catch {
+      ordersClient = supabase
+    }
+
     // Insert order into Supabase
     try {
-      if (supabase) {
-        const { error: orderError } = await supabase
+      if (ordersClient) {
+        const { error: orderError } = await ordersClient
           .from('orders')
           .insert({
             order_number: orderNumber,

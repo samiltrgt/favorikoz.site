@@ -1,15 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function PaymentCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const ranRef = useRef(false)
   const [status, setStatus] = useState<'loading' | 'pending' | 'pending_timeout' | 'success' | 'failed'>('loading')
   const [orderNumber, setOrderNumber] = useState<string>('')
 
   useEffect(() => {
+    if (ranRef.current) return
+    ranRef.current = true
     const parseTokenFromUrl = () => {
       const fromParams = searchParams.get('token') || searchParams.get('conversationId') || searchParams.get('paymentConversationId')
       if (fromParams) return fromParams
@@ -35,6 +38,16 @@ export default function PaymentCallbackPage() {
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+    async function fetchStatus(url: string) {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 25000)
+      try {
+        return await fetch(url, { signal: ctrl.signal })
+      } finally {
+        clearTimeout(t)
+      }
+    }
+
     const run = async () => {
       try {
         if (!token) {
@@ -46,10 +59,25 @@ export default function PaymentCallbackPage() {
         if (order) params.set('orderNumber', order)
         if (paymentId) params.set('paymentId', paymentId)
         const url = `/api/payment/status?${params.toString()}`
-        // Bazı bankalarda 3DS dönüşü sonrası provizyon birkaç saniye gecikebilir.
-        for (let i = 0; i < 20; i += 1) {
-          const res = await fetch(url)
-          const json = await res.json()
+        // Sunucu bir istekte v2 tamamlama + kısa retry yapabilir; istemci tarafı sınırlı tekrar.
+        for (let i = 0; i < 12; i += 1) {
+          let res: Response
+          try {
+            res = await fetchStatus(url)
+          } catch {
+            console.warn('[Ödeme callback] İstek zaman aşımı veya ağ hatası, tekrar deneniyor', i + 1)
+            setStatus('pending')
+            await sleep(2500)
+            continue
+          }
+          let json: { status?: string; error?: string }
+          try {
+            json = await res.json()
+          } catch {
+            setStatus('pending')
+            await sleep(2500)
+            continue
+          }
           console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error, try: i + 1 })
 
           if (json.status === 'success') {
@@ -59,7 +87,7 @@ export default function PaymentCallbackPage() {
 
           if (json.status === 'pending') {
             setStatus('pending')
-            await sleep(2000)
+            await sleep(2500)
             continue
           }
 

@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { retrievePayment, retrievePaymentByPaymentId } from '@/lib/iyzico'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { complete3DSPaymentV2, retrievePayment, retrievePaymentByPaymentId } from '@/lib/iyzico'
+import { buildIyzicoPaidPriceFromOrder } from '@/lib/iyzico-payment-amount'
+import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
+
+function getOrdersSupabase() {
+  try {
+    return createSupabaseAdmin()
+  } catch (e) {
+    console.error('[payment/status] SUPABASE_SERVICE_ROLE_KEY eksik — sipariş/3DS tamamlama RLS yüzünden kırılabilir', e)
+    return null
+  }
+}
 
 /**
  * GET /api/payment/status?token=...&orderNumber=...
@@ -29,29 +39,33 @@ export async function GET(request: NextRequest) {
 
     // Önce DB'de zaten completed ise direkt başarılı dön
     if (token) {
-      try {
-        const supabase = await createSupabaseServer()
-        const { data: existing } = await supabase
-          .from('orders')
-          .select('payment_status')
-          .eq('payment_token', token)
-          .single()
-        if (existing?.payment_status === 'completed') {
-          return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
-        }
-      } catch {}
+      const ordersDb = getOrdersSupabase()
+      if (ordersDb) {
+        try {
+          const { data: existing } = await ordersDb
+            .from('orders')
+            .select('payment_status')
+            .eq('payment_token', token)
+            .maybeSingle()
+          if (existing?.payment_status === 'completed') {
+            return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
+          }
+        } catch {}
+      }
     }
 
     if (token?.startsWith('test-token-')) {
       if (orderNumber) {
-        try {
-          const supabase = await createSupabaseServer()
-          await supabase
-            .from('orders')
-            .update({ status: 'paid', payment_status: 'completed', payment_token: token })
-            .eq('order_number', orderNumber)
-          await tryCreateNesInvoice(supabase, orderNumber, token)
-        } catch {}
+        const ordersDb = getOrdersSupabase()
+        if (ordersDb) {
+          try {
+            await ordersDb
+              .from('orders')
+              .update({ status: 'paid', payment_status: 'completed', payment_token: token })
+              .eq('order_number', orderNumber)
+            await tryCreateNesInvoice(ordersDb, orderNumber, token)
+          } catch {}
+        }
       }
       return NextResponse.json({ success: true, status: 'success', message: 'Test payment' })
     }
@@ -64,11 +78,46 @@ export async function GET(request: NextRequest) {
         ? await retrievePaymentByPaymentId(paymentId)
         : result
 
-    // 3DS callback sonrasında bankanın provizyon sonucu birkaç saniye gecikebilir.
-    // Bu yüzden kısa bir sunucu tarafı yeniden deneme penceresi uyguluyoruz.
+    // CALLBACK_THREEDS: önce v2 tamamlamayı dene (3ds-callback'ta RLS yüzünden atlanmış olabilir)
+    if (finalResult.status === 'success' && finalResult.paymentStatus === 'CALLBACK_THREEDS' && token && paymentId) {
+      const ordersDb = getOrdersSupabase()
+      if (ordersDb) {
+        const { data: orderRow } = await ordersDb
+          .from('orders')
+          .select('iyzico_basket_id, items, shipping_cost')
+          .eq('payment_token', token)
+          .maybeSingle()
+        if (orderRow?.iyzico_basket_id) {
+          const paidPrice = buildIyzicoPaidPriceFromOrder({
+            items: orderRow.items,
+            shipping_cost: orderRow.shipping_cost ?? 0,
+          })
+          console.log('[payment/status] CALLBACK_THREEDS → 3DS v2 auth denemesi', { paymentId, paidPrice })
+          try {
+            const authResult = await complete3DSPaymentV2({
+              conversationId: token,
+              paymentId,
+              paidPrice,
+              basketId: orderRow.iyzico_basket_id,
+            })
+            if (authResult?.status === 'success' && authResult?.paymentStatus === 'SUCCESS') {
+              finalResult = {
+                status: 'success',
+                paymentStatus: 'SUCCESS',
+                errorMessage: undefined,
+              }
+            }
+          } catch (e: any) {
+            console.error('[payment/status] 3DS v2 auth hata:', e?.message || e)
+          }
+        }
+      }
+    }
+
+    // Hâlâ bekliyorsa kısa retrieve tekrarı (Vercel süre limiti için kısa tutuldu)
     if (finalResult.status === 'success' && finalResult.paymentStatus === 'CALLBACK_THREEDS') {
-      for (let i = 0; i < 5; i += 1) {
-        await sleep(1500)
+      for (let i = 0; i < 3; i += 1) {
+        await sleep(1000)
         finalResult = paymentId ? await retrievePaymentByPaymentId(paymentId) : await retrievePayment(token as string)
         if (finalResult.status === 'success' && finalResult.paymentStatus === 'SUCCESS') {
           break
@@ -101,7 +150,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const supabase = await createSupabaseServer()
+    const supabase = getOrdersSupabase() || (await createSupabaseServer())
     let query = supabase
       .from('orders')
       .update({

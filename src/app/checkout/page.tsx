@@ -179,6 +179,7 @@ export default function CheckoutPage() {
 
     setIsProcessing(true)
     setError(null)
+    let handedOffToThreeDS = false
 
     try {
       const response = await fetch('/api/payment', {
@@ -214,21 +215,24 @@ export default function CheckoutPage() {
       
       if (result.success) {
         if (result.requires3DS && result.threeDSHtmlContent) {
-          const newWindow = window.open('', '_blank')
-          if (newWindow) {
-            const raw = String(result.threeDSHtmlContent || '')
-            let html = raw
-            // Iyzico bazen 3DS içeriğini base64 gönderir.
-            if (!raw.includes('<html') && !raw.includes('<form')) {
-              try {
-                html = decodeURIComponent(escape(window.atob(raw)))
-              } catch {
-                html = raw
-              }
+          const raw = String(result.threeDSHtmlContent || '')
+          let html = raw
+          // Iyzico bazen 3DS içeriğini base64 gönderir.
+          if (!raw.includes('<html') && !raw.includes('<form')) {
+            try {
+              html = decodeURIComponent(escape(window.atob(raw)))
+            } catch {
+              html = raw
             }
-            newWindow.document.write(html)
-            newWindow.document.close()
           }
+          // Aynı sekmede tam sayfa 3DS: bankanın kendi akışı (OTP sonrası bankada “onay” ekranı
+          // gösterilip gösterilmemesi tamamen bankaya bağlı; yeni sekme bu hissi bozabiliyordu).
+          handedOffToThreeDS = true
+          setIsProcessing(false)
+          document.open()
+          document.write(html)
+          document.close()
+          return
         } else if (result.paymentPageUrl) {
           window.location.href = result.paymentPageUrl
         }
@@ -239,7 +243,9 @@ export default function CheckoutPage() {
       setError('Bir hata oluştu. Lütfen tekrar deneyin.')
       console.error('Payment error:', err)
     } finally {
-      setIsProcessing(false)
+      if (!handedOffToThreeDS) {
+        setIsProcessing(false)
+      }
     }
   }
 
