@@ -28,17 +28,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Önce DB'de zaten completed ise direkt başarılı dön
-    try {
-      const supabase = await createSupabaseServer()
-      const { data: existing } = await supabase
-        .from('orders')
-        .select('payment_status')
-        .eq('payment_token', token)
-        .single()
-      if (existing?.payment_status === 'completed') {
-        return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
-      }
-    } catch {}
+    if (token) {
+      try {
+        const supabase = await createSupabaseServer()
+        const { data: existing } = await supabase
+          .from('orders')
+          .select('payment_status')
+          .eq('payment_token', token)
+          .single()
+        if (existing?.payment_status === 'completed') {
+          return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
+        }
+      } catch {}
+    }
 
     if (token?.startsWith('test-token-')) {
       if (orderNumber) {

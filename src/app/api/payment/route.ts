@@ -228,7 +228,8 @@ export async function POST(request: NextRequest) {
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',
-            payment_token: conversationId
+            payment_token: conversationId,
+            iyzico_basket_id: basketId,
           })
 
         if (orderError) {

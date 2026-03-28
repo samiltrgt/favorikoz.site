@@ -160,6 +160,7 @@ export interface Database {
           payment_method: string
           payment_status: 'pending' | 'completed' | 'failed'
           payment_token: string | null
+          iyzico_basket_id: string | null
           invoice_uuid: string | null
           invoice_pdf_url: string | null
           invoiced_at: string | null
@@ -186,6 +187,7 @@ export interface Database {
           payment_method: string
           payment_status?: 'pending' | 'completed' | 'failed'
           payment_token?: string | null
+          iyzico_basket_id?: string | null
           invoice_uuid?: string | null
           invoice_pdf_url?: string | null
           invoiced_at?: string | null
@@ -212,6 +214,7 @@ export interface Database {
           payment_method?: string
           payment_status?: 'pending' | 'completed' | 'failed'
           payment_token?: string | null
+          iyzico_basket_id?: string | null
           invoice_uuid?: string | null
           invoice_pdf_url?: string | null
           invoiced_at?: string | null

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { complete3DSPayment } from '@/lib/iyzico'
+import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
+import { buildIyzicoPaidPriceFromOrder } from '@/lib/iyzico-payment-amount'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 function getBaseUrl(req: NextRequest): string {
@@ -77,21 +78,6 @@ export async function POST(request: NextRequest) {
       queryKeys: Array.from(params.keys()),
     })
 
-    // Bazı banka/3DS dönüşlerinde paymentId/conversationData gelmeyebilir.
-    // Elimizde conversationId varsa status endpoint üzerinden doğrulamaya devam et.
-    if (!paymentId || !conversationData) {
-      if (conversationId) {
-        const qs = new URLSearchParams({
-          token: conversationId,
-        })
-        if (paymentId) qs.set('paymentId', paymentId)
-        return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
-      }
-      return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=missing_3ds_payload`, {
-        status: 302,
-      })
-    }
-
     // mdStatus 1/2/3/4 başarılı kabul edilir
     if (mdStatus && !['1', '2', '3', '4'].includes(mdStatus)) {
       return NextResponse.redirect(
@@ -100,22 +86,53 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await complete3DSPayment({
-      conversationId,
-      paymentId,
-      conversationData,
-    })
-
     const supabase = await createSupabaseServer()
     const { data: order } = await supabase
       .from('orders')
-      .select('order_number')
+      .select('order_number, iyzico_basket_id, items, shipping_cost')
       .eq('payment_token', conversationId)
-      .single()
+      .maybeSingle()
 
     const orderNumber = order?.order_number || ''
 
-    if (result?.status === 'success') {
+    let result: any = null
+
+    if (paymentId && conversationData) {
+      result = await complete3DSPayment({
+        conversationId,
+        paymentId,
+        conversationData,
+      })
+    } else if (paymentId && conversationId && order?.iyzico_basket_id) {
+      // conversationData boş: iyzico 3DS v2 tamamlama (dokümantasyon)
+      const paidPrice = buildIyzicoPaidPriceFromOrder({
+        items: order.items,
+        shipping_cost: order.shipping_cost ?? 0,
+      })
+      console.log('[3ds-callback] conversationData boş → 3DS v2 auth', {
+        paymentId,
+        paidPrice,
+        hasBasketId: true,
+      })
+      result = await complete3DSPaymentV2({
+        conversationId,
+        paymentId,
+        paidPrice,
+        basketId: order.iyzico_basket_id,
+      })
+    } else if (conversationId) {
+      const qs = new URLSearchParams({ token: conversationId })
+      if (paymentId) qs.set('paymentId', paymentId)
+      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
+    } else {
+      return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=missing_3ds_payload`, {
+        status: 302,
+      })
+    }
+
+    const paidOk = result?.status === 'success' && result?.paymentStatus === 'SUCCESS'
+
+    if (paidOk) {
       await supabase
         .from('orders')
         .update({
@@ -134,10 +151,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
     }
 
+    if (result?.status === 'success' && result?.paymentStatus && result.paymentStatus !== 'SUCCESS') {
+      const qs = new URLSearchParams({ token: conversationId })
+      if (paymentId) qs.set('paymentId', paymentId)
+      if (orderNumber) qs.set('orderNumber', orderNumber)
+      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
+    }
+
     const failed = new URLSearchParams({
       status: 'failed',
       token: conversationId,
-      error: result?.errorMessage || '3ds_complete_failed',
+      error: result?.errorMessage || result?.errorCode || '3ds_complete_failed',
     })
     if (orderNumber) failed.set('orderNumber', orderNumber)
     return NextResponse.redirect(`${baseUrl}/payment/callback?${failed.toString()}`, { status: 302 })

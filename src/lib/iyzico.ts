@@ -1,6 +1,19 @@
 // Iyzico SDK implementation with Vercel compatibility
 
 import Iyzipay from 'iyzipay'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const iyziUtils = require('iyzipay/lib/utils') as {
+  generateRandomString: (n: number) => string
+  generateAuthorizationHeaderV2: (
+    iyziWsHeaderName: string,
+    apiKey: string,
+    separator: string,
+    secretKey: string,
+    uri: string,
+    body: Record<string, unknown>,
+    randomString: string
+  ) => string
+}
 
 let iyzipayInstance: Iyzipay | null = null
 
@@ -142,6 +155,67 @@ export async function complete3DSPayment(payload: {
       }
     )
   })
+}
+
+/**
+ * 3DS v2 tamamlama — conversationData boş geldiğinde iyzico önerisi:
+ * https://docs.iyzico.com/odeme-metotlari/api/3ds/3ds-entegrasyonu/3ds-tamamlama
+ * (payment/v2/3dsecure/auth — paymentId, paidPrice, basketId, currency)
+ */
+export async function complete3DSPaymentV2(payload: {
+  conversationId: string
+  paymentId: string
+  paidPrice: string
+  basketId: string
+}): Promise<any> {
+  const creds = getIyzicoCredentials()
+  if (!creds) {
+    throw new Error('Iyzico SDK not initialized')
+  }
+  const { apiKey, secretKey, baseUrl } = creds
+  const uriPath = '/payment/v2/3dsecure/auth'
+  const randomString = iyziUtils.generateRandomString(8)
+  const body: Record<string, string> = {
+    locale: 'tr',
+    paymentId: payload.paymentId,
+    conversationId: payload.conversationId,
+    paidPrice: payload.paidPrice,
+    basketId: payload.basketId,
+    currency: 'TRY',
+  }
+  const authorization = iyziUtils.generateAuthorizationHeaderV2(
+    'IYZWSv2',
+    apiKey,
+    ':',
+    secretKey,
+    uriPath,
+    body,
+    randomString
+  )
+  const url = `${baseUrl.replace(/\/+$/, '')}${uriPath}`
+  console.log('📤 3DS v2 complete (auth)', { url, paymentId: payload.paymentId })
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'x-iyzi-rnd': randomString,
+      'x-iyzi-client-version': 'iyzipay-node-2.0.64',
+      Authorization: authorization,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const result = await res.json().catch(() => ({}))
+  console.log('📥 3DS v2 Complete Response:', {
+    status: result?.status,
+    errorCode: result?.errorCode,
+    errorMessage: result?.errorMessage,
+    paymentId: result?.paymentId,
+    paymentStatus: result?.paymentStatus,
+  })
+  return result
 }
 
 /** Ödeme sonucunu conversationId ile sorgula (callback sayfası için) */
