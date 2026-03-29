@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { headers } from 'next/headers'
 import { createSupabaseServer } from '@/lib/supabase/server'
-
-const FALLBACK_BASE = 'https://www.favorikozmetik.com'
+import { getSiteUrl } from '@/lib/site-url'
 
 async function getBaseUrl(): Promise<string> {
   try {
@@ -13,7 +12,7 @@ async function getBaseUrl(): Promise<string> {
   } catch {
     // headers() bazen build/static ortamında yoktur
   }
-  return process.env.NEXT_PUBLIC_BASE_URL || FALLBACK_BASE
+  return getSiteUrl()
 }
 
 export const revalidate = 3600
@@ -22,9 +21,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let BASE_URL: string
   try {
     BASE_URL = await getBaseUrl()
-    if (!BASE_URL || !BASE_URL.startsWith('http')) BASE_URL = FALLBACK_BASE
+    if (!BASE_URL || !BASE_URL.startsWith('http')) BASE_URL = getSiteUrl()
   } catch {
-    BASE_URL = FALLBACK_BASE
+    BASE_URL = getSiteUrl()
   }
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },

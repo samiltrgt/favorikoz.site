@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getSiteUrl } from '@/lib/site-url'
 
 // POST /api/auth/signup - Register new customer
 export async function POST(request: NextRequest) {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
           name: name || '',
           phone: phone || '',
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
       },
     })
     

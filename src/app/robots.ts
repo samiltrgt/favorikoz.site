@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { headers } from 'next/headers'
+import { getSiteUrl } from '@/lib/site-url'
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.favorikozmetik.com'
+  let baseUrl = getSiteUrl()
   try {
     const headersList = await headers()
     const host = headersList.get('host')

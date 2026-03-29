@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getSiteUrl } from '@/lib/site-url'
 
-const BASE_URL = 'https://www.favorikozmetik.com'
+const siteUrl = getSiteUrl()
 const ITEMLIST_LIMIT = 50
 
 type Props = { children: React.ReactNode; params: Promise<{ category: string }> }
@@ -57,7 +58,7 @@ export default async function CategoryLayout({ children, params }: Props) {
             '@type': 'ListItem',
             position: i + 1,
             name: p.name,
-            url: `${BASE_URL}/urun/${p.slug}`,
+            url: `${siteUrl}/urun/${p.slug}`,
           })),
         }
       : null
@@ -77,7 +78,7 @@ export default async function CategoryLayout({ children, params }: Props) {
           <ul>
             {products.map((p) => (
               <li key={p.slug}>
-                <a href={`${BASE_URL}/urun/${p.slug}`}>{p.name}</a>
+                <a href={`${siteUrl}/urun/${p.slug}`}>{p.name}</a>
               </li>
             ))}
           </ul>

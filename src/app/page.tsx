@@ -5,6 +5,7 @@ import Footer from '@/components/footer'
 import ProductsCarousel from '@/components/products-carousel'
 import FeaturesSection from '@/components/features-section'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getSiteUrl } from '@/lib/site-url'
 
 // Ağır client bileşenleri kritik yoldan çıkarmak için dynamic import (LCP/FCP iyileştirmesi)
 const ScrollHero = nextDynamic(() => import('@/components/scroll-hero'), {
@@ -18,7 +19,7 @@ const ScrollHero = nextDynamic(() => import('@/components/scroll-hero'), {
 const PromoBannerCarousel = nextDynamic(() => import('@/components/promo-banner-carousel'), { ssr: false })
 const HomeProductsBryhel = nextDynamic(() => import('@/components/home-products-bryhel'), { ssr: false })
 
-const BASE_URL = 'https://www.favorikozmetik.com'
+const siteUrl = getSiteUrl()
 
 export const metadata: Metadata = {
   title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
     description:
       'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
-    url: BASE_URL,
+    url: siteUrl,
     type: 'website',
   },
 }

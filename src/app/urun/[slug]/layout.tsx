@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getSiteUrl } from '@/lib/site-url'
 
-const BASE_URL = 'https://www.favorikozmetik.com'
+const siteUrl = getSiteUrl()
 
 async function getProductBySlug(slug: string) {
   const supabase = await createSupabaseServer()
@@ -90,7 +91,7 @@ function productJsonLd(
     name: product.name,
     description: product.description || product.name,
     image: product.image ? [product.image] : [],
-    url: `${BASE_URL}/urun/${product.slug}`,
+    url: `${siteUrl}/urun/${product.slug}`,
     ...(product.brand ? { brand: { '@type': 'Brand' as const, name: product.brand } } : {}),
     offers: {
       '@type': 'Offer',
@@ -140,7 +141,7 @@ function breadcrumbJsonLd(opts: {
 }) {
   const { productSlug, productName, categorySlug, categoryName, subcategorySlug, subcategoryName } = opts
   const items: { '@type': 'ListItem'; position: number; name: string; item: string }[] = [
-    { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: BASE_URL },
+    { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: siteUrl },
   ]
   let pos = 2
   if (categorySlug && categoryName) {
@@ -148,7 +149,7 @@ function breadcrumbJsonLd(opts: {
       '@type': 'ListItem',
       position: pos++,
       name: categoryName,
-      item: `${BASE_URL}/kategori/${categorySlug}`,
+      item: `${siteUrl}/kategori/${categorySlug}`,
     })
   }
   if (subcategorySlug && subcategoryName) {
@@ -156,14 +157,14 @@ function breadcrumbJsonLd(opts: {
       '@type': 'ListItem',
       position: pos++,
       name: subcategoryName,
-      item: `${BASE_URL}/kategori/${categorySlug}/${subcategorySlug}`,
+      item: `${siteUrl}/kategori/${categorySlug}/${subcategorySlug}`,
     })
   }
   items.push({
     '@type': 'ListItem',
     position: pos,
     name: productName,
-    item: `${BASE_URL}/urun/${productSlug}`,
+    item: `${siteUrl}/urun/${productSlug}`,
   })
   return {
     '@context': 'https://schema.org',
@@ -180,7 +181,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) {
     return {
       title: 'Ürün Bulunamadı | Favori Kozmetik',
-      alternates: { canonical: `${BASE_URL}/urun/${slug}` },
+      alternates: { canonical: `${siteUrl}/urun/${slug}` },
       robots: { index: false, follow: true },
     }
   }
@@ -189,7 +190,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     (product.description && product.description.slice(0, 160)) ||
     `${product.name}${product.brand ? ` - ${product.brand}` : ''}. Favori Kozmetik'te güvenle alışveriş yapın.`
-  const canonicalUrl = `${BASE_URL}/urun/${product.slug}`
+  const canonicalUrl = `${siteUrl}/urun/${product.slug}`
 
   return {
     title,

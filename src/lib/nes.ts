@@ -1,3 +1,5 @@
+import { getSiteUrl } from '@/lib/site-url'
+
 /**
  * NES Developer Portal – E-Fatura / E-Arşiv entegrasyonu
  *
@@ -185,7 +187,7 @@ export async function createEArchiveInvoice(order: OrderForInvoice): Promise<Cre
       return { success: false, error: 'NES yanıtında fatura UUID bulunamadı' }
     }
 
-    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || '').replace(/\/$/, '')
+    const baseUrl = getSiteUrl()
     const pdfUrl = baseUrl
       ? `${baseUrl}/api/nes/invoice-pdf?uuid=${encodeURIComponent(String(uuid))}`
       : undefined

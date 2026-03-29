@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getSiteUrl } from '@/lib/site-url'
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,11 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'E-posta gerekli' }, { status: 400 })
     }
     const supabase = await createSupabaseServer()
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      'http://localhost:3000'
-    const redirectTo = `${baseUrl.replace(/\/$/, '')}/sifre-yenile`
+    const redirectTo = `${getSiteUrl()}/sifre-yenile`
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo })
 

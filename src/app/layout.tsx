@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { getSiteUrl } from '@/lib/site-url'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const siteUrl = getSiteUrl()
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -22,14 +24,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://www.favorikozmetik.com'),
+  metadataBase: new URL(siteUrl),
   alternates: {
-    canonical: 'https://www.favorikozmetik.com/',
+    canonical: '/',
   },
   openGraph: {
     title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
     description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
-    url: 'https://www.favorikozmetik.com',
+    url: siteUrl,
     siteName: 'Favori Kozmetik',
     locale: 'tr_TR',
     type: 'website',
@@ -39,6 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
     description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
+    images: ['/logo.png'],
   },
   robots: {
     index: true,
@@ -58,21 +61,21 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'Organization',
-      '@id': 'https://www.favorikozmetik.com/#organization',
+      '@id': `${siteUrl}/#organization`,
       name: 'Favori Kozmetik',
-      url: 'https://www.favorikozmetik.com',
-      logo: { '@type': 'ImageObject', url: 'https://www.favorikozmetik.com/logo.png' },
+      url: siteUrl,
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/logo.png` },
     },
     {
       '@type': 'WebSite',
-      '@id': 'https://www.favorikozmetik.com/#website',
-      url: 'https://www.favorikozmetik.com',
+      '@id': `${siteUrl}/#website`,
+      url: siteUrl,
       name: 'Favori Kozmetik',
-      publisher: { '@id': 'https://www.favorikozmetik.com/#organization' },
+      publisher: { '@id': `${siteUrl}/#organization` },
       inLanguage: 'tr-TR',
       potentialAction: {
         '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.favorikozmetik.com/tum-urunler?search={search_term_string}' },
+        target: { '@type': 'EntryPoint', urlTemplate: `${siteUrl}/tum-urunler?search={search_term_string}` },
         'query-input': 'required name=search_term_string',
       },
     },
