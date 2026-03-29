@@ -15,7 +15,8 @@ async function getBaseUrl(): Promise<string> {
   return getSiteUrl()
 }
 
-export const revalidate = 3600
+/** Her istekte yeniden üretilir; Search Console / bot taramalarında güncel URL listesi. */
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let BASE_URL: string
