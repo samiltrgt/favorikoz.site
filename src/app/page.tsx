@@ -75,9 +75,9 @@ export default async function HomePage() {
       <Header />
       
       <main>
-        {/* 1. Scroll animasyonlu hero - mobilde 1.5 viewport scroll, sticky hero */}
+        {/* 1. Scroll animasyonlu hero - mobilde 3 viewport scroll, sticky hero */}
         <section className="relative w-full">
-          <div className="min-h-[150vh] md:min-h-0 md:h-[100vh]">
+          <div className="min-h-[300vh] md:min-h-0 md:h-[100vh]">
             <div className="sticky top-0 h-[100vh] w-full">
               <DeferredAdaptiveScrollHero products={products} />
             </div>

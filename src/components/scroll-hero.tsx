@@ -23,7 +23,7 @@ const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, 
 
 const TOTAL_IMAGES = 20
 const MAX_SCROLL = 3000
-const MOBILE_SCROLL_RANGE_VH = 1.5
+const MOBILE_SCROLL_RANGE_VH = 3
 const IMG_WIDTH = 80
 const IMG_HEIGHT = 110
 const CORNER_RADIUS = 12
