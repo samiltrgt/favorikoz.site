@@ -12,11 +12,34 @@ function isAndroidPlatform(ua: string): boolean {
 
 export default function AdaptiveScrollHero({ products }: { products: ProductLike[] }) {
   const [isAndroid, setIsAndroid] = useState<boolean | null>(null)
+  const [androidPanX, setAndroidPanX] = useState(0)
 
   useEffect(() => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
     setIsAndroid(isAndroidPlatform(ua))
   }, [])
+
+  useEffect(() => {
+    if (!isAndroid) return
+
+    const SCROLL_RANGE_VH = 2.9
+    let rafId = 0
+    const onScroll = () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const rangePx = window.innerHeight * SCROLL_RANGE_VH
+        const progress = Math.min(Math.max(window.scrollY / rangePx, 0), 1)
+        setAndroidPanX(progress)
+      })
+    }
+
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [isAndroid])
 
   const fallbackImage = useMemo(
     () => products.find((p) => p?.image)?.image || '/logo.png',
@@ -39,6 +62,7 @@ export default function AdaptiveScrollHero({ products }: { products: ProductLike
           src={androidHeroImage || fallbackImage || '/logo.png'}
           alt="Favori Kozmetik"
           className="absolute inset-0 w-full h-full object-cover opacity-60"
+          style={{ objectPosition: `${androidPanX * 100}% center` }}
           loading="eager"
           decoding="async"
         />
