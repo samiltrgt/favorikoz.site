@@ -2,6 +2,8 @@
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // Helps repeat visits avoid HTTP->HTTPS redirect; preload requires domain-side submission.
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
 ];
 
 // Public sayfalar için açıkça index, follow (Google "dizine eklenmesine izin verildi mi?" için)
@@ -10,6 +12,7 @@ const noindexNofollow = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
 module.exports = {
   trailingSlash: false,
+  compress: true,
   images: {
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',
@@ -48,5 +51,6 @@ module.exports = {
   // Serverless: bundle iyzipay properly
   experimental: {
     serverComponentsExternalPackages: ['iyzipay'],
+    optimizeCss: true,
   },
 };

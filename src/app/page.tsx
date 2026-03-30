@@ -1,23 +1,13 @@
 import type { Metadata } from 'next'
-import nextDynamic from 'next/dynamic'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import ProductsCarousel from '@/components/products-carousel'
 import FeaturesSection from '@/components/features-section'
+import DeferredHomeProductsBryhel from '@/components/deferred-home-products-bryhel'
+import DeferredAdaptiveScrollHero from '@/components/deferred-adaptive-scroll-hero'
+import DeferredProductsCarousel from '@/components/deferred-products-carousel'
+import DeferredPromoBannerCarousel from '@/components/deferred-promo-banner-carousel'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { getSiteUrl } from '@/lib/site-url'
-
-// Ağır client bileşenleri kritik yoldan çıkarmak için dynamic import (LCP/FCP iyileştirmesi)
-const AdaptiveScrollHero = nextDynamic(() => import('@/components/adaptive-scroll-hero'), {
-  ssr: false,
-  loading: () => (
-    <div className="relative w-full h-full min-h-[100vh] flex items-center justify-center bg-black/30" aria-hidden>
-      <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-    </div>
-  ),
-})
-const PromoBannerCarousel = nextDynamic(() => import('@/components/promo-banner-carousel'), { ssr: false })
-const HomeProductsBryhel = nextDynamic(() => import('@/components/home-products-bryhel'), { ssr: false })
 
 const siteUrl = getSiteUrl()
 
@@ -89,7 +79,7 @@ export default async function HomePage() {
         <section className="relative w-full">
           <div className="min-h-[150vh] md:min-h-0 md:h-[100vh]">
             <div className="sticky top-0 h-[100vh] w-full">
-              <AdaptiveScrollHero products={products} />
+              <DeferredAdaptiveScrollHero products={products} />
             </div>
           </div>
         </section>
@@ -100,17 +90,17 @@ export default async function HomePage() {
             className="absolute top-0 left-0 right-0 z-10 h-48 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-transparent md:hidden"
             aria-hidden
           />
-          <ProductsCarousel products={products} title="ÜRÜNLER" viewAllLink="/tum-urunler" />
+          <DeferredProductsCarousel products={products} title="ÜRÜNLER" viewAllLink="/tum-urunler" />
         </section>
 
         {/* 2b. Features Section (4 ikon) */}
         <FeaturesSection />
 
         {/* 3. Banner carousel */}
-        <PromoBannerCarousel products={products} />
+        <DeferredPromoBannerCarousel products={products} />
 
         {/* 4. Bryhel tarzı Our Products */}
-        <HomeProductsBryhel
+        <DeferredHomeProductsBryhel
           products={products}
           title="Fontenay Paris"
           viewAllLink="/tum-urunler"

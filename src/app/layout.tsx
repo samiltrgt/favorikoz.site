@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import { getSiteUrl } from '@/lib/site-url'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
 const siteUrl = getSiteUrl()
 
 export const viewport: Viewport = {
@@ -82,13 +80,6 @@ const jsonLd = {
   ],
 }
 
-function SupabasePreconnect() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const origin = url ? new URL(url).origin : null
-  if (!origin) return null
-  return <link rel="preconnect" href={origin} />
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -96,10 +87,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
-      <head>
-        <SupabasePreconnect />
-      </head>
-      <body className={inter.className}>
+      <head />
+      <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
