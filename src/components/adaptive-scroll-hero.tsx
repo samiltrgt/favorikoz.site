@@ -5,16 +5,16 @@ import ScrollHero from '@/components/scroll-hero'
 
 type ProductLike = { image?: string | null }
 
-function isApplePlatform(ua: string): boolean {
-  return /iPhone|iPad|iPod|Macintosh/i.test(ua)
+function isAndroidPlatform(ua: string): boolean {
+  return /Android/i.test(ua)
 }
 
 export default function AdaptiveScrollHero({ products }: { products: ProductLike[] }) {
-  const [isApple, setIsApple] = useState<boolean | null>(null)
+  const [isAndroid, setIsAndroid] = useState<boolean | null>(null)
 
   useEffect(() => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-    setIsApple(isApplePlatform(ua))
+    setIsAndroid(isAndroidPlatform(ua))
   }, [])
 
   const fallbackImage = useMemo(
@@ -23,11 +23,11 @@ export default function AdaptiveScrollHero({ products }: { products: ProductLike
   )
 
   // Keep a stable shell during hydration to avoid layout shifts.
-  if (isApple === null) {
+  if (isAndroid === null) {
     return <div className="relative w-full h-full min-h-[100vh] bg-black/30" aria-hidden />
   }
 
-  if (!isApple) {
+  if (isAndroid) {
     return (
       <div className="relative w-full h-full min-h-[100vh] overflow-hidden bg-[#1e1b18]">
         <img
