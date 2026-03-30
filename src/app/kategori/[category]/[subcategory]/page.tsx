@@ -9,46 +9,6 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ProductCardModern from '@/components/product-card-modern'
 
-// Alt kategori isimleri mapping
-const subcategoryNames: { [key: string]: { [key: string]: string } } = {
-  'tirnak': {
-    'jeller': 'Jeller',
-    'cihazlar': 'Cihazlar',
-    'freze-uclari': 'Freze Uçları',
-    'kalici-oje': 'Kalıcı Oje',
-    'protez-tirnak-malzemeleri': 'Protez Tırnak Malzemeleri',
-    'tirnak-fircalari': 'Tırnak Fırçaları',
-  },
-  'sac-bakimi': {
-    'sac-bakim': 'Saç Bakım',
-    'sac-topik': 'Saç Topik',
-    'sac-sekillendiriciler': 'Saç Şekillendiriciler',
-    'sac-fircasi-ve-tarak': 'Saç Fırçası ve Tarak',
-  },
-  'kisisel-bakim': {
-    'kisisel-bakim-alt': 'Kişisel Bakım',
-    'cilt-bakimi': 'Cilt Bakımı',
-  },
-  'ipek-kirpik': {
-    'ipek-kirpikler': 'İpek Kirpikler',
-    'diger-ipek-kirpik-urunleri': 'Diğer İpek Kirpik Ürünleri',
-  },
-  'kuafor-malzemeleri': {
-    'tiras-makineleri': 'Tıraş Makineleri',
-    'fon-makineleri': 'Fön Makineleri',
-    'diger-kuafor-malzemeleri': 'Diğer Kuaför Malzemeleri',
-  },
-}
-
-// Ana kategori isimleri
-const categoryNames: { [key: string]: string } = {
-  'tirnak': 'Tırnak',
-  'sac-bakimi': 'Saç Bakımı',
-  'kisisel-bakim': 'Kişisel Bakım',
-  'ipek-kirpik': 'İpek Kirpik',
-  'kuafor-malzemeleri': 'Kuaför Malzemeleri',
-}
-
 const sortOptions = [
   { value: 'newest', label: 'En Yeni' },
   { value: 'price-low', label: 'Fiyat (Düşük → Yüksek)' },
@@ -67,6 +27,8 @@ export default function SubcategoryPage() {
   const [allProducts, setAllProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [categoryName, setCategoryName] = useState<string>('Kategori')
+  const [subcategoryName, setSubcategoryName] = useState<string>(subcategorySlug)
 
   // Load products from API - direkt subcategory ile filtrele (1000 satır limitini aş)
   useEffect(() => {
@@ -75,11 +37,19 @@ export default function SubcategoryPage() {
         const res = await fetch(`/api/products?subcategory=${subcategorySlug}`, { cache: 'no-store' })
         const json = await res.json()
         if (json.success) setAllProducts(json.data || [])
+        const catRes = await fetch('/api/categories', { cache: 'no-store' })
+        const catJson = await catRes.json()
+        if (catJson.success && Array.isArray(catJson.flat)) {
+          const catFound = catJson.flat.find((c: any) => c.slug === categorySlug)
+          const subFound = catJson.flat.find((c: any) => c.slug === subcategorySlug)
+          setCategoryName(catFound?.name || categorySlug)
+          setSubcategoryName(subFound?.name || subcategorySlug)
+        }
       } catch {}
       setIsLoading(false)
     }
     load()
-  }, [subcategorySlug])
+  }, [subcategorySlug, categorySlug])
 
   // Alt kategoriye göre filtrele
   useEffect(() => {
@@ -114,9 +84,6 @@ export default function SubcategoryPage() {
     
     setFilteredProducts(filtered)
   }, [categorySlug, subcategorySlug, sortBy, allProducts])
-
-  const categoryName = categoryNames[categorySlug] || 'Kategori'
-  const subcategoryName = subcategoryNames[categorySlug]?.[subcategorySlug] || subcategorySlug
 
   return (
     <div className="min-h-screen bg-white">

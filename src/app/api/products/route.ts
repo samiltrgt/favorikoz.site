@@ -8,10 +8,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 5000
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 1000
     const category = searchParams.get('category')
     const subcategory = searchParams.get('subcategory')
     const search = searchParams.get('search')
+    const view = searchParams.get('view') // view=counts -> lightweight response for header counts
     const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
     const scopeAdmin = searchParams.get('scope') === 'admin' // Admin paneli: tüm ürünler (stok filtresi yok)
     
@@ -30,10 +31,15 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    let query = supabase
-      .from('products')
-      .select('*')
-      .is('deleted_at', null)
+    let query = supabase.from('products')
+
+    if (view === 'counts') {
+      query = query.select('category_slug, subcategory_slug, in_stock, stock_quantity').is('deleted_at', null)
+    } else {
+      query = query
+        .select('*')
+        .is('deleted_at', null)
+    }
     
     if (!skipStockFilter) {
       query = query.eq('in_stock', true).gt('stock_quantity', 0)
@@ -76,13 +82,17 @@ export async function GET(request: NextRequest) {
       )
     }
     
+    if (view === 'counts') {
+      return NextResponse.json({ success: true, data })
+    }
+
     // Convert price from kuruş to TL, then divide by 10 for display
     const products = data.map(p => ({
       ...p,
       price: (p.price / 100) / 10, // Kuruş → TL → /10
       original_price: p.original_price ? (p.original_price / 100) / 10 : null,
     }))
-    
+
     return NextResponse.json({ success: true, data: products })
   } catch (error) {
     console.error('API error:', error)

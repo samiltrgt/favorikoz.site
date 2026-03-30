@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
+import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
 
 type BasketItem = {
   id: string
   name: string
   category: string
-  price: number
   quantity?: number
 }
 
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const items: BasketItem[] = body.items || []
     const customer = body.customerInfo || {}
+    const couponCode = (body.couponCode || '').toString()
 
     if (!items.length) {
       return NextResponse.json({ success: false, error: 'Sepet boş' }, { status: 400 })
@@ -42,9 +43,74 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate subtotal (prices are in 10x format: 100 TL = 1000)
-    const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0)
-    
+    let ordersClient: any
+    try {
+      ordersClient = createSupabaseAdmin()
+    } catch {
+      ordersClient = await createSupabaseServer()
+    }
+    const requestedProductIds = items.map((item) => item.id).filter(Boolean)
+    const { data: products, error: productsError } = await ordersClient
+      .from('products')
+      .select('id, name, category_slug, price, in_stock, stock_quantity')
+      .in('id', requestedProductIds)
+
+    if (productsError || !products?.length) {
+      return NextResponse.json({ success: false, error: 'Ürünler doğrulanamadı' }, { status: 400 })
+    }
+
+    const productRows = (products || []) as any[]
+    const productsById = new Map(productRows.map((p) => [p.id, p]))
+    const canonicalItems = items.map((item) => {
+      const product = productsById.get(item.id)
+      const quantity = Math.max(1, Number(item.quantity || 1))
+      if (!product) {
+        throw new Error('Sepette geçersiz ürün bulundu')
+      }
+      if (!product.in_stock || product.stock_quantity < quantity) {
+        throw new Error(`${product.name} için yeterli stok bulunmuyor`)
+      }
+      // products.price is kuruş, convert to 10x display format
+      const unitPrice10x = Math.round(Number(product.price) / 100)
+      return {
+        id: product.id,
+        name: product.name,
+        category: product.category_slug || 'Genel',
+        quantity,
+        unitPrice10x,
+      }
+    })
+
+    const subtotalBeforeCoupon10x = canonicalItems.reduce((sum, i) => sum + i.unitPrice10x * i.quantity, 0)
+
+    let discountAmount10x = 0
+    let subtotalAfterCoupon10x = subtotalBeforeCoupon10x
+    let appliedCoupon: {
+      code: string
+      discount_type: 'percent' | 'fixed'
+      discount_value: number
+    } | null = null
+
+    const customerIdentityKey = getCustomerIdentityKey(customer.email || '')
+    if (couponCode) {
+      const couponResult = await validateCouponForSubtotal({
+        supabase: ordersClient,
+        couponCode,
+        subtotal10x: subtotalBeforeCoupon10x,
+        customerIdentityKey,
+      })
+      if (!couponResult.valid) {
+        return NextResponse.json({ success: false, error: couponResult.error }, { status: 400 })
+      }
+      discountAmount10x = couponResult.discountAmount10x
+      subtotalAfterCoupon10x = couponResult.subtotalAfterDiscount10x
+      appliedCoupon = {
+        code: couponResult.coupon.code,
+        discount_type: couponResult.coupon.discount_type,
+        discount_value: Number(couponResult.coupon.discount_value),
+      }
+    }
+
     // Calculate shipping: free if >= 1499 TL (14990 in 10x format), otherwise 100 TL (1000 in 10x format)
     // Optional one-time test override via env:
     // TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
@@ -53,34 +119,45 @@ export async function POST(request: NextRequest) {
     const testFreeShippingEmail = (process.env.TEST_FREE_SHIPPING_EMAIL || '').trim().toLowerCase()
     const customerEmail = (customer.email || '').toString().trim().toLowerCase()
     const isOneTimeTestShippingFree = !!testFreeShippingEmail && customerEmail === testFreeShippingEmail
-    const shipping = isOneTimeTestShippingFree
+    const shipping10x = isOneTimeTestShippingFree
       ? 0
-      : subtotal >= FREE_SHIPPING_THRESHOLD
+      : subtotalAfterCoupon10x >= FREE_SHIPPING_THRESHOLD
       ? 0
       : SHIPPING_COST
-    
+
     // Total price in 10x format
-    const totalPrice = subtotal + shipping
+    const totalPrice10x = subtotalAfterCoupon10x + shipping10x
 
     // Iyzico: Gönderilen tutar = tüm kırılımların toplamı olmalı. Basket kalemleri satır toplamı + kargo.
-    const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = items.map(item => {
-      const qty = item.quantity || 1
-      const lineTotalTL = ((item.price || 0) * qty) / 10 // satır toplamı TL
+    const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = canonicalItems.map((item) => {
+      const lineTotalTL = (item.unitPrice10x * item.quantity) / 10
       return {
         id: item.id,
         name: item.name,
-        category1: item.category || 'Genel',
+        category1: item.category,
         itemType: 'PHYSICAL',
         price: toPriceString(lineTotalTL),
       }
     })
-    if (shipping > 0) {
+
+    // Apply coupon discount as a separate virtual line item so iyzico item sum equals total.
+    if (discountAmount10x > 0) {
+      basketItemsForIyzico.push({
+        id: 'coupon-discount',
+        name: `Kupon İndirimi${appliedCoupon ? ` (${appliedCoupon.code})` : ''}`,
+        category1: 'İndirim',
+        itemType: 'VIRTUAL',
+        price: toPriceString(-(discountAmount10x / 10)),
+      })
+    }
+
+    if (shipping10x > 0) {
       basketItemsForIyzico.push({
         id: 'shipping',
         name: 'Kargo',
         category1: 'Kargo',
         itemType: 'VIRTUAL',
-        price: toPriceString(shipping / 10),
+        price: toPriceString(shipping10x / 10),
       })
     }
     const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
@@ -198,14 +275,6 @@ export async function POST(request: NextRequest) {
       console.error('Supabase auth error:', error)
     }
 
-    // Sipariş: RLS misafir/kayıtlı ayrımı 3DS callback'te okumayı bozmasın diye service role tercih
-    let ordersClient = supabase
-    try {
-      ordersClient = createSupabaseAdmin()
-    } catch {
-      ordersClient = supabase
-    }
-
     // Insert order into Supabase
     try {
       if (ordersClient) {
@@ -224,15 +293,21 @@ export async function POST(request: NextRequest) {
               zipcode: customer.zipCode || ''
             } as any,
             billing_address: null,
-            items: items.map(item => ({
+            items: canonicalItems.map((item) => ({
               product_id: item.id,
               name: item.name,
-              price: item.price * 10, // Store in kuruş (item.price is in 10x format, so *10 = kuruş: 255 * 10 = 2550)
-              quantity: item.quantity || 1
+              price: item.unitPrice10x * 10, // 10x to kuruş
+              quantity: item.quantity,
             })) as any,
-            subtotal: Math.round(subtotal * 10), // Store in kuruş (subtotal is in 10x format, so *10 = kuruş: 2550 * 10 = 25500)
-            shipping_cost: Math.round(shipping * 10), // Store in kuruş (shipping is in 10x format, so *10 = kuruş: 1000 * 10 = 10000)
-            total: Math.round(totalPrice * 10), // Store in kuruş (totalPrice is in 10x format, so *10 = kuruş: 3550 * 10 = 35500)
+            subtotal: Math.round(subtotalAfterCoupon10x * 10),
+            shipping_cost: Math.round(shipping10x * 10),
+            total: Math.round(totalPrice10x * 10),
+            coupon_code: appliedCoupon?.code || null,
+            coupon_discount_type: appliedCoupon?.discount_type || null,
+            coupon_discount_value: appliedCoupon?.discount_value || null,
+            discount_amount: Math.round(discountAmount10x * 10),
+            subtotal_before_coupon: Math.round(subtotalBeforeCoupon10x * 10),
+            subtotal_after_coupon: Math.round(subtotalAfterCoupon10x * 10),
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',

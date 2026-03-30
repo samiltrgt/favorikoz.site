@@ -18,6 +18,8 @@ interface Subcategory {
   name: string
   href: string
   key: string
+  depth?: number
+  children?: Subcategory[]
 }
 
 interface Category {
@@ -208,16 +210,33 @@ export default function Header() {
         if (!isMounted) return
         
         if (result.success && result.data) {
+          const flattenForMenu = (
+            node: any,
+            rootSlug: string,
+            depth: number = 0,
+            ancestors: string[] = []
+          ): Subcategory[] => {
+            const path = [...ancestors, node.slug]
+            const href = `/kategori/${rootSlug}/${path.join('/')}`
+            const current: Subcategory = {
+              name: node.name,
+              href,
+              key: node.slug,
+              depth,
+              children: node.subcategories || [],
+            }
+            const children = (node.subcategories || []).flatMap((child: any) =>
+              flattenForMenu(child, rootSlug, depth + 1, path)
+            )
+            return [current, ...children]
+          }
+
           // Transform API data to header format
           const transformedCategories = result.data.map((cat: any) => ({
             name: cat.name,
             href: `/kategori/${cat.slug}`,
             hasDropdown: cat.subcategories && cat.subcategories.length > 0,
-            subcategories: cat.subcategories?.map((sub: any) => ({
-              name: sub.name,
-              href: `/kategori/${cat.slug}/${sub.slug}`,
-              key: sub.slug
-            })) || []
+            subcategories: (cat.subcategories || []).flatMap((sub: any) => flattenForMenu(sub, cat.slug)),
           }))
           setCategories(transformedCategories)
         }
@@ -237,7 +256,7 @@ export default function Header() {
     let isMounted = true
     const loadCounts = async () => {
       try {
-        const res = await fetch('/api/products', { cache: 'no-store' })
+        const res = await fetch('/api/products?view=counts&limit=500', { cache: 'no-store' })
         const json = await res.json()
         if (json.success && Array.isArray(json.data)) {
           const counts: Record<string, number> = {}
@@ -337,7 +356,7 @@ export default function Header() {
                         className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
                         onClick={() => setHoveredCategory(null)}
                       >
-                        <span>{sub.name}</span>
+                        <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
                         <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
                           {categoryCounts[sub.key] ?? 0}
                         </span>
@@ -573,7 +592,7 @@ export default function Header() {
                                 setMobileCategoriesOpen({})
                               }}
                             >
-                              <span>{sub.name}</span>
+                              <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
                               <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
                                 {categoryCounts[sub.key] ?? 0}
                               </span>

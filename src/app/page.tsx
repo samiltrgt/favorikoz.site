@@ -47,11 +47,11 @@ export default async function HomePage() {
     // Fetch products from Supabase (sadece stokta olanlar)
     const { data: allProducts, error: supabaseError } = await supabase
       .from('products')
-      .select('*')
+      .select('id, slug, name, brand, price, original_price, image, rating, reviews_count, in_stock, stock_quantity, created_at, subcategory_slug, category_slug')
       .is('deleted_at', null)
       .eq('in_stock', true) // Müşterilere sadece stokta olan ürünleri göster
       .gt('stock_quantity', 0) // Stok miktarı 0'dan büyük olmalı
-      .limit(1000)
+      .limit(120)
     
     if (supabaseError) {
       console.error('❌ Supabase error:', {
@@ -89,7 +89,7 @@ export default async function HomePage() {
         <section className="relative w-full">
           <div className="min-h-[150vh] md:min-h-0 md:h-[100vh]">
             <div className="sticky top-0 h-[100vh] w-full">
-              <ScrollHero />
+              <ScrollHero products={products} />
             </div>
           </div>
         </section>

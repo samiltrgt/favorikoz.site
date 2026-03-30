@@ -20,6 +20,7 @@ import {
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { getCart } from '@/lib/cart'
+import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
 
 type Step = 'info' | 'shipping' | 'payment'
 
@@ -39,6 +40,10 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
   
   const [formData, setFormData] = useState({
     // Müşteri Bilgileri
@@ -76,6 +81,8 @@ export default function CheckoutPage() {
         // Load cart
         const cart = getCart()
         setCartItems(cart)
+        const storedCoupon = getAppliedCouponCode()
+        if (storedCoupon) setCouponCode(storedCoupon)
 
     // Load user profile if logged in
         const response = await fetch('/api/auth/me')
@@ -112,8 +119,46 @@ export default function CheckoutPage() {
   const testFreeShippingEmail = (process.env.NEXT_PUBLIC_TEST_FREE_SHIPPING_EMAIL || '').trim().toLowerCase()
   const isOneTimeTestShippingFree =
     !!testFreeShippingEmail && (formData.email || '').trim().toLowerCase() === testFreeShippingEmail
-  const shipping = isOneTimeTestShippingFree ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)
-  const total = subtotal + shipping
+  const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscount)
+  const shipping = isOneTimeTestShippingFree ? 0 : (subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)
+  const total = subtotalAfterCoupon + shipping
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Lütfen kupon kodu girin')
+      setCouponDiscount(0)
+      clearAppliedCouponCode()
+      return
+    }
+    try {
+      setIsApplyingCoupon(true)
+      setCouponError(null)
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          couponCode,
+          email: formData.email || '',
+          items: cartItems.map((item) => ({ id: item.id, quantity: item.qty })),
+        }),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        setCouponDiscount(0)
+        setCouponError(result.error || 'Kupon uygulanamadı')
+        clearAppliedCouponCode()
+        return
+      }
+      setCouponDiscount(Number(result.data.discountAmount || 0))
+      setAppliedCouponCode(couponCode)
+    } catch {
+      setCouponDiscount(0)
+      setCouponError('Kupon doğrulanırken hata oluştu')
+      clearAppliedCouponCode()
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
 
   // Validation
   const validateStep = (step: Step): boolean => {
@@ -190,9 +235,9 @@ export default function CheckoutPage() {
             id: item.id,
             name: item.name,
             category: 'Kozmetik',
-            price: item.price,
             quantity: item.qty
           })),
+          couponCode,
           customerInfo: {
             name: formData.name,
             surname: formData.surname,
@@ -565,7 +610,7 @@ export default function CheckoutPage() {
                           </div>
                         </div>
                         <div className="font-medium">
-                          {subtotal >= FREE_SHIPPING_THRESHOLD ? (
+                          {subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? (
                             <span className="text-green-600">Ücretsiz</span>
                           ) : (
                             <span>₺100</span>
@@ -830,10 +875,37 @@ export default function CheckoutPage() {
 
           {/* Price Breakdown */}
               <div className="border-t border-gray-200 pt-4 space-y-3">
+                <div>
+                  <label className="mb-2 block text-sm text-gray-700">Kupon Kodu</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      placeholder="KODUNUZU GİRİN"
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={isApplyingCoupon}
+                      className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white hover:bg-black disabled:opacity-60"
+                    >
+                      {isApplyingCoupon ? '...' : 'Uygula'}
+                    </button>
+                  </div>
+                  {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
+                </div>
+
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Ara Toplam</span>
                   <span className="font-medium text-black">₺{(subtotal / 10).toFixed(2)}</span>
             </div>
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Kupon İndirimi</span>
+                    <span className="font-medium text-green-600">-₺{(couponDiscount / 10).toFixed(2)}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">
@@ -845,15 +917,15 @@ export default function CheckoutPage() {
             </div>
             
             {/* Free Shipping Progress */}
-                {subtotal < FREE_SHIPPING_THRESHOLD && formData.shippingMethod === 'standard' && (
+                {subtotalAfterCoupon < FREE_SHIPPING_THRESHOLD && formData.shippingMethod === 'standard' && (
                   <div className="pt-2">
                     <div className="text-xs text-orange-600 mb-2">
-                  Ücretsiz kargo için ₺{((FREE_SHIPPING_THRESHOLD - subtotal) / 10).toFixed(2)} daha ekleyin
+                  Ücretsiz kargo için ₺{((FREE_SHIPPING_THRESHOLD - subtotalAfterCoupon) / 10).toFixed(2)} daha ekleyin
                 </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div 
                         className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((subtotalAfterCoupon / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
                       />
                 </div>
               </div>

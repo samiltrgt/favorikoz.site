@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useRef, useEffect, useState, useMemo } from 'react'
-import SplitText from '@/components/SplitText'
 
 type AnimationPhase = 'scatter' | 'line' | 'arc'
 
@@ -55,37 +54,9 @@ function getImageUrls(products: { image?: string | null }[]): string[] {
 const EMPTY_PRODUCTS: { image?: string | null }[] = []
 
 export default function ScrollHero({ products }: { products?: { image?: string | null }[] }) {
-  const [managedProducts, setManagedProducts] = useState<{ image?: string | null }[] | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    const loadManaged = async () => {
-      try {
-        const res = await fetch('/api/scroll-hero-products', { cache: 'no-store' })
-        const json = await res.json()
-        if (cancelled) return
-        if (json.success && Array.isArray(json.data)) {
-          const mapped = (json.data as any[])
-            .map((row) => ({ image: row?.products?.image || row?.image_url || row?.image || null }))
-            .filter((row) => !!row.image)
-          setManagedProducts(mapped)
-          return
-        }
-      } catch {}
-      if (!cancelled) setManagedProducts([])
-    }
-    loadManaged()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const productList = useMemo(
-    () => {
-      if (managedProducts && managedProducts.length > 0) return managedProducts
-      return products && Array.isArray(products) ? products : EMPTY_PRODUCTS
-    },
-    [managedProducts, products]
+    () => (products && Array.isArray(products) ? products : EMPTY_PRODUCTS),
+    [products]
   )
   const imageUrls = useMemo(() => getImageUrls(productList), [productList])
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -384,25 +355,13 @@ export default function ScrollHero({ products }: { products?: { image?: string |
         </div>
       </div>
       <canvas ref={canvasRef} className="relative z-10 block w-full h-full cursor-default" />
-      <div
-        className="absolute inset-0 z-20 flex items-center justify-center pt-[18vh] md:pt-0 pointer-events-none px-4"
-        aria-hidden
-      >
-        <SplitText
-          text="Favori Kozmetik"
-          className="text-2xl font-semibold text-center text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.4)]"
-          delay={500}
-          duration={0.8}
-          ease="power3.out"
-          splitType="chars"
-          from={{ opacity: 0, y: 40 }}
-          to={{ opacity: 1, y: 0 }}
-          threshold={0.1}
-          rootMargin="-100px"
-          textAlign="center"
-          tag="h1"
-          onLetterAnimationComplete={() => {}}
-        />
+      <div className="absolute inset-0 z-20 flex items-center justify-center pt-[18vh] md:pt-0 pointer-events-none px-4">
+        <h1
+          className="text-2xl font-semibold text-center text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.4)] leading-tight min-h-[32px]"
+          aria-label="Favori Kozmetik"
+        >
+          Favori Kozmetik
+        </h1>
       </div>
       <div
         className="absolute bottom-0 left-0 right-0 z-10 h-48 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-white hidden md:block"

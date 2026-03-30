@@ -10,14 +10,6 @@ import Footer from '@/components/footer'
 import ProductCardModern from '@/components/product-card-modern'
 // Fetch from API to reflect admin edits
 
-const categoryNames: { [key: string]: string } = {
-  'tirnak': 'Tırnak',
-  'sac-bakimi': 'Saç Bakımı',
-  'kisisel-bakim': 'Kişisel Bakım',
-  'ipek-kirpik': 'İpek Kirpik',
-  'kuafor-malzemeleri': 'Kuaför Malzemeleri',
-}
-
 const sortOptions = [
   { value: 'newest', label: 'En Yeni' },
   { value: 'price-low', label: 'Fiyat (Düşük → Yüksek)' },
@@ -35,6 +27,7 @@ export default function CategoryPage() {
   const [allProducts, setAllProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [categoryName, setCategoryName] = useState<string>('Kategori')
 
   // Load products from API
   useEffect(() => {
@@ -43,11 +36,19 @@ export default function CategoryPage() {
         const res = await fetch('/api/products', { cache: 'no-store' })
         const json = await res.json()
         if (json.success) setAllProducts(json.data || [])
+        const catRes = await fetch('/api/categories', { cache: 'no-store' })
+        const catJson = await catRes.json()
+        if (catJson.success && Array.isArray(catJson.flat)) {
+          const found = catJson.flat.find((c: any) => c.slug === categorySlug)
+          setCategoryName(found?.name || categorySlug)
+        } else {
+          setCategoryName(categorySlug)
+        }
       } catch {}
       setIsLoading(false)
     }
     load()
-  }, [])
+  }, [categorySlug])
 
   // Kategoriye göre filtrele
   useEffect(() => {
@@ -83,8 +84,6 @@ export default function CategoryPage() {
     
     setFilteredProducts(filtered)
   }, [categorySlug, sortBy, allProducts])
-
-  const categoryName = categoryNames[categorySlug] || 'Kategori'
 
   return (
     <div className="min-h-screen bg-white">

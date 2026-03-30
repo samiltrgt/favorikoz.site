@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield 
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { getCart, setCart } from '@/lib/cart'
+import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
 
 // UI tipinde sepet öğesi
 type UIItem = {
@@ -27,6 +28,10 @@ export default function CartPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [removingItem, setRemovingItem] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
   // LocalStorage'dan sepet yükle ve API'den ürün bilgilerini al
   useEffect(() => {
@@ -52,6 +57,8 @@ export default function CartPage() {
             }
           })
           setCartItems(ui)
+          const storedCoupon = getAppliedCouponCode()
+          if (storedCoupon) setCouponCode(storedCoupon)
         }
       } catch (error) {
         console.error('Error loading cart items:', error)
@@ -82,7 +89,44 @@ export default function CartPage() {
   const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
   const SHIPPING_COST = 1000 // 100 TL (display için /10 yapılacak)
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-  const total = subtotal - discount + shipping
+  const total = Math.max(0, subtotal - discount - couponDiscount + shipping)
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Lütfen kupon kodu girin')
+      setCouponDiscount(0)
+      clearAppliedCouponCode()
+      return
+    }
+
+    try {
+      setIsApplyingCoupon(true)
+      setCouponError(null)
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          couponCode,
+          items: cartItems.map((item) => ({ id: item.id, quantity: item.quantity })),
+        }),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        setCouponDiscount(0)
+        setCouponError(result.error || 'Kupon uygulanamadı')
+        clearAppliedCouponCode()
+        return
+      }
+      setCouponDiscount(Number(result.data.discountAmount || 0))
+      setAppliedCouponCode(couponCode)
+    } catch {
+      setCouponDiscount(0)
+      setCouponError('Kupon doğrulanırken hata oluştu')
+      clearAppliedCouponCode()
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
 
   // Miktar güncelleme
   const updateQuantity = (id: string, newQuantity: number) => {
@@ -282,6 +326,27 @@ export default function CartPage() {
               
               {/* Price Breakdown */}
               <div className="space-y-4 mb-6">
+                <div>
+                  <label className="mb-2 block text-sm text-gray-700">Kupon Kodu</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      placeholder="KODUNUZU GİRİN"
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={isApplyingCoupon}
+                      className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white hover:bg-black disabled:opacity-60"
+                    >
+                      {isApplyingCoupon ? '...' : 'Uygula'}
+                    </button>
+                  </div>
+                  {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
+                  {couponDiscount > 0 && <p className="mt-2 text-xs text-green-600">Kupon indirimi uygulandı</p>}
+                </div>
+
                 <div className="flex justify-between text-gray-600">
                   <span>Ara Toplam</span>
                   <span>₺{(subtotal / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -291,6 +356,13 @@ export default function CartPage() {
                   <div className="flex justify-between text-green-600">
                     <span>İndirim</span>
                     <span>-₺{(discount / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Kupon İndirimi</span>
+                    <span>-₺{(couponDiscount / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 )}
                 

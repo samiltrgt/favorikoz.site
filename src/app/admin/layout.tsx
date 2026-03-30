@@ -18,7 +18,8 @@ import {
   Sparkles,
   Gem,
   FolderTree,
-  ImageIcon
+  ImageIcon,
+  Ticket
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -54,6 +55,7 @@ export default function AdminLayout({
     { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
     { name: 'Promo Banner', href: '/admin/promo-banners', icon: Image },
     { name: 'Promo Carousel', href: '/admin/promo-carousel', icon: Image },
+    { name: 'Kuponlar', href: '/admin/coupons', icon: Ticket },
     { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Müşteriler', href: '/admin/customers', icon: Users },
     { name: 'Raporlar', href: '/admin/reports', icon: BarChart3 },

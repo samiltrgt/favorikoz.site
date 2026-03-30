@@ -151,6 +151,29 @@ export async function POST(request: NextRequest) {
         })
         .eq('payment_token', conversationId)
 
+      const { data: paidOrder } = await supabase
+        .from('orders')
+        .select('id, coupon_code, customer_email')
+        .eq('payment_token', conversationId)
+        .maybeSingle()
+      if (paidOrder?.coupon_code) {
+        const { data: coupon } = await supabase
+          .from('coupons')
+          .select('id')
+          .eq('code', paidOrder.coupon_code)
+          .maybeSingle()
+        if (coupon?.id) {
+          await supabase.from('coupon_usages').upsert(
+            {
+              coupon_id: coupon.id,
+              order_id: paidOrder.id,
+              customer_identity_key: (paidOrder.customer_email || '').trim().toLowerCase(),
+            },
+            { onConflict: 'order_id' }
+          )
+        }
+      }
+
       const qs = new URLSearchParams({
         status: 'success',
         token: conversationId,

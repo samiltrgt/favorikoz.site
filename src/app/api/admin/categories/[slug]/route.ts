@@ -22,6 +22,28 @@ async function checkAdminAccess(supabase: any) {
   return { authorized: true }
 }
 
+function collectDescendants(startSlug: string, rows: Array<{ slug: string; parent_slug: string | null }>) {
+  const childrenByParent = new Map<string, string[]>()
+  for (const row of rows) {
+    if (!row.parent_slug) continue
+    const list = childrenByParent.get(row.parent_slug) ?? []
+    list.push(row.slug)
+    childrenByParent.set(row.parent_slug, list)
+  }
+  const descendants = new Set<string>()
+  const stack = [startSlug]
+  while (stack.length > 0) {
+    const current = stack.pop() as string
+    const children = childrenByParent.get(current) ?? []
+    for (const child of children) {
+      if (descendants.has(child)) continue
+      descendants.add(child)
+      stack.push(child)
+    }
+  }
+  return descendants
+}
+
 // GET /api/admin/categories/[slug] - Get single category (Admin only)
 export async function GET(
   request: NextRequest,
@@ -118,7 +140,7 @@ export async function PUT(
       }
     }
     
-    // If parent_slug is provided, verify it exists and is not the same category
+    // If parent_slug is provided, verify it exists and is not same/descendant (cycle guard)
     if (parent_slug !== undefined) {
       if (parent_slug === slug) {
         return NextResponse.json(
@@ -128,6 +150,18 @@ export async function PUT(
       }
       
       if (parent_slug) {
+        const { data: allCategories } = await supabase
+          .from('categories')
+          .select('slug,parent_slug')
+          .is('deleted_at', null)
+        const descendants = collectDescendants(slug, allCategories || [])
+        if (descendants.has(parent_slug)) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid parent category: cyclic hierarchy is not allowed' },
+            { status: 400 }
+          )
+        }
+
         const { data: parent, error: parentError } = await supabase
           .from('categories')
           .select('slug')
@@ -216,16 +250,16 @@ export async function DELETE(
       )
     }
     
-    // Check if this is a main category with subcategories
-    const { data: subcategories } = await supabase
+    // Check if this category has descendants
+    const { data: allCategories } = await supabase
       .from('categories')
-      .select('slug')
-      .eq('parent_slug', slug)
+      .select('slug,parent_slug')
       .is('deleted_at', null)
-    
-    if (subcategories && subcategories.length > 0) {
+    const descendants = collectDescendants(slug, allCategories || [])
+
+    if (descendants.size > 0) {
       return NextResponse.json(
-        { success: false, error: 'Cannot delete category with subcategories. Please delete subcategories first.' },
+        { success: false, error: 'Cannot delete category with child categories. Please delete children first.' },
         { status: 400 }
       )
     }

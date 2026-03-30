@@ -156,6 +156,12 @@ export interface Database {
           subtotal: number
           shipping_cost: number
           total: number
+          coupon_code: string | null
+          coupon_discount_type: string | null
+          coupon_discount_value: number | null
+          discount_amount: number
+          subtotal_before_coupon: number | null
+          subtotal_after_coupon: number | null
           status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method: string
           payment_status: 'pending' | 'completed' | 'failed'
@@ -183,6 +189,12 @@ export interface Database {
           subtotal: number
           shipping_cost: number
           total: number
+          coupon_code?: string | null
+          coupon_discount_type?: string | null
+          coupon_discount_value?: number | null
+          discount_amount?: number
+          subtotal_before_coupon?: number | null
+          subtotal_after_coupon?: number | null
           status?: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method: string
           payment_status?: 'pending' | 'completed' | 'failed'
@@ -210,6 +222,12 @@ export interface Database {
           subtotal?: number
           shipping_cost?: number
           total?: number
+          coupon_code?: string | null
+          coupon_discount_type?: string | null
+          coupon_discount_value?: number | null
+          discount_amount?: number
+          subtotal_before_coupon?: number | null
+          subtotal_after_coupon?: number | null
           status?: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method?: string
           payment_status?: 'pending' | 'completed' | 'failed'
@@ -309,6 +327,70 @@ export interface Database {
           is_active?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      coupons: {
+        Row: {
+          id: string
+          code: string
+          discount_type: 'percent' | 'fixed'
+          discount_value: number
+          valid_from: string | null
+          valid_until: string | null
+          max_total_uses: number | null
+          max_uses_per_customer: number | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          discount_type: 'percent' | 'fixed'
+          discount_value: number
+          valid_from?: string | null
+          valid_until?: string | null
+          max_total_uses?: number | null
+          max_uses_per_customer?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          discount_type?: 'percent' | 'fixed'
+          discount_value?: number
+          valid_from?: string | null
+          valid_until?: string | null
+          max_total_uses?: number | null
+          max_uses_per_customer?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      coupon_usages: {
+        Row: {
+          id: string
+          coupon_id: string
+          order_id: string
+          customer_identity_key: string
+          used_at: string
+        }
+        Insert: {
+          id?: string
+          coupon_id: string
+          order_id: string
+          customer_identity_key: string
+          used_at?: string
+        }
+        Update: {
+          id?: string
+          coupon_id?: string
+          order_id?: string
+          customer_identity_key?: string
+          used_at?: string
         }
       }
       promo_banner_products: {

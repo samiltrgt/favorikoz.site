@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
               .from('orders')
               .update({ status: 'paid', payment_status: 'completed', payment_token: token })
               .eq('order_number', orderNumber)
+            await recordCouponUsage(ordersDb, orderNumber, token)
             await tryCreateNesInvoice(ordersDb, orderNumber, token)
           } catch {}
         }
@@ -169,6 +170,7 @@ export async function GET(request: NextRequest) {
     if (error) console.error('[payment/status] Order update error:', error)
     else console.log('[payment/status] Sipariş güncellendi (ödendi)', orderNumber || '(token ile bulundu)')
 
+    await recordCouponUsage(supabase, orderNumber || null, token || '')
     await tryCreateNesInvoice(supabase, orderNumber || null, token || '')
 
     return NextResponse.json({ success: true, status: 'success' })
@@ -231,5 +233,33 @@ async function tryCreateNesInvoice(supabase: Awaited<ReturnType<typeof createSup
     }
   } catch (err: any) {
     console.error('NES fatura hatası:', err?.message || err)
+  }
+}
+
+async function recordCouponUsage(supabase: any, orderNumber: string | null, paymentToken: string) {
+  try {
+    let query = supabase
+      .from('orders')
+      .select('id, coupon_code, customer_email')
+      .eq('status', 'paid')
+      .limit(1)
+
+    query = orderNumber ? query.eq('order_number', orderNumber) : query.eq('payment_token', paymentToken)
+    const { data: order } = await query.maybeSingle()
+    if (!order?.coupon_code) return
+
+    const { data: coupon } = await supabase.from('coupons').select('id').eq('code', order.coupon_code).maybeSingle()
+    if (!coupon?.id) return
+
+    await supabase.from('coupon_usages').upsert(
+      {
+        coupon_id: coupon.id,
+        order_id: order.id,
+        customer_identity_key: (order.customer_email || '').trim().toLowerCase(),
+      },
+      { onConflict: 'order_id' }
+    )
+  } catch (err) {
+    console.error('[payment/status] coupon usage kayıt hatası:', err)
   }
 }

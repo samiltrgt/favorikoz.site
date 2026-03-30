@@ -97,7 +97,6 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
-        <link rel="preconnect" href="https://images.unsplash.com" />
         <SupabasePreconnect />
       </head>
       <body className={inter.className}>
