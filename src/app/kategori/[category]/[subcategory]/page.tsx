@@ -198,7 +198,7 @@ export default function SubcategoryPage() {
                       alt={product.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes={viewMode === 'list' ? '96px' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'}
+                      sizes={viewMode === 'list' ? '96px' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px'}
                     />
                     {product.is_new && (
                       <div className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-1 rounded">

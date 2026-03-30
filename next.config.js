@@ -15,6 +15,8 @@ module.exports = {
     loaderFile: './src/lib/cloudinary-loader.ts',
     unoptimized: false,
     formats: ['image/avif', 'image/webp'],
+    deviceSizes: [320, 420, 640, 750, 828, 1080],
+    imageSizes: [64, 96, 128, 160, 192, 256, 320],
     remotePatterns: [
       {
         protocol: 'https',

@@ -54,9 +54,37 @@ function getImageUrls(products: { image?: string | null }[]): string[] {
 const EMPTY_PRODUCTS: { image?: string | null }[] = []
 
 export default function ScrollHero({ products }: { products?: { image?: string | null }[] }) {
+  const [managedProducts, setManagedProducts] = useState<{ image?: string | null }[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const loadManaged = async () => {
+      try {
+        const res = await fetch('/api/scroll-hero-products', { cache: 'no-store' })
+        const json = await res.json()
+        if (cancelled) return
+        if (json.success && Array.isArray(json.data)) {
+          const mapped = (json.data as any[])
+            .map((row) => ({ image: row?.products?.image || row?.image_url || row?.image || null }))
+            .filter((row) => !!row.image)
+          setManagedProducts(mapped)
+          return
+        }
+      } catch {}
+      if (!cancelled) setManagedProducts([])
+    }
+    loadManaged()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const productList = useMemo(
-    () => (products && Array.isArray(products) ? products : EMPTY_PRODUCTS),
-    [products]
+    () => {
+      if (managedProducts && managedProducts.length > 0) return managedProducts
+      return products && Array.isArray(products) ? products : EMPTY_PRODUCTS
+    },
+    [managedProducts, products]
   )
   const imageUrls = useMemo(() => getImageUrls(productList), [productList])
   const canvasRef = useRef<HTMLCanvasElement>(null)

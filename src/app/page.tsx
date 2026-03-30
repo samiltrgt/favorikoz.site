@@ -8,7 +8,7 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 import { getSiteUrl } from '@/lib/site-url'
 
 // Ağır client bileşenleri kritik yoldan çıkarmak için dynamic import (LCP/FCP iyileştirmesi)
-const ScrollHero = nextDynamic(() => import('@/components/scroll-hero'), {
+const AdaptiveScrollHero = nextDynamic(() => import('@/components/adaptive-scroll-hero'), {
   ssr: false,
   loading: () => (
     <div className="relative w-full h-full min-h-[100vh] flex items-center justify-center bg-black/30" aria-hidden>
@@ -89,7 +89,7 @@ export default async function HomePage() {
         <section className="relative w-full">
           <div className="min-h-[150vh] md:min-h-0 md:h-[100vh]">
             <div className="sticky top-0 h-[100vh] w-full">
-              <ScrollHero products={products} />
+              <AdaptiveScrollHero products={products} />
             </div>
           </div>
         </section>

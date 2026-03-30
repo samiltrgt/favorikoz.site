@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1200px) 33vw, 280px"
           />
         </Link>
         
