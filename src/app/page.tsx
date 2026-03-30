@@ -86,10 +86,6 @@ export default async function HomePage() {
 
         {/* 2. Ürünler carousel (oklarla) - mobilde üstte karartma gradient */}
         <section className="relative">
-          <div
-            className="absolute top-0 left-0 right-0 z-10 h-48 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-transparent md:hidden"
-            aria-hidden
-          />
           <DeferredProductsCarousel products={products} title="ÜRÜNLER" viewAllLink="/tum-urunler" />
         </section>
 

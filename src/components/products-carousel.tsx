@@ -80,9 +80,8 @@ export default function ProductsCarousel({
 
   return (
     <section className="relative py-12 sm:py-16 bg-white overflow-hidden">
-      {/* Üstte hero renginden beyaza geçiş (hero gradyanıyla birleşir) */}
       <div
-        className="absolute top-0 left-0 right-0 h-24 pointer-events-none bg-gradient-to-b from-[#FAFAFA] to-white z-0"
+        className="absolute top-0 left-0 right-0 h-56 pointer-events-none bg-gradient-to-b from-[#AEAFAF] to-white z-0"
         aria-hidden
       />
 

@@ -376,19 +376,29 @@ export default function ScrollHero({ products }: { products?: { image?: string |
         </div>
       </div>
       <canvas ref={canvasRef} className="relative z-10 block w-full h-full cursor-default" />
-      <div className="absolute inset-0 z-20 flex items-center justify-center pt-[18vh] md:pt-0 pointer-events-none px-4">
-        <h1
-          className="text-2xl font-semibold text-center text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.4)] leading-tight min-h-[32px]"
-          aria-label="Favori Kozmetik"
+      <div className="absolute inset-0 z-20 flex items-center justify-start md:justify-center pt-[28vh] md:pt-0 pointer-events-none px-6 md:px-10">
+        <div
+          className="text-left md:text-center text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.45)]"
+          aria-label="Favori Kozmetik - Profesyonel Güzelliğin Adresi"
         >
-          Favori Kozmetik
-        </h1>
+          <div className="relative inline-block text-left">
+            <h1
+              className="text-5xl md:text-6xl font-extrabold tracking-wide leading-[0.95] animate-fade-in-up"
+              style={{ animationDuration: '1.1s', animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+            >
+              Favori
+              <br />
+              Kozmetik
+            </h1>
+            <p
+              className="mt-2 text-lg md:text-2xl font-semibold tracking-[0.08em] whitespace-nowrap animate-fade-in-up animation-delay-300"
+              style={{ animationDuration: '1.2s', animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+            >
+              Profesyonel Guzelligin Adresi
+            </p>
+          </div>
+        </div>
       </div>
-      <div
-        className="absolute bottom-0 left-0 right-0 z-10 h-48 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-white hidden md:block"
-        aria-hidden
-      />
-
       {!isLoaded && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="flex flex-col items-center">
