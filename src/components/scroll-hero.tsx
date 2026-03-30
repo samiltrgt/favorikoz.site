@@ -28,25 +28,18 @@ const IMG_WIDTH = 80
 const IMG_HEIGHT = 110
 const CORNER_RADIUS = 12
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr]
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]]
-  }
-  return out
-}
-
 const FALLBACK_IMAGE =
   'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect fill="%23e5e7eb" width="300" height="300"/></svg>')
 
 function getImageUrls(products: { image?: string | null }[]): string[] {
-  const urls = products.filter((p) => p?.image).map((p) => p.image as string)
+  const urls = products
+    .filter((p) => p?.image)
+    .map((p) => (p.image as string).trim())
+    .sort((a, b) => a.localeCompare(b))
   if (urls.length === 0) return Array(TOTAL_IMAGES).fill(FALLBACK_IMAGE)
-  const shuffled = shuffle(urls)
   const result: string[] = []
   for (let i = 0; i < TOTAL_IMAGES; i++) {
-    result.push(shuffled[i % shuffled.length])
+    result.push(urls[i % urls.length])
   }
   return result
 }
