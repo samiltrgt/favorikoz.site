@@ -51,6 +51,5 @@ module.exports = {
   // Serverless: bundle iyzipay properly
   experimental: {
     serverComponentsExternalPackages: ['iyzipay'],
-    optimizeCss: true,
   },
 };
