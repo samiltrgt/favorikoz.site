@@ -31,20 +31,63 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    let query = supabase.from('products')
-
     if (view === 'counts') {
-      query = query.select('category_slug, subcategory_slug, in_stock, stock_quantity').is('deleted_at', null)
-    } else {
-      query = query
-        .select('*')
+      let countsQuery = supabase
+        .from('products')
+        .select('category_slug, subcategory_slug, in_stock, stock_quantity')
         .is('deleted_at', null)
+
+      if (!skipStockFilter) {
+        countsQuery = countsQuery.eq('in_stock', true).gt('stock_quantity', 0)
+      }
+
+      if (fetchByIds) {
+        countsQuery = countsQuery.in('id', ids)
+      } else {
+        if (subcategory) {
+          countsQuery = countsQuery.eq('subcategory_slug', subcategory)
+        } else if (category) {
+          countsQuery = countsQuery.eq('category_slug', category)
+        }
+        if (search) {
+          countsQuery = countsQuery.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
+        }
+        countsQuery = countsQuery.order('created_at', { ascending: false }).limit(limit || 1000)
+      }
+
+      const { data, error } = await countsQuery
+      if (error) {
+        console.error('❌ Supabase error:', {
+          message: error.message,
+          details: error,
+          code: error.code,
+          hint: error.hint
+        })
+        return NextResponse.json(
+          {
+            success: false,
+            error: error.message || 'Failed to fetch products',
+            details: process.env.NODE_ENV === 'development' ? {
+              code: error.code,
+              hint: error.hint,
+              details: error.details
+            } : undefined
+          },
+          { status: 500 }
+        )
+      }
+      return NextResponse.json({ success: true, data })
     }
-    
+
+    let query = supabase
+      .from('products')
+      .select('*')
+      .is('deleted_at', null)
+
     if (!skipStockFilter) {
       query = query.eq('in_stock', true).gt('stock_quantity', 0)
     }
-    
+
     if (fetchByIds) {
       query = query.in('id', ids)
     } else {
@@ -56,9 +99,9 @@ export async function GET(request: NextRequest) {
       if (search) {
         query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
       }
-      query = query.order('created_at', { ascending: false }).limit(limit || 5000)
+      query = query.order('created_at', { ascending: false }).limit(limit || 1000)
     }
-    
+
     const { data, error } = await query
     
     if (error) {
@@ -82,10 +125,6 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    if (view === 'counts') {
-      return NextResponse.json({ success: true, data })
-    }
-
     // Convert price from kuruş to TL, then divide by 10 for display
     const products = data.map(p => ({
       ...p,
