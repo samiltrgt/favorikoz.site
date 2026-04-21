@@ -64,7 +64,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [isLoading, setIsLoading] = useState(true)
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedSubcategory, setSelectedSubcategory] = useState('')
+  const [selectedSubcategoryLevel1, setSelectedSubcategoryLevel1] = useState('')
+  const [selectedSubcategoryLevel2, setSelectedSubcategoryLevel2] = useState('')
+  const [selectedSubcategoryLevel3, setSelectedSubcategoryLevel3] = useState('')
+  const [loadedSubcategorySlug, setLoadedSubcategorySlug] = useState('')
+  const [isSubcategoryPathHydrated, setIsSubcategoryPathHydrated] = useState(false)
 
   // Load categories from API
   useEffect(() => {
@@ -84,14 +88,19 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             'bg-indigo-100 text-indigo-800',
             'bg-red-100 text-red-800',
           ]
-          const mappedCategories = result.data.map((cat: any, index: number) => ({
+          const mapCategoryTree = (nodes: any[], rootIndex: number): CategoryOption[] =>
+            (nodes || []).map((node: any) => ({
+              value: node.slug,
+              label: node.name,
+              color: categoryColors[rootIndex % categoryColors.length],
+              subcategories: mapCategoryTree(node.subcategories || [], rootIndex),
+            }))
+
+          const mappedCategories = (result.data || []).map((cat: any, index: number) => ({
             value: cat.slug,
             label: cat.name,
             color: categoryColors[index % categoryColors.length],
-            subcategories: cat.subcategories?.map((sub: any) => ({
-              value: sub.slug,
-              label: sub.name
-            })) || []
+            subcategories: mapCategoryTree(cat.subcategories || [], index),
           }))
           setCategories(mappedCategories)
         }
@@ -109,23 +118,44 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     loadCategories()
   }, [])
 
-  const getAllDescendantSubcategories = (
-    items: CategoryOption[] = [],
-    parentPath = ''
-  ): Array<{ value: string; label: string }> => {
-    const result: Array<{ value: string; label: string }> = []
+  const findSubcategoryPath = (items: CategoryOption[], targetSlug: string): string[] | null => {
     for (const item of items) {
-      const pathLabel = parentPath ? `${parentPath} > ${item.label}` : item.label
-      result.push({ value: item.value, label: pathLabel })
+      if (item.value === targetSlug) return [item.value]
       if (item.subcategories?.length) {
-        result.push(...getAllDescendantSubcategories(item.subcategories, pathLabel))
+        const childPath = findSubcategoryPath(item.subcategories, targetSlug)
+        if (childPath) return [item.value, ...childPath]
       }
     }
-    return result
+    return null
   }
 
   const selectedCategoryNode = categories.find((c) => c.value === selectedCategory)
-  const selectableSubcategories = getAllDescendantSubcategories(selectedCategoryNode?.subcategories || [])
+  const level1Options = selectedCategoryNode?.subcategories || []
+  const selectedLevel1Node = level1Options.find((item) => item.value === selectedSubcategoryLevel1)
+  const level2Options = selectedLevel1Node?.subcategories || []
+  const selectedLevel2Node = level2Options.find((item) => item.value === selectedSubcategoryLevel2)
+  const level3Options = selectedLevel2Node?.subcategories || []
+  const selectedLevel3Node = level3Options.find((item) => item.value === selectedSubcategoryLevel3)
+  const selectedSubcategory =
+    selectedSubcategoryLevel3 || selectedSubcategoryLevel2 || selectedSubcategoryLevel1 || ''
+
+  useEffect(() => {
+    if (
+      isSubcategoryPathHydrated ||
+      !loadedSubcategorySlug ||
+      !selectedCategoryNode?.subcategories?.length
+    ) {
+      return
+    }
+
+    const path = findSubcategoryPath(selectedCategoryNode.subcategories, loadedSubcategorySlug)
+    if (path) {
+      setSelectedSubcategoryLevel1(path[0] || '')
+      setSelectedSubcategoryLevel2(path[1] || '')
+      setSelectedSubcategoryLevel3(path[2] || '')
+    }
+    setIsSubcategoryPathHydrated(true)
+  }, [isSubcategoryPathHydrated, loadedSubcategorySlug, selectedCategoryNode])
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -148,7 +178,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           const categorySlug = foundProduct.category_slug || foundProduct.category || ''
           const subcategorySlug = foundProduct.subcategory_slug || ''
           setSelectedCategory(categorySlug)
-          setSelectedSubcategory(subcategorySlug)
+          setLoadedSubcategorySlug(subcategorySlug)
+          setSelectedSubcategoryLevel1('')
+          setSelectedSubcategoryLevel2('')
+          setSelectedSubcategoryLevel3('')
+          setIsSubcategoryPathHydrated(false)
           setFormData({
             name: foundProduct.name,
             brand: foundProduct.brand,
@@ -217,7 +251,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         description: formData.description,
         category: selectedCategory, // Ana kategori
-        subcategory: selectedSubcategory || undefined, // Alt kategori (opsiyonel)
+        subcategory: selectedSubcategory || undefined, // En derin seçili alt kategori (opsiyonel)
         isNew: formData.isNew,
         isBestSeller: formData.isBestSeller,
         inStock: formData.inStock,
@@ -404,7 +438,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                       value={selectedCategory}
                       onChange={(e) => {
                         setSelectedCategory(e.target.value)
-                        setSelectedSubcategory('')
+                        setSelectedSubcategoryLevel1('')
+                        setSelectedSubcategoryLevel2('')
+                        setSelectedSubcategoryLevel3('')
+                        setLoadedSubcategorySlug('')
+                        setIsSubcategoryPathHydrated(true)
                         setFormData(prev => ({ ...prev, category: e.target.value }))
                       }}
                       required
@@ -421,20 +459,70 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                       ))}
                     </select>
                     
-                    {selectedCategory && selectableSubcategories.length > 0 && (
+                    {selectedCategory && level1Options.length > 0 && (
                       <select
-                        name="subcategory"
-                        value={selectedSubcategory}
-                      onChange={(e) => {
-                        setSelectedSubcategory(e.target.value)
-                        // formData.category stays as selectedCategory (main category)
-                      }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
+                        name="subcategoryLevel1"
+                        value={selectedSubcategoryLevel1}
+                        onChange={(e) => {
+                          setSelectedSubcategoryLevel1(e.target.value)
+                          setSelectedSubcategoryLevel2('')
+                          setSelectedSubcategoryLevel3('')
+                          setLoadedSubcategorySlug('')
+                          setIsSubcategoryPathHydrated(true)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white mb-2"
                       >
-                        <option value="">Alt kategori seçin (opsiyonel)</option>
-                        {selectableSubcategories.map((subcategory) => (
+                        <option value="">1. alt kategori seçin (opsiyonel)</option>
+                        {level1Options.map((subcategory) => (
                           <option 
                             key={subcategory.value} 
+                            value={subcategory.value}
+                          >
+                            {subcategory.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {selectedSubcategoryLevel1 && level2Options.length > 0 && (
+                      <select
+                        name="subcategoryLevel2"
+                        value={selectedSubcategoryLevel2}
+                        onChange={(e) => {
+                          setSelectedSubcategoryLevel2(e.target.value)
+                          setSelectedSubcategoryLevel3('')
+                          setLoadedSubcategorySlug('')
+                          setIsSubcategoryPathHydrated(true)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white mb-2"
+                      >
+                        <option value="">2. alt kategori seçin (opsiyonel)</option>
+                        {level2Options.map((subcategory) => (
+                          <option
+                            key={subcategory.value}
+                            value={subcategory.value}
+                          >
+                            {subcategory.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {selectedSubcategoryLevel2 && level3Options.length > 0 && (
+                      <select
+                        name="subcategoryLevel3"
+                        value={selectedSubcategoryLevel3}
+                        onChange={(e) => {
+                          setSelectedSubcategoryLevel3(e.target.value)
+                          setLoadedSubcategorySlug('')
+                          setIsSubcategoryPathHydrated(true)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">3. alt kategori seçin (opsiyonel)</option>
+                        {level3Options.map((subcategory) => (
+                          <option
+                            key={subcategory.value}
                             value={subcategory.value}
                           >
                             {subcategory.label}
@@ -448,7 +536,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         <span className="text-sm text-gray-600">Seçili:</span>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categories.find(c => c.value === selectedCategory)?.color || 'bg-gray-100 text-gray-800'}`}>
                           {selectedSubcategory 
-                            ? selectableSubcategories.find((s) => s.value === selectedSubcategory)?.label
+                            ? selectedSubcategoryLevel3
+                              ? `${selectedLevel1Node?.label} > ${selectedLevel2Node?.label} > ${selectedLevel3Node?.label}`
+                              : selectedSubcategoryLevel2
+                                ? `${selectedLevel1Node?.label} > ${selectedLevel2Node?.label}`
+                                : selectedLevel1Node?.label
                             : categories.find(c => c.value === selectedCategory)?.label}
                         </span>
                       </div>
