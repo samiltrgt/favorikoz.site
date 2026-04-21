@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+async function resolveRootCategorySlug(supabase: any, categorySlug: string) {
+  let currentSlug: string | null = categorySlug
+  while (currentSlug) {
+    const { data: categoryData } = await supabase
+      .from('categories')
+      .select('slug,parent_slug')
+      .eq('slug', currentSlug)
+      .single()
+
+    if (!categoryData) {
+      return null
+    }
+
+    if (!categoryData.parent_slug) {
+      return categoryData.slug
+    }
+
+    currentSlug = categoryData.parent_slug
+  }
+
+  return null
+}
+
 // Helper function to check admin access
 async function checkAdminAccess(supabase: any) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -88,18 +111,12 @@ export async function PUT(
     if (body.brand !== undefined) updateData.brand = body.brand
     // Category handling: category_slug should be the main category, subcategory_slug should be the subcategory
     if (body.category !== undefined || body.subcategory !== undefined) {
-      // If subcategory is provided, we need to find its parent category
+      // If subcategory is provided, map category to top-level ancestor
       if (body.subcategory) {
         updateData.subcategory_slug = body.subcategory
-        // Find parent category for the subcategory
-        const { data: subcategoryData } = await supabase
-          .from('categories')
-          .select('parent_slug')
-          .eq('slug', body.subcategory)
-          .single()
-        
-        if (subcategoryData?.parent_slug) {
-          updateData.category_slug = subcategoryData.parent_slug
+        const rootCategorySlug = await resolveRootCategorySlug(supabase, body.subcategory)
+        if (rootCategorySlug) {
+          updateData.category_slug = rootCategorySlug
         } else {
           // Fallback: use category if provided
           updateData.category_slug = body.category || null

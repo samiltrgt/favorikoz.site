@@ -24,7 +24,8 @@ export default function NewProductPage() {
     barcode: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<Array<{ value: string; label: string; subcategories?: Array<{ value: string; label: string }> }>>([])
+  type CategoryOption = { value: string; label: string; subcategories?: CategoryOption[] }
+  const [categories, setCategories] = useState<CategoryOption[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedSubcategory, setSelectedSubcategory] = useState('')
 
@@ -58,6 +59,24 @@ export default function NewProductPage() {
     }
     loadCategories()
   }, [])
+
+  const getAllDescendantSubcategories = (
+    items: CategoryOption[] = [],
+    parentPath = ''
+  ): Array<{ value: string; label: string }> => {
+    const result: Array<{ value: string; label: string }> = []
+    for (const item of items) {
+      const pathLabel = parentPath ? `${parentPath} > ${item.label}` : item.label
+      result.push({ value: item.value, label: pathLabel })
+      if (item.subcategories?.length) {
+        result.push(...getAllDescendantSubcategories(item.subcategories, pathLabel))
+      }
+    }
+    return result
+  }
+
+  const selectedCategoryNode = categories.find((c) => c.value === selectedCategory)
+  const selectableSubcategories = getAllDescendantSubcategories(selectedCategoryNode?.subcategories || [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -236,7 +255,7 @@ export default function NewProductPage() {
                     ))}
                   </select>
                   
-                  {selectedCategory && categories.find(c => c.value === selectedCategory)?.subcategories && categories.find(c => c.value === selectedCategory)!.subcategories!.length > 0 && (
+                  {selectedCategory && selectableSubcategories.length > 0 && (
                     <select
                       name="subcategory"
                       value={selectedSubcategory}
@@ -247,7 +266,7 @@ export default function NewProductPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                     >
                       <option value="">Alt kategori seçin (opsiyonel)</option>
-                      {categories.find(c => c.value === selectedCategory)?.subcategories?.map((subcategory) => (
+                      {selectableSubcategories.map((subcategory) => (
                         <option key={subcategory.value} value={subcategory.value}>
                           {subcategory.label}
                         </option>

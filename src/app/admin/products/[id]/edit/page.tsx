@@ -35,6 +35,13 @@ interface Product {
   created_at?: string
 }
 
+type CategoryOption = {
+  value: string
+  label: string
+  color: string
+  subcategories?: CategoryOption[]
+}
+
 export default function EditProductPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
@@ -55,7 +62,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [categories, setCategories] = useState<Array<{ value: string; label: string; color: string; subcategories?: Array<{ value: string; label: string }> }>>([])
+  const [categories, setCategories] = useState<CategoryOption[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedSubcategory, setSelectedSubcategory] = useState('')
 
@@ -101,6 +108,24 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     }
     loadCategories()
   }, [])
+
+  const getAllDescendantSubcategories = (
+    items: CategoryOption[] = [],
+    parentPath = ''
+  ): Array<{ value: string; label: string }> => {
+    const result: Array<{ value: string; label: string }> = []
+    for (const item of items) {
+      const pathLabel = parentPath ? `${parentPath} > ${item.label}` : item.label
+      result.push({ value: item.value, label: pathLabel })
+      if (item.subcategories?.length) {
+        result.push(...getAllDescendantSubcategories(item.subcategories, pathLabel))
+      }
+    }
+    return result
+  }
+
+  const selectedCategoryNode = categories.find((c) => c.value === selectedCategory)
+  const selectableSubcategories = getAllDescendantSubcategories(selectedCategoryNode?.subcategories || [])
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -396,7 +421,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                       ))}
                     </select>
                     
-                    {selectedCategory && categories.find(c => c.value === selectedCategory)?.subcategories && categories.find(c => c.value === selectedCategory)!.subcategories!.length > 0 && (
+                    {selectedCategory && selectableSubcategories.length > 0 && (
                       <select
                         name="subcategory"
                         value={selectedSubcategory}
@@ -407,7 +432,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white"
                       >
                         <option value="">Alt kategori seçin (opsiyonel)</option>
-                        {categories.find(c => c.value === selectedCategory)?.subcategories?.map((subcategory) => (
+                        {selectableSubcategories.map((subcategory) => (
                           <option 
                             key={subcategory.value} 
                             value={subcategory.value}
@@ -423,7 +448,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         <span className="text-sm text-gray-600">Seçili:</span>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categories.find(c => c.value === selectedCategory)?.color || 'bg-gray-100 text-gray-800'}`}>
                           {selectedSubcategory 
-                            ? categories.find(c => c.value === selectedCategory)?.subcategories?.find(s => s.value === selectedSubcategory)?.label
+                            ? selectableSubcategories.find((s) => s.value === selectedSubcategory)?.label
                             : categories.find(c => c.value === selectedCategory)?.label}
                         </span>
                       </div>

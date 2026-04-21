@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+async function resolveRootCategorySlug(supabase: any, categorySlug: string) {
+  let currentSlug: string | null = categorySlug
+  while (currentSlug) {
+    const { data: categoryData } = await supabase
+      .from('categories')
+      .select('slug,parent_slug')
+      .eq('slug', currentSlug)
+      .single()
+
+    if (!categoryData) {
+      return null
+    }
+
+    if (!categoryData.parent_slug) {
+      return categoryData.slug
+    }
+
+    currentSlug = categoryData.parent_slug
+  }
+
+  return null
+}
+
 // GET /api/products - Get all products
 export async function GET(request: NextRequest) {
   try {
@@ -179,16 +202,11 @@ export async function POST(request: NextRequest) {
     let categorySlug = body.category || null
     let subcategorySlug = body.subcategory || null
     
-    // If subcategory is provided, find its parent category
+    // If subcategory is provided, map category to the top-level ancestor
     if (subcategorySlug) {
-      const { data: subcategoryData } = await supabase
-        .from('categories')
-        .select('parent_slug')
-        .eq('slug', subcategorySlug)
-        .single()
-      
-      if (subcategoryData?.parent_slug) {
-        categorySlug = subcategoryData.parent_slug
+      const rootCategorySlug = await resolveRootCategorySlug(supabase, subcategorySlug)
+      if (rootCategorySlug) {
+        categorySlug = rootCategorySlug
       }
     }
     
