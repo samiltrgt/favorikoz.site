@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+type CategoryLookupRow = {
+  slug: string
+  parent_slug: string | null
+}
+
 async function resolveRootCategorySlug(supabase: any, categorySlug: string) {
   let currentSlug: string | null = categorySlug
   while (currentSlug) {
-    const { data: categoryData } = await supabase
+    const categoryQueryResult: { data: CategoryLookupRow | null } = await supabase
       .from('categories')
       .select('slug,parent_slug')
       .eq('slug', currentSlug)
       .single()
+    const categoryData = categoryQueryResult.data
 
     if (!categoryData) {
       return null
