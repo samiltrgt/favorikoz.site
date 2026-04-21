@@ -346,7 +346,7 @@ export default function Header() {
                 )}
                 {category.hasDropdown && hoveredCategory === category.name && (
                   <div
-                    className="absolute left-1/2 top-full -translate-x-1/2 mt-1 w-64 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
+                    className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-64 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
                     onMouseLeave={() => setHoveredCategory(null)}
                   >
                     {category.subcategories?.map((sub: Subcategory) => (
