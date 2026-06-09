@@ -2,8 +2,11 @@
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // Helps repeat visits avoid HTTP->HTTPS redirect; preload requires domain-side submission.
-  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+  // HSTS stays strong (1y + subdomains) but intentionally OMITS `preload`: the apex
+  // currently shows rare/intermittent TLS handshake failures on Vercel's anycast edge,
+  // and the browser preload list is hard to exit. Re-add `preload` only after the apex
+  // is verified stable (see scripts/diagnose-ssl.mjs) and you submit at hstspreload.org.
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
 ];
 
 // Public sayfalar için açıkça index, follow (Google "dizine eklenmesine izin verildi mi?" için)

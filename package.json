@@ -29,6 +29,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "diagnose:ssl": "node scripts/diagnose-ssl.mjs",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
