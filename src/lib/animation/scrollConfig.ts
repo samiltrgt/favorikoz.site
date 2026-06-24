@@ -3,14 +3,26 @@ export type DeviceTier = 'mobile' | 'tablet' | 'desktop'
 export const FRAME_CONFIG = {
   basePath: '/frames',
   extension: 'webp',
-  padLength: 4,
-  posterSrc: '/poster.webp',
-  totalSourceFrames: 60,
-  preloadCount: 10,
+  filePrefix: 'frame_',
+  fileSuffix: '_delay-0.042s',
+  padLength: 3,
+  posterSrc: '/frames/frame_000_delay-0.042s.webp',
+  totalSourceFrames: 144,
+  /** Frames loaded immediately after frame 0 (LCP-safe critical path). */
+  preloadCount: 8,
+  /** Remaining frames are decoded in idle batches of this size. */
+  preloadBatchSize: 4,
+  /** Delay before idle batch preload so LCP can paint first. */
+  lcpDeferMs: 300,
   counts: {
-    mobile: 30,
-    tablet: 45,
-    desktop: 60,
+    mobile: 36,
+    tablet: 48,
+    desktop: 72,
+  },
+  maxDpr: {
+    mobile: 1,
+    tablet: 1.5,
+    desktop: 2,
   },
   breakpoints: {
     mobile: 768,
@@ -20,7 +32,8 @@ export const FRAME_CONFIG = {
 
 export const SCROLL_CONFIG = {
   scrollDistanceVh: 300,
-  scrub: true,
+  /** Slight smoothing — easier on slow scroll without hurting scrub fidelity much. */
+  scrub: 0.5,
   pin: true,
   overlayFadeStart: 0.8,
   overlayFadeEnd: 1,
@@ -34,6 +47,10 @@ export function getDeviceTier(width: number): DeviceTier {
 
 export function getFrameCount(width: number): number {
   return FRAME_CONFIG.counts[getDeviceTier(width)]
+}
+
+export function getMaxDpr(width: number): number {
+  return FRAME_CONFIG.maxDpr[getDeviceTier(width)]
 }
 
 /**
@@ -55,9 +72,9 @@ export function getFrameIndices(effectiveCount: number): number[] {
   return indices
 }
 
-/** Builds the public URL for a 1-indexed source frame file (e.g. 0 -> /frames/0001.avif). */
+/** Builds the public URL for a 0-indexed source frame file (e.g. 0 -> /frames/frame_000_delay-0.042s.webp). */
 export function getFrameUrl(sourceIndex: number): string {
-  const fileNumber = sourceIndex + 1
-  const padded = String(fileNumber).padStart(FRAME_CONFIG.padLength, '0')
-  return `${FRAME_CONFIG.basePath}/${padded}.${FRAME_CONFIG.extension}`
+  const index = Math.min(Math.max(sourceIndex, 0), FRAME_CONFIG.totalSourceFrames - 1)
+  const padded = String(index).padStart(FRAME_CONFIG.padLength, '0')
+  return `${FRAME_CONFIG.basePath}/${FRAME_CONFIG.filePrefix}${padded}${FRAME_CONFIG.fileSuffix}.${FRAME_CONFIG.extension}`
 }

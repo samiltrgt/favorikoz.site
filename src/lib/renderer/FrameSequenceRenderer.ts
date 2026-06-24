@@ -5,6 +5,8 @@ type DecodedFrame = ImageBitmap | HTMLImageElement
 export interface FrameSequenceOptions {
   frameUrls: string[]
   preloadCount: number
+  preloadBatchSize: number
+  lcpDeferMs: number
 }
 
 function sourceSize(source: DecodedFrame): { sw: number; sh: number } {
@@ -19,8 +21,11 @@ export class FrameSequenceRenderer extends BaseCanvasRenderer {
   private urls: string[]
   private frames: (DecodedFrame | null)[]
   private readonly preloadCount: number
+  private readonly preloadBatchSize: number
+  private readonly lcpDeferMs: number
   private readonly supportsBitmap: boolean
   private nextToLoad = 0
+  private deferApplied = false
   private idleHandle: number | null = null
   private idleTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -29,6 +34,8 @@ export class FrameSequenceRenderer extends BaseCanvasRenderer {
     this.urls = options.frameUrls.slice()
     this.frames = new Array(this.urls.length).fill(null)
     this.preloadCount = Math.min(Math.max(options.preloadCount, 1), this.urls.length)
+    this.preloadBatchSize = Math.max(1, options.preloadBatchSize)
+    this.lcpDeferMs = Math.max(0, options.lcpDeferMs)
     this.supportsBitmap = typeof createImageBitmap === 'function'
   }
 
@@ -40,7 +47,7 @@ export class FrameSequenceRenderer extends BaseCanvasRenderer {
     return !!this.frames[index]
   }
 
-  /** Interface entry point. Loads frame 0 (LCP swap), then the preload window, then the rest. */
+  /** Loads frame 0 (LCP swap), a small critical window, then the rest in idle batches. */
   async load(onFirstFrameReady?: () => void): Promise<void> {
     if (this.disposed || this.urls.length === 0) return
 
@@ -48,15 +55,18 @@ export class FrameSequenceRenderer extends BaseCanvasRenderer {
     if (this.disposed) return
     onFirstFrameReady?.()
 
-    const initial: Promise<void>[] = []
-    for (let i = 1; i < this.preloadCount; i++) {
-      initial.push(this.loadIndex(i))
+    const criticalEnd = Math.min(this.preloadCount, this.urls.length)
+    if (criticalEnd > 1) {
+      const criticalLoads: Promise<void>[] = []
+      for (let i = 1; i < criticalEnd; i++) {
+        criticalLoads.push(this.loadIndex(i))
+      }
+      await Promise.all(criticalLoads)
     }
-    await Promise.all(initial)
     if (this.disposed) return
 
-    this.nextToLoad = this.preloadCount
-    this.scheduleRemaining()
+    this.nextToLoad = criticalEnd
+    this.scheduleRemainingBatches()
   }
 
   /** Explicit alias matching the frame-sequence source API. */
@@ -143,28 +153,46 @@ export class FrameSequenceRenderer extends BaseCanvasRenderer {
     })
   }
 
-  private scheduleRemaining(): void {
+  private scheduleRemainingBatches(): void {
     if (this.disposed || this.nextToLoad >= this.urls.length) return
 
-    const run = (): void => {
+    const runBatch = (): void => {
       this.idleHandle = null
       this.idleTimeout = null
       if (this.disposed || this.nextToLoad >= this.urls.length) return
-      const index = this.nextToLoad
-      this.nextToLoad += 1
-      void this.loadIndex(index).then(() => {
-        if (!this.disposed) this.scheduleRemaining()
+
+      const batchEnd = Math.min(this.nextToLoad + this.preloadBatchSize, this.urls.length)
+      const batch: Promise<void>[] = []
+      for (let i = this.nextToLoad; i < batchEnd; i++) {
+        batch.push(this.loadIndex(i))
+      }
+      this.nextToLoad = batchEnd
+
+      void Promise.all(batch).then(() => {
+        if (!this.disposed) this.scheduleRemainingBatches()
       })
     }
 
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      this.idleHandle = (
-        window as Window & {
-          requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number
-        }
-      ).requestIdleCallback(run, { timeout: 2000 })
+    const scheduleIdle = (): void => {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        this.idleHandle = (
+          window as Window & {
+            requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number
+          }
+        ).requestIdleCallback(runBatch, { timeout: 3000 })
+      } else {
+        this.idleTimeout = setTimeout(runBatch, 48)
+      }
+    }
+
+    if (!this.deferApplied && this.lcpDeferMs > 0) {
+      this.deferApplied = true
+      this.idleTimeout = setTimeout(() => {
+        this.idleTimeout = null
+        scheduleIdle()
+      }, this.lcpDeferMs)
     } else {
-      this.idleTimeout = setTimeout(run, 32)
+      scheduleIdle()
     }
   }
 

@@ -11,6 +11,7 @@ import {
   getFrameCount,
   getFrameIndices,
   getFrameUrl,
+  getMaxDpr,
 } from '@/lib/animation/scrollConfig'
 
 if (typeof window !== 'undefined') {
@@ -59,7 +60,7 @@ export function useSpriteScroll({
     const computeMetrics = (): CanvasMetrics => ({
       cssWidth: window.innerWidth,
       cssHeight: window.innerHeight,
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
+      dpr: Math.min(window.devicePixelRatio || 1, getMaxDpr(window.innerWidth)),
     })
 
     const resizeCanvas = (): void => {
@@ -84,6 +85,8 @@ export function useSpriteScroll({
     renderer = new FrameSequenceRenderer(canvas, {
       frameUrls: urls,
       preloadCount: FRAME_CONFIG.preloadCount,
+      preloadBatchSize: FRAME_CONFIG.preloadBatchSize,
+      lcpDeferMs: FRAME_CONFIG.lcpDeferMs,
     })
     resizeCanvas()
 

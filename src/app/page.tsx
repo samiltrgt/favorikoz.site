@@ -3,7 +3,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import FeaturesSection from '@/components/features-section'
 import DeferredHomeProductsBryhel from '@/components/deferred-home-products-bryhel'
-import DeferredAdaptiveScrollHero from '@/components/deferred-adaptive-scroll-hero'
+import HeroSection from '@/components/sections/HeroSection'
 import DeferredProductsCarousel from '@/components/deferred-products-carousel'
 import DeferredPromoBannerCarousel from '@/components/deferred-promo-banner-carousel'
 import { createSupabaseServer } from '@/lib/supabase/server'
@@ -75,14 +75,7 @@ export default async function HomePage() {
       <Header />
       
       <main>
-        {/* 1. Scroll animasyonlu hero - mobilde 3 viewport scroll, sticky hero */}
-        <section className="relative w-full">
-          <div className="min-h-[300vh] md:min-h-0 md:h-[100vh]">
-            <div className="sticky top-0 h-[100vh] w-full">
-              <DeferredAdaptiveScrollHero products={products} />
-            </div>
-          </div>
-        </section>
+        <HeroSection />
 
         {/* 2. Ürünler carousel (oklarla) - mobilde üstte karartma gradient */}
         <section className="relative">
