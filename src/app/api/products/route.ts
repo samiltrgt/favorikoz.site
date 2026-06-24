@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
 type CategoryLookupRow = {
@@ -30,6 +31,54 @@ async function resolveRootCategorySlug(supabase: any, categorySlug: string) {
   return null
 }
 
+async function isAdminRequest(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role === 'admin') return true
+  }
+
+  const cookieStore = await cookies()
+  return Boolean(cookieStore.get('adminAuthV2')?.value)
+}
+
+function mapProductPrices(products: any[]) {
+  return products.map((p) => ({
+    ...p,
+    price: (p.price / 100) / 10,
+    original_price: p.original_price ? (p.original_price / 100) / 10 : null,
+  }))
+}
+
+async function fetchAllProducts(
+  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
+  applyFilters: (query: any) => any
+) {
+  const pageSize = 1000
+  let from = 0
+  const all: any[] = []
+
+  while (true) {
+    let query = supabase.from('products').select('*').is('deleted_at', null)
+    query = applyFilters(query)
+    query = query.order('created_at', { ascending: false }).range(from, from + pageSize - 1)
+
+    const { data, error } = await query
+    if (error) throw error
+
+    const batch = data || []
+    all.push(...batch)
+    if (batch.length < pageSize) break
+    from += pageSize
+  }
+
+  return all
+}
+
 // GET /api/products - Get all products
 export async function GET(request: NextRequest) {
   try {
@@ -52,12 +101,8 @@ export async function GET(request: NextRequest) {
     const fetchByIds = ids.length > 0
     
     let skipStockFilter = fetchByIds
-    if (scopeAdmin) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (profile?.role === 'admin') skipStockFilter = true
-      }
+    if (scopeAdmin && (await isAdminRequest(supabase))) {
+      skipStockFilter = true
     }
     
     if (view === 'counts') {
@@ -108,28 +153,58 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data })
     }
 
-    let query = supabase
-      .from('products')
-      .select('*')
-      .is('deleted_at', null)
-
-    if (!skipStockFilter) {
-      query = query.eq('in_stock', true).gt('stock_quantity', 0)
+    if (fetchByIds) {
+      let idsQuery = supabase.from('products').select('*').is('deleted_at', null).in('id', ids)
+      if (!skipStockFilter) {
+        idsQuery = idsQuery.eq('in_stock', true).gt('stock_quantity', 0)
+      }
+      const { data, error } = await idsQuery
+      if (error) {
+        console.error('❌ Supabase error:', {
+          message: error.message,
+          details: error,
+          code: error.code,
+          hint: error.hint,
+        })
+        return NextResponse.json(
+          {
+            success: false,
+            error: error.message || 'Failed to fetch products',
+            details: process.env.NODE_ENV === 'development' ? {
+              code: error.code,
+              hint: error.hint,
+              details: error.details,
+            } : undefined,
+          },
+          { status: 500 }
+        )
+      }
+      return NextResponse.json({ success: true, data: mapProductPrices(data || []) })
     }
 
-    if (fetchByIds) {
-      query = query.in('id', ids)
-    } else {
+    const applyListFilters = (baseQuery: any) => {
+      let filtered = baseQuery
       if (subcategory) {
-        query = query.eq('subcategory_slug', subcategory)
+        filtered = filtered.eq('subcategory_slug', subcategory)
       } else if (category) {
-        query = query.eq('category_slug', category)
+        filtered = filtered.eq('category_slug', category)
       }
       if (search) {
-        query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
+        filtered = filtered.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
       }
-      query = query.order('created_at', { ascending: false }).limit(limit || 1000)
+      if (!skipStockFilter) {
+        filtered = filtered.eq('in_stock', true).gt('stock_quantity', 0)
+      }
+      return filtered
     }
+
+    if (skipStockFilter && scopeAdmin) {
+      const data = await fetchAllProducts(supabase, applyListFilters)
+      return NextResponse.json({ success: true, data: mapProductPrices(data) })
+    }
+
+    let query = applyListFilters(supabase.from('products').select('*').is('deleted_at', null))
+    query = query.order('created_at', { ascending: false }).limit(limit || 1000)
 
     const { data, error } = await query
     
@@ -154,14 +229,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Convert price from kuruş to TL, then divide by 10 for display
-    const products = data.map(p => ({
-      ...p,
-      price: (p.price / 100) / 10, // Kuruş → TL → /10
-      original_price: p.original_price ? (p.original_price / 100) / 10 : null,
-    }))
-
-    return NextResponse.json({ success: true, data: products })
+    return NextResponse.json({ success: true, data: mapProductPrices(data || []) })
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(

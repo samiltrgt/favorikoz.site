@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { loadCategorySortConfig, MENU_SORT_SLUG } from '@/lib/category-sort-config'
+import { buildCategoryTree } from '@/lib/category-tree'
 
 type CategoryRow = {
   slug: string
@@ -7,21 +9,6 @@ type CategoryRow = {
   description?: string | null
   parent_slug?: string | null
   deleted_at?: string | null
-}
-
-function buildCategoryTree(rows: CategoryRow[]) {
-  const byParent = new Map<string | null, CategoryRow[]>()
-  for (const row of rows) {
-    const key = row.parent_slug ?? null
-    const list = byParent.get(key) ?? []
-    list.push(row)
-    byParent.set(key, list)
-  }
-  const makeNode = (row: CategoryRow): CategoryRow & { subcategories: any[] } => ({
-    ...row,
-    subcategories: (byParent.get(row.slug) ?? []).map(makeNode),
-  })
-  return (byParent.get(null) ?? []).map(makeNode)
 }
 
 // Helper function to check admin access
@@ -59,6 +46,8 @@ export async function GET() {
       )
     }
     
+    const sortConfig = await loadCategorySortConfig(supabase)
+    
     // Get all categories (including deleted for admin view)
     const { data, error } = await supabase
       .from('categories')
@@ -74,8 +63,8 @@ export async function GET() {
       )
     }
     
-    const flat = (data || []) as CategoryRow[]
-    const categoriesWithSubcategories = buildCategoryTree(flat)
+    const flat = ((data || []) as CategoryRow[]).filter((cat) => cat.slug !== MENU_SORT_SLUG)
+    const categoriesWithSubcategories = buildCategoryTree(flat, sortConfig)
     const mainCategories = flat.filter((cat) => !cat.parent_slug)
     const subcategories = flat.filter((cat) => !!cat.parent_slug)
     

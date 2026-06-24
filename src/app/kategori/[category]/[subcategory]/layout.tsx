@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { getSiteUrl } from '@/lib/site-url'
+import { collectDescendantSlugsFromFlat } from '@/lib/category-tree'
 
 const siteUrl = getSiteUrl()
 const ITEMLIST_LIMIT = 50
@@ -56,11 +57,18 @@ export default async function SubcategoryLayout({ children, params }: Props) {
   const { category, subcategory } = await params
 
   const supabase = await createSupabaseServer()
+  const { data: categoryRows } = await supabase
+    .from('categories')
+    .select('slug, parent_slug')
+    .is('deleted_at', null)
+
+  const subcategorySlugs = collectDescendantSlugsFromFlat(categoryRows || [], subcategory)
+
   const { data: products } = await supabase
     .from('products')
     .select('slug, name')
     .eq('category_slug', category)
-    .eq('subcategory_slug', subcategory)
+    .in('subcategory_slug', subcategorySlugs)
     .is('deleted_at', null)
     .eq('in_stock', true)
     .gt('stock_quantity', 0)

@@ -70,7 +70,7 @@ export default function HeroProductsAdminPage() {
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products')
+      const response = await fetch('/api/products?scope=admin', { cache: 'no-store' })
       const result = await response.json()
       if (result.success) {
         setAllProducts(result.data || [])

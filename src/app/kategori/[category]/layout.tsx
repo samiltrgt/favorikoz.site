@@ -42,7 +42,6 @@ export default async function CategoryLayout({ children, params }: Props) {
     .from('products')
     .select('slug, name')
     .eq('category_slug', categorySlug)
-    .is('subcategory_slug', null)
     .is('deleted_at', null)
     .eq('in_stock', true)
     .gt('stock_quantity', 0)

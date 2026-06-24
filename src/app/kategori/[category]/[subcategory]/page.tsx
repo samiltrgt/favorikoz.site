@@ -8,6 +8,7 @@ import { ArrowLeft, Filter, Grid, List, Star } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ProductCardModern from '@/components/product-card-modern'
+import { collectDescendantSlugsFromFlat } from '@/lib/category-tree'
 
 const sortOptions = [
   { value: 'newest', label: 'En Yeni' },
@@ -29,12 +30,13 @@ export default function SubcategoryPage() {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [categoryName, setCategoryName] = useState<string>('Kategori')
   const [subcategoryName, setSubcategoryName] = useState<string>(subcategorySlug)
+  const [subcategorySlugs, setSubcategorySlugs] = useState<string[]>([subcategorySlug])
 
   // Load products from API - direkt subcategory ile filtrele (1000 satır limitini aş)
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/products?subcategory=${subcategorySlug}`, { cache: 'no-store' })
+        const res = await fetch(`/api/products?category=${categorySlug}`, { cache: 'no-store' })
         const json = await res.json()
         if (json.success) setAllProducts(json.data || [])
         const catRes = await fetch('/api/categories', { cache: 'no-store' })
@@ -44,6 +46,7 @@ export default function SubcategoryPage() {
           const subFound = catJson.flat.find((c: any) => c.slug === subcategorySlug)
           setCategoryName(catFound?.name || categorySlug)
           setSubcategoryName(subFound?.name || subcategorySlug)
+          setSubcategorySlugs(collectDescendantSlugsFromFlat(catJson.flat, subcategorySlug))
         }
       } catch {}
       setIsLoading(false)
@@ -51,16 +54,13 @@ export default function SubcategoryPage() {
     load()
   }, [subcategorySlug, categorySlug])
 
-  // Alt kategoriye göre filtrele
+  // Alt kategoriye göre filtrele (alt ağaçtaki ürünler dahil)
   useEffect(() => {
+    const allowedSlugs = new Set(subcategorySlugs)
     let filtered = allProducts.filter((product: any) => {
-      // Stokta olmalı (extra güvenlik katmanı)
       if (!product.in_stock || product.stock_quantity <= 0) return false
-      // Önce category_slug ile ana kategoriyi kontrol et
       if (product.category_slug !== categorySlug) return false
-      
-      // Alt kategori slug'ı tam olarak eşleşmeli
-      return product.subcategory_slug === subcategorySlug
+      return product.subcategory_slug && allowedSlugs.has(product.subcategory_slug)
     })
     
     // Sıralama
@@ -83,7 +83,7 @@ export default function SubcategoryPage() {
     }
     
     setFilteredProducts(filtered)
-  }, [categorySlug, subcategorySlug, sortBy, allProducts])
+  }, [categorySlug, subcategorySlug, subcategorySlugs, sortBy, allProducts])
 
   return (
     <div className="min-h-screen bg-white">

@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from 'next'
+import { GoogleTagManager } from '@next/third-parties/google'
 import { getSiteUrl } from '@/lib/site-url'
+import { getPublicCategories } from '@/lib/categories-server'
+import { CategoriesProvider } from '@/components/categories-provider'
 import './globals.css'
 
 const siteUrl = getSiteUrl()
+const GTM_ID = 'GTM-57BVM8H7'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -80,11 +84,19 @@ const jsonLd = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  let menuCategories: Awaited<ReturnType<typeof getPublicCategories>>['tree'] = []
+  try {
+    const data = await getPublicCategories()
+    menuCategories = data.tree
+  } catch (error) {
+    console.error('Failed to load menu categories:', error)
+  }
+
   return (
     <html lang="tr">
       <head />
@@ -93,8 +105,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <CategoriesProvider categories={menuCategories}>{children}</CategoriesProvider>
       </body>
+      <GoogleTagManager gtmId={GTM_ID} />
     </html>
   )
 }

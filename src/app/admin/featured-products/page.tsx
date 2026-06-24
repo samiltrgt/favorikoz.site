@@ -44,7 +44,7 @@ export default function FeaturedProductsPage() {
   const loadData = async () => {
     try {
       // Load all products
-      const productsRes = await fetch('/api/products')
+      const productsRes = await fetch('/api/products?scope=admin', { cache: 'no-store' })
       const productsData = await productsRes.json()
       if (productsData.success) {
         setAllProducts(productsData.data || [])

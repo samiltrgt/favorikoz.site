@@ -30,6 +30,7 @@
     "start": "next start",
     "lint": "next lint",
     "diagnose:ssl": "node scripts/diagnose-ssl.mjs",
+    "fix:cloudflare-dns": "node scripts/fix-cloudflare-dns.mjs",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -42,6 +43,7 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@next/third-parties": "^16.2.9",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.0",
     "@types/iyzipay": "^2.0.3",

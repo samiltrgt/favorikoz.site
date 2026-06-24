@@ -8,6 +8,7 @@ import { ArrowLeft, Filter, Grid, List, Star } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ProductCardModern from '@/components/product-card-modern'
+import { collectSubtreeSlugs, type CategoryTreeNode } from '@/lib/category-tree'
 // Fetch from API to reflect admin edits
 
 const sortOptions = [
@@ -28,19 +29,49 @@ export default function CategoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [categoryName, setCategoryName] = useState<string>('Kategori')
+  const [subcategories, setSubcategories] = useState<Array<{ slug: string; name: string; count: number }>>([])
 
   // Load products from API
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/products', { cache: 'no-store' })
+        const res = await fetch(`/api/products?category=${categorySlug}`, { cache: 'no-store' })
         const json = await res.json()
-        if (json.success) setAllProducts(json.data || [])
+        const products = json.success ? json.data || [] : []
+        if (json.success) setAllProducts(products)
+
         const catRes = await fetch('/api/categories', { cache: 'no-store' })
         const catJson = await catRes.json()
-        if (catJson.success && Array.isArray(catJson.flat)) {
-          const found = catJson.flat.find((c: any) => c.slug === categorySlug)
-          setCategoryName(found?.name || categorySlug)
+        if (catJson.success) {
+          const treeNode = Array.isArray(catJson.data)
+            ? catJson.data.find((c: any) => c.slug === categorySlug)
+            : null
+          if (treeNode?.name) setCategoryName(treeNode.name)
+          else if (Array.isArray(catJson.flat)) {
+            const found = catJson.flat.find((c: any) => c.slug === categorySlug)
+            setCategoryName(found?.name || categorySlug)
+          }
+
+          const children = (treeNode?.subcategories || []) as CategoryTreeNode[]
+          if (children.length > 0) {
+            const inStock = products.filter(
+              (p: any) =>
+                p.in_stock &&
+                p.stock_quantity > 0 &&
+                p.category_slug === categorySlug &&
+                p.subcategory_slug
+            )
+            setSubcategories(
+              children.map((child) => {
+                const subtreeSlugs = new Set(collectSubtreeSlugs(child))
+                return {
+                  slug: child.slug,
+                  name: child.name || child.slug,
+                  count: inStock.filter((p: any) => subtreeSlugs.has(p.subcategory_slug)).length,
+                }
+              })
+            )
+          }
         } else {
           setCategoryName(categorySlug)
         }
@@ -50,17 +81,11 @@ export default function CategoryPage() {
     load()
   }, [categorySlug])
 
-  // Kategoriye göre filtrele
+  // Kategoriye göre filtrele (alt kategorilerdeki tüm ürünler dahil)
   useEffect(() => {
-    // Ana kategori sayfasında: Sadece alt kategorisi olmayan ürünleri göster
-    // (Alt kategorisi olan ürünler alt kategori sayfalarında gösterilir)
-    let filtered = allProducts.filter((product:any) => {
-      // Stokta olmalı (extra güvenlik katmanı)
+    let filtered = allProducts.filter((product: any) => {
       if (!product.in_stock || product.stock_quantity <= 0) return false
-      // Ana kategori eşleşmeli
-      if (product.category_slug !== categorySlug) return false
-      // Alt kategorisi olmamalı (null veya undefined)
-      return !product.subcategory_slug
+      return product.category_slug === categorySlug
     })
     
     // Sıralama

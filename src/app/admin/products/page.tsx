@@ -14,11 +14,46 @@ import {
   Package
 } from 'lucide-react'
 
+type CategoryRow = { slug: string; name: string; parent_slug?: string | null }
+
+function buildSubcategoriesByRoot(
+  flat: CategoryRow[],
+  mainSlugs: string[]
+): Record<string, Array<{ value: string; label: string }>> {
+  const childrenByParent = new Map<string, CategoryRow[]>()
+
+  for (const cat of flat) {
+    if (!cat.parent_slug) continue
+    const list = childrenByParent.get(cat.parent_slug) ?? []
+    list.push(cat)
+    childrenByParent.set(cat.parent_slug, list)
+  }
+
+  const collectDescendants = (parentSlug: string, prefix = ''): Array<{ value: string; label: string }> => {
+    const children = childrenByParent.get(parentSlug) ?? []
+    const result: Array<{ value: string; label: string }> = []
+
+    for (const child of children) {
+      const label = prefix ? `${prefix} › ${child.name}` : child.name
+      result.push({ value: child.slug, label })
+      result.push(...collectDescendants(child.slug, label))
+    }
+
+    return result
+  }
+
+  const map: Record<string, Array<{ value: string; label: string }>> = {}
+  for (const root of mainSlugs) {
+    map[root] = collectDescendants(root)
+  }
+  return map
+}
+
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedSubcategory, setSelectedSubcategory] = useState('all')
-  const [sortBy, setSortBy] = useState('name')
+  const [sortBy, setSortBy] = useState('created')
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([])
   const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, Array<{ value: string; label: string }>>>({})
@@ -55,21 +90,15 @@ export default function ProductsPage() {
             ])
           }
           
-          // Alt kategorileri map'le (dropdown için)
-          if (subCats && subCats.length > 0) {
-            const map: Record<string, Array<{ value: string; label: string }>> = {}
-            subCats.forEach((sub: any) => {
-              if (sub.parent_slug) {
-                if (!map[sub.parent_slug]) {
-                  map[sub.parent_slug] = []
-                }
-                map[sub.parent_slug].push({
-                  value: sub.slug,
-                  label: sub.name
-                })
-              }
-            })
-            setSubcategoriesMap(map)
+          // Alt kategorileri map'le (iç içe tüm alt kategoriler dahil)
+          const flatData: CategoryRow[] =
+            result.flat?.length > 0
+              ? result.flat
+              : [...(mainCats || []), ...(subCats || [])]
+          const mainSlugs = (mainCats || []).map((cat: CategoryRow) => cat.slug)
+
+          if (mainSlugs.length > 0) {
+            setSubcategoriesMap(buildSubcategoriesByRoot(flatData, mainSlugs))
           }
         }
       } catch (error) {
@@ -92,7 +121,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await fetch('/api/products')
+        const response = await fetch('/api/products?scope=admin', { cache: 'no-store' })
         const result = await response.json()
         if (result.success) {
           setProducts(result.data)
@@ -112,7 +141,7 @@ export default function ProductsPage() {
     const handleFocus = () => {
       const loadProducts = async () => {
         try {
-          const response = await fetch('/api/products')
+          const response = await fetch('/api/products?scope=admin', { cache: 'no-store' })
           const result = await response.json()
           if (result.success) {
             setProducts(result.data)
@@ -273,6 +302,7 @@ export default function ProductsPage() {
             onChange={(e) => setSortBy(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           >
+            <option value="created">En Yeni</option>
             <option value="name">İsme Göre</option>
             <option value="price">Fiyata Göre</option>
             <option value="brand">Markaya Göre</option>
@@ -326,6 +356,12 @@ export default function ProductsPage() {
                       {product.name}
                     </h3>
                     <p className="text-xs text-gray-500 mb-1">{product.brand}</p>
+                    {product.subcategory_slug && (
+                      <p className="text-xs text-blue-600 mb-1">
+                        {subcategoriesMap[product.category_slug]?.find((s) => s.value === product.subcategory_slug)?.label ||
+                          product.subcategory_slug}
+                      </p>
+                    )}
                     {product.barcode && (
                       <p className="text-xs text-gray-400 font-mono mb-2">
                         Kod: {product.barcode}

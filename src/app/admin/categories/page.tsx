@@ -9,7 +9,9 @@ import {
   FolderOpen,
   X,
   Save,
-  AlertCircle
+  AlertCircle,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 
 interface Category {
@@ -29,6 +31,8 @@ export default function CategoriesPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [movingSlug, setMovingSlug] = useState<string | null>(null)
+  const [sortParent, setSortParent] = useState('tirnak')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -189,6 +193,46 @@ export default function CategoriesPage() {
     }
   }
 
+  const handleMoveSort = async (
+    category: Category,
+    direction: 'up' | 'down',
+    parentSlugOverride?: string | null
+  ) => {
+    try {
+      setMovingSlug(category.slug)
+      setError(null)
+
+      const parent_slug =
+        parentSlugOverride !== undefined
+          ? parentSlugOverride
+          : category.parent_slug ?? null
+
+      const response = await fetch('/api/admin/category-sort', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parent_slug,
+          slug: category.slug,
+          direction,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSuccess('Menü sırası güncellendi')
+        await loadCategories()
+      } else {
+        setError(result.error || 'Sıralama güncellenemedi')
+      }
+    } catch (error) {
+      console.error('Error updating sort order:', error)
+      setError('Sıralama güncellenirken bir hata oluştu')
+    } finally {
+      setMovingSlug(null)
+    }
+  }
+
   const handleDelete = async (category: Category) => {
     if (!confirm(`"${category.name}" kategorisini silmek istediğinize emin misiniz?`)) {
       return
@@ -240,7 +284,31 @@ export default function CategoriesPage() {
     return result
   }
 
-  const renderCategory = (category: Category, level: number = 0) => {
+  const findCategoryBySlug = (cats: Category[], slug: string): Category | null => {
+    for (const cat of cats) {
+      if (cat.slug === slug) return cat
+      if (cat.subcategories?.length) {
+        const found = findCategoryBySlug(cat.subcategories, slug)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const getSortSiblings = (): Category[] => {
+    if (sortParent === 'root') return categories
+    return findCategoryBySlug(categories, sortParent)?.subcategories ?? []
+  }
+
+  const sortSiblings = getSortSiblings()
+  const flatCategories = getAllCategoriesFlat(categories)
+
+  const renderCategory = (
+    category: Category,
+    level: number = 0,
+    siblings: Category[] = [],
+    index: number = 0
+  ) => {
     const hasSubcategories = category.subcategories && category.subcategories.length > 0
     const isExpanded = expandedCategories.has(category.slug)
     const indent = level * 24
@@ -248,10 +316,10 @@ export default function CategoriesPage() {
     return (
       <div key={category.slug} className="border-b border-gray-200">
         <div 
-          className="flex items-center justify-between py-3 px-4 hover:bg-gray-50"
+          className="flex flex-col gap-3 py-3 px-4 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
           style={{ paddingLeft: `${16 + indent}px` }}
         >
-          <div className="flex items-center gap-3 flex-1">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {hasSubcategories ? (
               <button
                 onClick={() => toggleExpand(category.slug)}
@@ -277,7 +345,27 @@ export default function CategoriesPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <button
+              type="button"
+              onClick={() => handleMoveSort(category, 'up')}
+              disabled={index === 0 || movingSlug === category.slug}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Yukarı taşı"
+            >
+              <ChevronUp className="h-4 w-4" />
+              Yukarı
+            </button>
+            <button
+              type="button"
+              onClick={() => handleMoveSort(category, 'down')}
+              disabled={index === siblings.length - 1 || movingSlug === category.slug}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Aşağı taşı"
+            >
+              <ChevronDown className="h-4 w-4" />
+              Aşağı
+            </button>
             <button
               onClick={() => handleOpenModal(category)}
               className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
@@ -296,7 +384,9 @@ export default function CategoriesPage() {
         </div>
         {hasSubcategories && isExpanded && (
           <div>
-            {category.subcategories!.map(sub => renderCategory(sub, level + 1))}
+            {category.subcategories!.map((sub, subIndex) =>
+              renderCategory(sub, level + 1, category.subcategories!, subIndex)
+            )}
           </div>
         )}
       </div>
@@ -318,7 +408,7 @@ export default function CategoriesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kategori Yönetimi</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Kategorileri ve alt kategorileri yönetin
+            Kategorileri ve alt kategorileri yönetin. Menü sırası için ok butonlarını kullanın.
           </p>
         </div>
         <button
@@ -344,6 +434,90 @@ export default function CategoriesPage() {
         </div>
       )}
 
+      {/* Menü Sıralaması */}
+      <div className="bg-white rounded-lg shadow border-2 border-blue-100">
+        <div className="px-4 py-4 border-b border-blue-100 bg-blue-50">
+          <h2 className="text-lg font-semibold text-gray-900">Menü Sıralaması</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Site menüsündeki kategori sırasını buradan değiştirin. Önce hangi grubu sıralayacağınızı seçin.
+          </p>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sıralanacak grup
+            </label>
+            <select
+              value={sortParent}
+              onChange={(e) => setSortParent(e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="root">Ana menü (üst kategoriler)</option>
+              {flatCategories.map((cat) => (
+                <option key={cat.slug} value={cat.slug}>
+                  {cat.name} alt kategorileri
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {sortSiblings.length === 0 ? (
+            <p className="text-sm text-gray-500">Bu grupta alt kategori yok.</p>
+          ) : (
+            <ol className="space-y-2">
+              {sortSiblings.map((cat, index) => (
+                <li
+                  key={cat.slug}
+                  className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 border border-gray-200 rounded-lg bg-gray-50"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900">{cat.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{cat.slug}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleMoveSort(
+                          cat,
+                          'up',
+                          sortParent === 'root' ? null : sortParent
+                        )
+                      }
+                      disabled={index === 0 || movingSlug === cat.slug}
+                      className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                      Yukarı
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleMoveSort(
+                          cat,
+                          'down',
+                          sortParent === 'root' ? null : sortParent
+                        )
+                      }
+                      disabled={index === sortSiblings.length - 1 || movingSlug === cat.slug}
+                      className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      Aşağı
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
+
       {/* Categories List */}
       <div className="bg-white rounded-lg shadow">
         <div className="divide-y divide-gray-200">
@@ -352,7 +526,7 @@ export default function CategoriesPage() {
               Henüz kategori eklenmemiş. Yeni kategori eklemek için yukarıdaki butonu kullanın.
             </div>
           ) : (
-            categories.map(category => renderCategory(category))
+            categories.map((category, index) => renderCategory(category, 0, categories, index))
           )}
         </div>
       </div>

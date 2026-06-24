@@ -48,6 +48,11 @@ module.exports = {
     return [
       { source: '/(.*)', headers: [...securityHeaders, indexFollow] },
       { source: '/admin/:path*', headers: [...securityHeaders, noindexNofollow] },
+      { source: '/api/categories', headers: [
+        ...securityHeaders,
+        noindexNofollow,
+        { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
+      ]},
       { source: '/api/:path*', headers: [...securityHeaders, noindexNofollow] },
     ];
   },

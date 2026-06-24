@@ -6,7 +6,8 @@
  * Bu script Excel dosyasından ürünleri okuyup Supabase'e ekler/günceller:
  * - Barcode varsa → Fiyat, stok ve kategori (alt kategori kodu) günceller
  * - Barcode yoksa → Yeni ürün ekler
- * - "Alt kategori kodu" sütunu: her harf bir alt kategoriye eşlenir (a, b, ç, ğ, ı, ...)
+ * - "Alt kategori kodu" sütunu: harf (a, b, …) veya Türkçe metin (örn. "tırnak süsleri")
+ * - İç içe alt kategoriler (protez tırnak > tırnak süsleri) Supabase categories tablosundan eşlenir
  *
  * Kullanım: npx tsx scripts/import-excel-to-supabase.ts "C:\Users\Lenovo\Desktop\enyeni.xlsx"
  */
@@ -136,6 +137,10 @@ const SUBCATEGORY_TO_CATEGORY: Record<string, string> = {
   'kalici-oje': 'tirnak',
   'protez-tirnak-malzemeleri': 'tirnak',
   'tirnak-fircalari': 'tirnak',
+  'tirnak-susleri': 'tirnak',
+  'base-coat-top-coat': 'tirnak',
+  'protez-tirnak-setleri': 'tirnak',
+  'torpu-freze-makinesi': 'tirnak',
 }
 
 // A sütunundaki kategori metni (örn. "saç topik", "protez tırnak malzemeleri") → slug eşlemesi.
@@ -144,14 +149,110 @@ const SUBCATEGORY_SLUGS_BY_LENGTH = Object.keys(SUBCATEGORY_TO_CATEGORY).sort(
   (a, b) => b.length - a.length
 )
 
+// Excel'deki Türkçe alt kategori metinleri → slug (tam metin sütun için)
+const DISPLAY_NAME_ALIASES: Record<string, string> = {
+  'sac-sekillendirici': 'sac-sekillendiriciler',
+  'sac-sekillendiriciler': 'sac-sekillendiriciler',
+  'kisisel-bakim-alt': 'kisisel-bakim-alt',
+  'kisisel-bakim': 'kisisel-bakim-alt',
+  'freze-uclari': 'freze-uclari',
+  'freze-ucu': 'freze-uclari',
+  'torpu-freze-makinesi': 'torpu-freze-makinesi',
+  'tirnak-fircalari': 'tirnak-fircalari',
+  'tirnak-fircasi': 'tirnak-fircalari',
+  'tirnak-susleri': 'tirnak-susleri',
+  'tirnak-sus': 'tirnak-susleri',
+  'base-coat-top-coat': 'base-coat-top-coat',
+  'base-coat': 'base-coat-top-coat',
+  'diger-tirnak-malzemeleri': 'protez-tirnak-malzemeleri',
+  'diger-tirnak-malzeme': 'protez-tirnak-malzemeleri',
+}
+
 function getCategoryFromCategoryName(categoryRaw: string): { subcategorySlug: string; categorySlug: string } | null {
   if (!categoryRaw || String(categoryRaw).trim() === '') return null
   const slugified = slugify(String(categoryRaw).trim())
   if (!slugified) return null
+
+  const aliasSlug = DISPLAY_NAME_ALIASES[slugified]
+  if (aliasSlug) {
+    const catSlug = SUBCATEGORY_TO_CATEGORY[aliasSlug]
+    if (catSlug) return { subcategorySlug: aliasSlug, categorySlug: catSlug }
+  }
+
   for (const subSlug of SUBCATEGORY_SLUGS_BY_LENGTH) {
     if (slugified === subSlug || slugified.includes(subSlug)) {
       const catSlug = SUBCATEGORY_TO_CATEGORY[subSlug]
       if (catSlug) return { subcategorySlug: subSlug, categorySlug: catSlug }
+    }
+    // "şaç şekillendirici" → sac-sekillendirici, slug: sac-sekillendiriciler
+    if (slugified.length >= 8 && subSlug.includes(slugified)) {
+      const catSlug = SUBCATEGORY_TO_CATEGORY[subSlug]
+      if (catSlug) return { subcategorySlug: subSlug, categorySlug: catSlug }
+    }
+  }
+  return null
+}
+
+type CategoryMatch = { subcategorySlug: string; categorySlug: string }
+
+let dbCategoryLookup: Array<{ textKey: string; slug: string; rootSlug: string; name: string }> = []
+
+async function loadDbCategories() {
+  const { data: cats, error } = await supabase
+    .from('categories')
+    .select('slug, name, parent_slug')
+    .is('deleted_at', null)
+
+  if (error) throw error
+
+  const bySlug = new Map((cats || []).map((c) => [c.slug, c]))
+
+  function rootSlug(slug: string): string {
+    let current = slug
+    const seen = new Set<string>()
+    while (true) {
+      const row = bySlug.get(current)
+      if (!row?.parent_slug || seen.has(current)) break
+      seen.add(current)
+      current = row.parent_slug
+    }
+    return current
+  }
+
+  const rows: typeof dbCategoryLookup = []
+  for (const cat of cats || []) {
+    if (!cat.parent_slug) continue
+    const root = rootSlug(cat.slug)
+    rows.push({ textKey: slugify(cat.name), slug: cat.slug, rootSlug: root, name: cat.name })
+    rows.push({ textKey: cat.slug, slug: cat.slug, rootSlug: root, name: cat.name })
+  }
+  dbCategoryLookup = rows.sort((a, b) => b.textKey.length - a.textKey.length)
+
+  const nested = (cats || []).filter((c) => {
+    const parent = bySlug.get(c.parent_slug || '')
+    return parent?.parent_slug != null
+  })
+  console.log(`📂 DB alt kategori: ${(cats || []).filter((c) => c.parent_slug).length} (iç içe: ${nested.length})`)
+  if (nested.length) {
+    console.log(`   İç içe örnek: ${nested.slice(0, 4).map((c) => c.name).join(', ')}\n`)
+  } else {
+    console.log('')
+  }
+}
+
+function getCategoryFromDbName(categoryRaw: string): CategoryMatch | null {
+  if (!categoryRaw || !dbCategoryLookup.length) return null
+  const slugified = slugify(String(categoryRaw).trim())
+  if (!slugified) return null
+
+  for (const row of dbCategoryLookup) {
+    if (slugified === row.textKey || slugified === row.slug) {
+      return { subcategorySlug: row.slug, categorySlug: row.rootSlug }
+    }
+  }
+  for (const row of dbCategoryLookup) {
+    if (slugified.length >= 8 && (slugified.includes(row.textKey) || row.textKey.includes(slugified))) {
+      return { subcategorySlug: row.slug, categorySlug: row.rootSlug }
     }
   }
   return null
@@ -255,10 +356,22 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
   const altKodStr = altKategoriKodu != null ? String(altKategoriKodu).trim() : ''
   // Eğer sütunda tek harf varsa → harf eşlemesi, birden fazla karakter varsa → metin eşlemesi
   const letterMap = altKodStr.length === 1 ? getCategoryFromLetter(altKodStr) : null
-  const nameMapFromAlt = altKodStr.length > 1 ? getCategoryFromCategoryName(altKodStr) : null
-  const nameMapFromCat = getCategoryFromCategoryName(categoryRaw)
-  const subcategorySlug = letterMap?.subcategorySlug ?? nameMapFromAlt?.subcategorySlug ?? nameMapFromCat?.subcategorySlug
-  const categorySlugFromSub = letterMap?.categorySlug ?? nameMapFromAlt?.categorySlug ?? nameMapFromCat?.categorySlug
+  const dbMapFromAlt = altKodStr.length > 1 ? getCategoryFromDbName(altKodStr) : null
+  const nameMapFromAlt = altKodStr.length > 1 && !dbMapFromAlt ? getCategoryFromCategoryName(altKodStr) : null
+  const dbMapFromCat = getCategoryFromDbName(categoryRaw)
+  const nameMapFromCat = !dbMapFromCat ? getCategoryFromCategoryName(categoryRaw) : null
+  const subcategorySlug =
+    letterMap?.subcategorySlug ??
+    dbMapFromAlt?.subcategorySlug ??
+    nameMapFromAlt?.subcategorySlug ??
+    dbMapFromCat?.subcategorySlug ??
+    nameMapFromCat?.subcategorySlug
+  const categorySlugFromSub =
+    letterMap?.categorySlug ??
+    dbMapFromAlt?.categorySlug ??
+    nameMapFromAlt?.categorySlug ??
+    dbMapFromCat?.categorySlug ??
+    nameMapFromCat?.categorySlug
   const description = pick(row, ['Ürün Açıklaması', 'açıklama', 'aciklama', 'description', 'detay']) || ''
   const stockQty = toNumber(pick(row, ['Ürün Stok Adedi', 'stok', 'stok miktarı', 'stok adedi', 'quantity', 'qty']))
   const inStock = stockQty > 0 || String(pick(row, ['stokta', 'stok durumu', 'in stock'])).toLowerCase().includes('var')
@@ -361,19 +474,36 @@ async function importToSupabase(products: ParsedProduct[]) {
 
   for (const product of products) {
     try {
-      // 1. Barcode'a göre mevcut ürünü kontrol et (birden fazla varsa en eskisini al)
-      const { data: existingList, error: findError } = await supabase
+      // 1. Barcode'a göre mevcut ürünü kontrol et (önce aktif, yoksa soft-delete)
+      const { data: activeList, error: activeFindError } = await supabase
         .from('products')
         .select('id, barcode, price, original_price, created_at')
         .eq('barcode', product.barcode)
+        .is('deleted_at', null)
         .order('created_at', { ascending: true })
         .limit(1)
 
-      if (findError) {
-        throw findError
+      if (activeFindError) {
+        throw activeFindError
       }
 
-      const existing = existingList && existingList.length > 0 ? existingList[0] : null
+      let existing = activeList && activeList.length > 0 ? activeList[0] : null
+
+      if (!existing) {
+        const { data: deletedList, error: deletedFindError } = await supabase
+          .from('products')
+          .select('id, barcode, price, original_price, created_at')
+          .eq('barcode', product.barcode)
+          .not('deleted_at', 'is', null)
+          .order('created_at', { ascending: true })
+          .limit(1)
+
+        if (deletedFindError) {
+          throw deletedFindError
+        }
+
+        existing = deletedList && deletedList.length > 0 ? deletedList[0] : null
+      }
 
       if (existing) {
         // ✅ ÜRÜN VAR → Fiyat ve stok güncelle
@@ -389,6 +519,7 @@ async function importToSupabase(products: ParsedProduct[]) {
           stock_quantity: number;
           in_stock: boolean;
           updated_at: string;
+          deleted_at: null;
           category_slug?: string | null;
           subcategory_slug?: string | null;
         } = {
@@ -398,6 +529,7 @@ async function importToSupabase(products: ParsedProduct[]) {
           stock_quantity: product.stockQty,
           in_stock: isInStock,
           updated_at: new Date().toISOString(),
+          deleted_at: null,
         }
         if (product.subcategorySlug != null && product.categorySlugFromSub != null) {
           updateData.category_slug = product.categorySlugFromSub
@@ -441,7 +573,7 @@ async function importToSupabase(products: ParsedProduct[]) {
             images: product.images,
             rating: product.rating,
             reviews_count: product.reviews,
-            is_new: product.isNew,
+            is_new: product.isNew ?? true,
             is_best_seller: product.isBestSeller,
             in_stock: isInStock,
             stock_quantity: product.stockQty,
@@ -496,6 +628,7 @@ async function main() {
   }
 
   try {
+    await loadDbCategories()
     const products = readExcelFile(xlsxArg)
     await importToSupabase(products)
   } catch (error: any) {

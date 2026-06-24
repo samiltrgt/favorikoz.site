@@ -7,6 +7,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
 import { getCart } from '@/lib/cart'
 import { getFavorites } from '@/lib/favorites'
+import { useMenuCategories } from '@/components/categories-provider'
 
 // Static menu items (not categories)
 const staticMenuItems = [
@@ -29,6 +30,36 @@ interface Category {
   subcategories?: Subcategory[]
 }
 
+function transformCategoryTree(apiData: any[]): Category[] {
+  const flattenForMenu = (
+    node: any,
+    rootSlug: string,
+    depth: number = 0,
+    ancestors: string[] = []
+  ): Subcategory[] => {
+    const path = [...ancestors, node.slug]
+    const href = `/kategori/${rootSlug}/${path.join('/')}`
+    const current: Subcategory = {
+      name: node.name,
+      href,
+      key: node.slug,
+      depth,
+      children: node.subcategories || [],
+    }
+    const children = (node.subcategories || []).flatMap((child: any) =>
+      flattenForMenu(child, rootSlug, depth + 1, path)
+    )
+    return [current, ...children]
+  }
+
+  return apiData.map((cat: any) => ({
+    name: cat.name,
+    href: `/kategori/${cat.slug}`,
+    hasDropdown: cat.subcategories && cat.subcategories.length > 0,
+    subcategories: (cat.subcategories || []).flatMap((sub: any) => flattenForMenu(sub, cat.slug)),
+  }))
+}
+
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
@@ -44,7 +75,12 @@ export default function Header() {
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
   const [headerHeight, setHeaderHeight] = useState(0)
   const headerRef = useRef<HTMLElement>(null)
-  const [categories, setCategories] = useState<Category[]>([])
+  const menuCategoriesFromServer = useMenuCategories()
+  const [fetchedCategories, setFetchedCategories] = useState<Category[]>([])
+  const categories =
+    menuCategoriesFromServer && menuCategoriesFromServer.length > 0
+      ? transformCategoryTree(menuCategoriesFromServer)
+      : fetchedCategories
   const [mobileMenuClosing, setMobileMenuClosing] = useState(false)
   const [mobileMenuAnimated, setMobileMenuAnimated] = useState(false)
 
@@ -200,56 +236,34 @@ export default function Header() {
     }
   }, [])
 
-  // Load categories from API
+  // API fallback when server categories are unavailable
   useEffect(() => {
+    if (menuCategoriesFromServer && menuCategoriesFromServer.length > 0) return
+
     let isMounted = true
     const loadCategories = async () => {
       try {
-        const response = await fetch('/api/categories', { cache: 'no-store' })
+        const response = await fetch('/api/categories', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
         const result = await response.json()
         if (!isMounted) return
-        
-        if (result.success && result.data) {
-          const flattenForMenu = (
-            node: any,
-            rootSlug: string,
-            depth: number = 0,
-            ancestors: string[] = []
-          ): Subcategory[] => {
-            const path = [...ancestors, node.slug]
-            const href = `/kategori/${rootSlug}/${path.join('/')}`
-            const current: Subcategory = {
-              name: node.name,
-              href,
-              key: node.slug,
-              depth,
-              children: node.subcategories || [],
-            }
-            const children = (node.subcategories || []).flatMap((child: any) =>
-              flattenForMenu(child, rootSlug, depth + 1, path)
-            )
-            return [current, ...children]
-          }
 
-          // Transform API data to header format
-          const transformedCategories = result.data.map((cat: any) => ({
-            name: cat.name,
-            href: `/kategori/${cat.slug}`,
-            hasDropdown: cat.subcategories && cat.subcategories.length > 0,
-            subcategories: (cat.subcategories || []).flatMap((sub: any) => flattenForMenu(sub, cat.slug)),
-          }))
-          setCategories(transformedCategories)
+        if (result.success && result.data) {
+          setFetchedCategories(transformCategoryTree(result.data))
         }
       } catch (error) {
         console.error('Error loading categories:', error)
-        // Fallback to empty array on error
-        if (isMounted) setCategories([])
+        if (isMounted) setFetchedCategories([])
       }
     }
-    
+
     loadCategories()
-    return () => { isMounted = false }
-  }, [])
+    return () => {
+      isMounted = false
+    }
+  }, [menuCategoriesFromServer])
 
   // Load category/subcategory counts from API (stokta olan ürünler; navbar’da güncel sayı)
   useEffect(() => {
@@ -328,7 +342,7 @@ export default function Header() {
                   >
                     <Link
                       href={category.href}
-                      className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                      className="text-base font-semibold text-white/90 hover:text-white transition-colors"
                     >
                       {category.name}
                     </Link>
@@ -339,21 +353,21 @@ export default function Header() {
                 ) : (
                   <Link
                     href={category.href}
-                    className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                    className="text-base font-semibold text-white/90 hover:text-white transition-colors"
                   >
                     {category.name}
                   </Link>
                 )}
                 {category.hasDropdown && hoveredCategory === category.name && (
                   <div
-                    className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-64 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
+                    className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
                     onMouseLeave={() => setHoveredCategory(null)}
                   >
                     {category.subcategories?.map((sub: Subcategory) => (
                       <Link
                         key={sub.href}
                         href={sub.href}
-                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
                         onClick={() => setHoveredCategory(null)}
                       >
                         <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
@@ -575,7 +589,7 @@ export default function Header() {
                         onClick={() =>
                           setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })
                         }
-                        className="flex w-full items-center justify-between rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                        className="flex w-full items-center justify-between rounded-lg py-3 px-3 text-lg font-semibold text-white/90 hover:bg-white/10 hover:text-white transition-colors"
                       >
                         <span>{category.name}</span>
                         <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -586,7 +600,7 @@ export default function Header() {
                             <Link
                               key={sub.href}
                               href={sub.href}
-                              className="flex items-center justify-between py-2 text-sm text-white/70 hover:text-white transition-colors"
+                              className="flex items-center justify-between py-2.5 text-base font-semibold text-white/80 hover:text-white transition-colors"
                               onClick={() => {
                                 closeMobileMenu()
                                 setMobileCategoriesOpen({})
@@ -607,7 +621,7 @@ export default function Header() {
                   <Link
                     key={category.href}
                     href={category.href}
-                    className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                    className="rounded-lg py-3 px-3 text-lg font-semibold text-white/90 hover:bg-white/10 hover:text-white transition-colors"
                     onClick={closeMobileMenu}
                   >
                     {category.name}
