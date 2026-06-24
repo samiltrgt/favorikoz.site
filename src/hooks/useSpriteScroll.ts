@@ -3,6 +3,7 @@
 import { RefObject, useEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
 import { FrameSequenceRenderer } from '@/lib/renderer/FrameSequenceRenderer'
 import type { ISequenceRenderer, CanvasMetrics } from '@/lib/renderer/types'
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/lib/animation/scrollConfig'
 
 if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger)
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 }
 
 export interface UseSpriteScrollParams {
@@ -56,6 +57,7 @@ export function useSpriteScroll({
     let lastDrawnFrame = -1
     let started = false
     let paused = typeof document !== 'undefined' ? document.hidden : false
+    let autoPlayCleanup: (() => void) | null = null
 
     const computeMetrics = (): CanvasMetrics => ({
       cssWidth: window.innerWidth,
@@ -141,9 +143,19 @@ export function useSpriteScroll({
     )
     observer.observe(section)
 
+    let autoPlayTween: gsap.core.Tween | null = null
+
+    const killAutoPlay = (): void => {
+      if (autoPlayTween) {
+        autoPlayTween.kill()
+        autoPlayTween = null
+      }
+    }
+
     ctx = gsap.context(() => {
       const lastFrame = frameCount - 1
       const fadeDuration = SCROLL_CONFIG.overlayFadeEnd - SCROLL_CONFIG.overlayFadeStart
+      const autoPlay = SCROLL_CONFIG.autoPlay
 
       const timeline = gsap.timeline({
         scrollTrigger: {
@@ -159,6 +171,84 @@ export function useSpriteScroll({
           },
         },
       })
+
+      const st = timeline.scrollTrigger
+
+      if (autoPlay.enabled && st) {
+        let autoPlayDir: 0 | 1 | -1 = 0
+
+        const onWheelOrTouch = (deltaY: number): void => {
+          if (!st.isActive || deltaY === 0) return
+
+          const goingDown = deltaY > 0
+          const dir: 1 | -1 = goingDown ? 1 : -1
+
+          // Already auto-playing the same direction: let it run.
+          if (autoPlayTween && autoPlayDir === dir) return
+          // Reversed mid-flight: kill the current tween and re-aim the other way.
+          if (autoPlayTween && autoPlayDir !== dir) killAutoPlay()
+
+          const start = st.start
+          const end = st.end
+          const range = end - start
+          if (range <= 0) return
+
+          const current = window.scrollY || window.pageYOffset
+          const progress = (current - start) / range
+
+          // Require a small scroll into the hero before auto-play engages.
+          if (goingDown && progress < autoPlay.startThreshold) return
+          if (!goingDown && progress <= autoPlay.startThreshold) return
+
+          let target: number
+          if (goingDown) {
+            // Continue past the hero end straight into the next section (products carousel),
+            // so finishing the animation flows seamlessly down to it in one motion.
+            const nextEl = section.nextElementSibling as HTMLElement | null
+            target = nextEl
+              ? nextEl.getBoundingClientRect().top + current
+              : end
+          } else {
+            target = start
+          }
+
+          const remaining = Math.abs(target - current)
+          if (remaining <= 1) return
+
+          autoPlayDir = dir
+          const duration = remaining / autoPlay.pixelsPerSecond
+          autoPlayTween = gsap.to(window, {
+            scrollTo: { y: target, autoKill: true },
+            duration,
+            ease: autoPlay.ease,
+            onComplete: killAutoPlay,
+            onInterrupt: killAutoPlay,
+          })
+        }
+
+        const wheelHandler = (e: WheelEvent): void => onWheelOrTouch(e.deltaY)
+
+        let touchLastY = 0
+        const touchStartHandler = (e: TouchEvent): void => {
+          touchLastY = e.touches[0]?.clientY ?? 0
+        }
+        const touchMoveHandler = (e: TouchEvent): void => {
+          const y = e.touches[0]?.clientY ?? 0
+          // Swipe up (content moves down) => deltaY positive, like wheel.
+          onWheelOrTouch(touchLastY - y)
+          touchLastY = y
+        }
+
+        window.addEventListener('wheel', wheelHandler, { passive: true })
+        window.addEventListener('touchstart', touchStartHandler, { passive: true })
+        window.addEventListener('touchmove', touchMoveHandler, { passive: true })
+
+        autoPlayCleanup = () => {
+          window.removeEventListener('wheel', wheelHandler)
+          window.removeEventListener('touchstart', touchStartHandler)
+          window.removeEventListener('touchmove', touchMoveHandler)
+        }
+      }
 
       timeline.to(
         playhead,
@@ -191,6 +281,9 @@ export function useSpriteScroll({
       window.removeEventListener('resize', onResize)
       window.removeEventListener('orientationchange', onResize)
       document.removeEventListener('visibilitychange', onVisibilityChange)
+      autoPlayCleanup?.()
+      autoPlayCleanup = null
+      killAutoPlay()
       observer?.disconnect()
       observer = null
       ctx?.revert()

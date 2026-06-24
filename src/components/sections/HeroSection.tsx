@@ -45,6 +45,12 @@ export default function HeroSection() {
           className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out"
         />
 
+        {/* Hero'nun alt kenarını sitenin gri tonuna (#AEAFAF) eriterek keskin geçişi yumuşatır */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-32 bg-gradient-to-b from-transparent to-[#AEAFAF] sm:h-40"
+          aria-hidden="true"
+        />
+
         <div
           ref={overlayRef}
           className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white will-change-transform"

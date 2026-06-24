@@ -37,6 +37,20 @@ export const SCROLL_CONFIG = {
   pin: true,
   overlayFadeStart: 0.8,
   overlayFadeEnd: 1,
+  /**
+   * Constant-velocity auto-play. A small downward scroll inside the hero plays the
+   * whole sequence start→end at a fixed speed (the smooth feel of a fast manual swipe),
+   * instead of snapping with a variable, ease-in/out duration.
+   */
+  autoPlay: {
+    enabled: true,
+    /** Travel speed in CSS px per second (matches the smooth manual-scroll feel). */
+    pixelsPerSecond: 1200,
+    /** Minimum progress the user must scroll into the hero before auto-play kicks in. */
+    startThreshold: 0.015,
+    /** Linear motion = even frame cadence, no mid-scroll stall. */
+    ease: 'none',
+  },
 } as const
 
 export function getDeviceTier(width: number): DeviceTier {
