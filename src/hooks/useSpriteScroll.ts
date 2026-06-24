@@ -177,7 +177,10 @@ export function useSpriteScroll({
       if (autoPlay.enabled && st) {
         let autoPlayDir: 0 | 1 | -1 = 0
 
-        const onWheelOrTouch = (deltaY: number): void => {
+        // useAutoKill: wheel (desktop) lets the user interrupt by scrolling again.
+        // Touch (mobile) fires once on finger-lift with autoKill off so the native
+        // momentum scroll can't cancel the tween mid-flight; a new touch cancels it.
+        const triggerAutoPlay = (deltaY: number, useAutoKill: boolean): void => {
           if (!st.isActive || deltaY === 0) return
 
           const goingDown = deltaY > 0
@@ -218,7 +221,7 @@ export function useSpriteScroll({
           autoPlayDir = dir
           const duration = remaining / autoPlay.pixelsPerSecond
           autoPlayTween = gsap.to(window, {
-            scrollTo: { y: target, autoKill: true },
+            scrollTo: { y: target, autoKill: useAutoKill },
             duration,
             ease: autoPlay.ease,
             onComplete: killAutoPlay,
@@ -226,27 +229,45 @@ export function useSpriteScroll({
           })
         }
 
-        const wheelHandler = (e: WheelEvent): void => onWheelOrTouch(e.deltaY)
+        const wheelHandler = (e: WheelEvent): void => triggerAutoPlay(e.deltaY, true)
 
-        let touchLastY = 0
+        // Mobile: track the gesture, then fire a single tween on touchend.
+        const TOUCH_MIN_DELTA = 6
+        let touchStartY = 0
+        let touchPrevY = 0
+        let touchDir: 0 | 1 | -1 = 0
+
         const touchStartHandler = (e: TouchEvent): void => {
-          touchLastY = e.touches[0]?.clientY ?? 0
+          // A fresh touch means the user wants control — cancel any running auto-play.
+          killAutoPlay()
+          const y = e.touches[0]?.clientY ?? 0
+          touchStartY = y
+          touchPrevY = y
+          touchDir = 0
         }
         const touchMoveHandler = (e: TouchEvent): void => {
           const y = e.touches[0]?.clientY ?? 0
-          // Swipe up (content moves down) => deltaY positive, like wheel.
-          onWheelOrTouch(touchLastY - y)
-          touchLastY = y
+          const d = touchPrevY - y
+          if (Math.abs(d) > 0) touchDir = d > 0 ? 1 : -1
+          touchPrevY = y
+        }
+        const touchEndHandler = (): void => {
+          const totalDelta = touchStartY - touchPrevY
+          if (touchDir === 0 || Math.abs(totalDelta) < TOUCH_MIN_DELTA) return
+          // Swipe up (content moves up) => positive delta => play forward, like wheel down.
+          triggerAutoPlay(touchDir, false)
         }
 
         window.addEventListener('wheel', wheelHandler, { passive: true })
         window.addEventListener('touchstart', touchStartHandler, { passive: true })
         window.addEventListener('touchmove', touchMoveHandler, { passive: true })
+        window.addEventListener('touchend', touchEndHandler, { passive: true })
 
         autoPlayCleanup = () => {
           window.removeEventListener('wheel', wheelHandler)
           window.removeEventListener('touchstart', touchStartHandler)
           window.removeEventListener('touchmove', touchMoveHandler)
+          window.removeEventListener('touchend', touchEndHandler)
         }
       }
 
