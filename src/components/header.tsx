@@ -301,6 +301,11 @@ export default function Header() {
     }, 300)
   }
 
+  const isActiveHref = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
     <header ref={headerRef} className="sticky top-0 z-[100] bg-black/20 backdrop-blur-md">
       {/* Gradient orbs – clipped inside this wrapper so header has no overflow (mobile menu can show) */}
@@ -322,66 +327,7 @@ export default function Header() {
             <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
           </Link>
 
-          {/* Desktop: Nav links + Search + Actions */}
-          <div className="hidden lg:flex items-center gap-8">
-            {staticMenuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium text-white/90 hover:text-white transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
-            {categories.map((category) => (
-              <div key={category.name} className="relative">
-                {category.hasDropdown ? (
-                  <div
-                    className="flex items-center gap-1 cursor-pointer"
-                    onMouseEnter={() => setHoveredCategory(category.name)}
-                  >
-                    <Link
-                      href={category.href}
-                      className="text-base font-semibold text-white/90 hover:text-white transition-colors"
-                    >
-                      {category.name}
-                    </Link>
-                    <ChevronDown
-                      className={`w-4 h-4 text-white/80 transition-transform ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
-                    />
-                  </div>
-                ) : (
-                  <Link
-                    href={category.href}
-                    className="text-base font-semibold text-white/90 hover:text-white transition-colors"
-                  >
-                    {category.name}
-                  </Link>
-                )}
-                {category.hasDropdown && hoveredCategory === category.name && (
-                  <div
-                    className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
-                    onMouseLeave={() => setHoveredCategory(null)}
-                  >
-                    {category.subcategories?.map((sub: Subcategory) => (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
-                        onClick={() => setHoveredCategory(null)}
-                      >
-                        <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
-                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
-                          {categoryCounts[sub.key] ?? 0}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
+          {/* Desktop: Search + Actions (kategoriler ayrı barda) */}
           <div className="hidden lg:flex items-center gap-4">
             <form className="flex flex-1 max-w-[200px]" onSubmit={handleSearch}>
               <div className="relative">
@@ -506,6 +452,75 @@ export default function Header() {
             </button>
           </div>
         </nav>
+
+        {/* Kategori barı – her sayfada, ayrı satır (sadece desktop) */}
+        <div className="hidden lg:block border-t border-white/10 bg-black/35 backdrop-blur-md">
+          <div className="container mx-auto flex items-center justify-center gap-7 px-4 py-2.5">
+            {staticMenuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative text-sm font-medium drop-shadow-sm transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:w-full after:origin-center after:rounded-full after:bg-white after:transition-transform ${
+                  isActiveHref(item.href)
+                    ? 'text-white after:scale-x-100'
+                    : 'text-white/85 hover:text-white after:scale-x-0 hover:after:scale-x-100'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {categories.map((category) => {
+              const active = isActiveHref(category.href)
+              return (
+                <div
+                  key={category.name}
+                  className="relative"
+                  onMouseLeave={() => setHoveredCategory(null)}
+                >
+                  <div
+                    className="flex items-center gap-1"
+                    onMouseEnter={() => category.hasDropdown && setHoveredCategory(category.name)}
+                  >
+                    <Link
+                      href={category.href}
+                      className={`relative text-sm font-semibold drop-shadow-sm transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:w-full after:origin-center after:rounded-full after:bg-white after:transition-transform ${
+                        active
+                          ? 'text-white after:scale-x-100'
+                          : 'text-white/85 hover:text-white after:scale-x-0 hover:after:scale-x-100'
+                      }`}
+                    >
+                      {category.name}
+                    </Link>
+                    {category.hasDropdown && (
+                      <ChevronDown
+                        className={`h-4 w-4 text-white/70 transition-transform ${
+                          hoveredCategory === category.name ? 'rotate-180' : ''
+                        }`}
+                      />
+                    )}
+                  </div>
+                  {category.hasDropdown && hoveredCategory === category.name && (
+                    <div className="scrollbar-elegant absolute left-1/2 top-full z-50 mt-2 w-72 max-h-[70vh] -translate-x-1/2 overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm">
+                      {category.subcategories?.map((sub: Subcategory) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                          onClick={() => setHoveredCategory(null)}
+                        >
+                          <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
+                          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
+                            {categoryCounts[sub.key] ?? 0}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
