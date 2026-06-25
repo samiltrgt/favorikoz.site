@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
 import { getCart } from '@/lib/cart'
@@ -321,9 +322,14 @@ export default function Header() {
         <nav className="container mx-auto flex items-center justify-between px-4 py-4">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
-              <span className="text-sm font-bold">F</span>
-            </div>
+            <Image
+              src="/fk-amblem.png"
+              alt="Favori Kozmetik"
+              width={36}
+              height={36}
+              priority
+              className="h-9 w-9 rounded-full"
+            />
             <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
           </Link>
 
@@ -554,9 +560,13 @@ export default function Header() {
             <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 overscroll-contain" style={{ minHeight: 0 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
-                  <span className="text-sm font-bold">F</span>
-                </div>
+                <Image
+                  src="/fk-amblem.png"
+                  alt="Favori Kozmetik"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full"
+                />
                 <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
               </div>
               <button
