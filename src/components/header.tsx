@@ -543,28 +543,30 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobil kategori barı – yatay kaydırılabilir (sadece mobil/tablet) */}
-        <div className="lg:hidden border-t border-white/15 bg-black/40 backdrop-blur-md">
-          <div
-            className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4 py-2"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {categories.map((category) => {
-              const active = isActiveHref(category.href)
-              return (
-                <Link
-                  key={category.name}
-                  href={category.href}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-                    active ? 'bg-white/15 text-pink-400' : 'bg-white/5 text-white hover:text-pink-400'
-                  }`}
-                >
-                  {category.name}
-                </Link>
-              )
-            })}
+        {/* Mobil kategori barı – yatay kaydırılabilir (sadece mobil/tablet, ana sayfa hariç) */}
+        {pathname !== '/' && (
+          <div className="lg:hidden border-t border-white/15 bg-black/40 backdrop-blur-md">
+            <div
+              className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4 py-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {categories.map((category) => {
+                const active = isActiveHref(category.href)
+                return (
+                  <Link
+                    key={category.name}
+                    href={category.href}
+                    className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                      active ? 'bg-white/15 text-pink-400' : 'bg-white/5 text-white hover:text-pink-400'
+                    }`}
+                  >
+                    {category.name}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
