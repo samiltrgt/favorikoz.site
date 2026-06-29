@@ -9,7 +9,7 @@ export default function FeaturesSection() {
             </div>
             <div>
               <h3 className="font-light text-black text-sm mb-0.5">Ücretsiz Kargo</h3>
-              <p className="text-gray-500 text-xs">1500 TL ve üzeri siparişlerde</p>
+              <p className="text-gray-500 text-xs">2000 TL ve üzeri siparişlerde</p>
             </div>
           </div>
 

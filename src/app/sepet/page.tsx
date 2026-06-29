@@ -83,10 +83,10 @@ export default function CartPage() {
     }
     return total
   }, 0)
-  // 1499 TL ve üzeri ücretsiz kargo, değilse 100 TL kargo ücreti
+  // 2000 TL ve üzeri ücretsiz kargo, değilse 100 TL kargo ücreti
   // Fiyatlar 10 ile çarpılmış formatta tutuluyor (100 TL = 1000 birim)
-  // Bu yüzden 1499 TL = 14990 birim, 100 TL kargo = 1000 birim
-  const FREE_SHIPPING_THRESHOLD = 14990 // 1499 TL
+  // Bu yüzden 2000 TL = 20000 birim, 100 TL kargo = 1000 birim
+  const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL
   const SHIPPING_COST = 1000 // 100 TL (display için /10 yapılacak)
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = Math.max(0, subtotal - discount - couponDiscount + shipping)
