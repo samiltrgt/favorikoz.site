@@ -172,7 +172,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Info - Minimal Zara style */}
       <div className="p-3 space-y-1">
         <Link href={`/urun/${product.slug}`}>
-          <h3 className="font-light text-black text-sm line-clamp-2 leading-tight hover:text-gray-600 transition-colors">
+          <h3 className="font-light text-black text-sm leading-tight hover:text-gray-600 transition-colors">
             {product.name}
           </h3>
         </Link>

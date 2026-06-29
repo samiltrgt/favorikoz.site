@@ -114,7 +114,7 @@ export default function ProductPromoSlider({ products = [] }: { products?: any[]
                         sizes="200px"
                       />
                     </div>
-                    <h3 className="font-medium text-gray-900 text-lg line-clamp-2 mb-2 mt-2 group-hover:underline">
+                    <h3 className="font-medium text-gray-900 text-lg mb-2 mt-2 group-hover:underline">
                       {slide.product.name}
                     </h3>
                     <div className="text-xl font-bold text-gray-900">

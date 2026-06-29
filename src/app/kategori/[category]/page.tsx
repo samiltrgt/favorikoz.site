@@ -245,7 +245,7 @@ export default function CategoryPage() {
 
                   <div className={`${viewMode === 'list' ? 'flex-1' : 'mt-4'}`}>
                     <div className="mb-2">
-                      <h3 className="font-medium text-black text-sm leading-tight mb-1 line-clamp-2">
+                      <h3 className="font-medium text-black text-sm leading-tight mb-1">
                         <Link href={`/urun/${product.slug}`} className="hover:text-gray-600">
                           {product.name}
                         </Link>

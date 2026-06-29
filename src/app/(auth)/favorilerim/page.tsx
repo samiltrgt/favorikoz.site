@@ -180,7 +180,7 @@ export default function FavoritesPage() {
                 {/* Product Info */}
                 <div className="p-4 space-y-2">
                   <Link href={`/urun/${product.slug}`}>
-                    <h3 className="font-light text-black text-sm line-clamp-2 leading-tight hover:text-gray-600 transition-colors">
+                    <h3 className="font-light text-black text-sm leading-tight hover:text-gray-600 transition-colors">
                       {product.name}
                     </h3>
                   </Link>
