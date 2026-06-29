@@ -309,7 +309,7 @@ export default function Header() {
       </div>
 
       <div className="relative z-10">
-        <nav className="container mx-auto flex items-center justify-between px-4 py-4">
+        <nav className="container relative mx-auto flex items-center justify-between px-4 py-4">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
@@ -322,6 +322,11 @@ export default function Header() {
             />
             <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
           </Link>
+
+          {/* Orta slogan – tam ortada (sadece geniş ekran) */}
+          <span className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-sm font-medium tracking-wide text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] xl:block">
+            Türkiye&apos;nin Profesyonel Kozmetik Mağazası
+          </span>
 
           {/* Desktop: Search + Actions (kategoriler ayrı barda, aşağıda) */}
           <div className="hidden lg:flex items-center gap-4">
