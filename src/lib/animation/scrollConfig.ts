@@ -19,10 +19,12 @@ export const FRAME_CONFIG = {
     tablet: 48,
     desktop: 72,
   },
+  // Source frames are 720p; rendering above 1x DPR only upscales the same pixels
+  // at a large per-frame draw cost (up to 4K at DPR 2), which is the main scroll jank.
   maxDpr: {
     mobile: 1,
-    tablet: 1.5,
-    desktop: 2,
+    tablet: 1,
+    desktop: 1,
   },
   breakpoints: {
     mobile: 768,

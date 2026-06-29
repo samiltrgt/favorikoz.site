@@ -302,8 +302,13 @@ export default function Header() {
     }, 300)
   }
 
+  const isActiveHref = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
-    <header ref={headerRef} className="sticky top-0 z-[100] bg-black/20 backdrop-blur-md">
+    <header ref={headerRef} className="sticky top-0 z-[100] bg-black/35 backdrop-blur-md">
       {/* Gradient orbs – clipped inside this wrapper so header has no overflow (mobile menu can show) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="absolute -right-60 -top-10 flex flex-col items-end blur-xl">
@@ -334,12 +339,16 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                className={`text-sm font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
+                  isActiveHref(item.href) ? 'text-pink-400' : 'text-white'
+                }`}
               >
                 {item.name}
               </Link>
             ))}
-            {categories.map((category) => (
+            {categories.map((category) => {
+              const active = isActiveHref(category.href)
+              return (
               <div key={category.name} className="relative">
                 {category.hasDropdown ? (
                   <div
@@ -348,18 +357,22 @@ export default function Header() {
                   >
                     <Link
                       href={category.href}
-                      className="text-base font-semibold text-white/90 hover:text-white transition-colors"
+                      className={`text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
+                        active ? 'text-pink-400' : 'text-white'
+                      }`}
                     >
                       {category.name}
                     </Link>
                     <ChevronDown
-                      className={`w-4 h-4 text-white/80 transition-transform ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 drop-shadow transition-transform ${hoveredCategory === category.name || active ? 'text-pink-400' : 'text-white'} ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
                     />
                   </div>
                 ) : (
                   <Link
                     href={category.href}
-                    className="text-base font-semibold text-white/90 hover:text-white transition-colors"
+                    className={`text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
+                      active ? 'text-pink-400' : 'text-white'
+                    }`}
                   >
                     {category.name}
                   </Link>
@@ -385,7 +398,8 @@ export default function Header() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
