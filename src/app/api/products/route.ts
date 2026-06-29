@@ -106,51 +106,89 @@ export async function GET(request: NextRequest) {
     }
     
     if (view === 'counts') {
-      let countsQuery = supabase
-        .from('products')
-        .select('category_slug, subcategory_slug, in_stock, stock_quantity')
+      // Fetch ALL matching products (Supabase caps each request at 1000 rows, so paginate).
+      const pageSize = 1000
+      let fromIdx = 0
+      const rows: Array<{ category_slug: string | null; subcategory_slug: string | null }> = []
+
+      while (true) {
+        let countsQuery = supabase
+          .from('products')
+          .select('category_slug, subcategory_slug')
+          .is('deleted_at', null)
+
+        if (!skipStockFilter) {
+          countsQuery = countsQuery.eq('in_stock', true).gt('stock_quantity', 0)
+        }
+        countsQuery = countsQuery.range(fromIdx, fromIdx + pageSize - 1)
+
+        const { data, error } = await countsQuery
+        if (error) {
+          console.error('❌ Supabase error:', {
+            message: error.message,
+            details: error,
+            code: error.code,
+            hint: error.hint,
+          })
+          return NextResponse.json(
+            {
+              success: false,
+              error: error.message || 'Failed to fetch products',
+            },
+            { status: 500 }
+          )
+        }
+
+        const batch = data || []
+        rows.push(...batch)
+        if (batch.length < pageSize) break
+        fromIdx += pageSize
+      }
+
+      // Load category tree so nested subcategories roll up their descendants' products.
+      const { data: cats, error: catError } = await supabase
+        .from('categories')
+        .select('slug, parent_slug')
         .is('deleted_at', null)
-
-      if (!skipStockFilter) {
-        countsQuery = countsQuery.eq('in_stock', true).gt('stock_quantity', 0)
-      }
-
-      if (fetchByIds) {
-        countsQuery = countsQuery.in('id', ids)
-      } else {
-        if (subcategory) {
-          countsQuery = countsQuery.eq('subcategory_slug', subcategory)
-        } else if (category) {
-          countsQuery = countsQuery.eq('category_slug', category)
-        }
-        if (search) {
-          countsQuery = countsQuery.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`)
-        }
-        countsQuery = countsQuery.order('created_at', { ascending: false }).limit(limit || 1000)
-      }
-
-      const { data, error } = await countsQuery
-      if (error) {
-        console.error('❌ Supabase error:', {
-          message: error.message,
-          details: error,
-          code: error.code,
-          hint: error.hint
-        })
+      if (catError) {
         return NextResponse.json(
-          {
-            success: false,
-            error: error.message || 'Failed to fetch products',
-            details: process.env.NODE_ENV === 'development' ? {
-              code: error.code,
-              hint: error.hint,
-              details: error.details
-            } : undefined
-          },
+          { success: false, error: catError.message || 'Failed to load categories' },
           { status: 500 }
         )
       }
-      return NextResponse.json({ success: true, data })
+
+      const childrenOf = new Map<string, string[]>()
+      for (const c of cats || []) {
+        if (!c.parent_slug) continue
+        if (!childrenOf.has(c.parent_slug)) childrenOf.set(c.parent_slug, [])
+        childrenOf.get(c.parent_slug)!.push(c.slug)
+      }
+
+      // Products are assigned to a single (usually leaf) subcategory_slug.
+      const directSub = new Map<string, number>()
+      for (const r of rows) {
+        if (r.subcategory_slug) {
+          directSub.set(r.subcategory_slug, (directSub.get(r.subcategory_slug) || 0) + 1)
+        }
+      }
+
+      // Aggregated count = products directly in the slug + all of its descendants.
+      const computed = new Map<string, number>()
+      const aggregate = (slug: string, stack: Set<string>): number => {
+        if (computed.has(slug)) return computed.get(slug)!
+        if (stack.has(slug)) return 0
+        stack.add(slug)
+        let total = directSub.get(slug) || 0
+        for (const child of childrenOf.get(slug) || []) total += aggregate(child, stack)
+        stack.delete(slug)
+        computed.set(slug, total)
+        return total
+      }
+
+      const counts: Record<string, number> = {}
+      for (const c of cats || []) counts[c.slug] = aggregate(c.slug, new Set())
+
+      return NextResponse.json({ success: true, counts, total: rows.length })
     }
 
     if (fetchByIds) {

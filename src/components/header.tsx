@@ -266,27 +266,17 @@ export default function Header() {
     }
   }, [menuCategoriesFromServer])
 
-  // Load category/subcategory counts from API (stokta olan ürünler; navbar’da güncel sayı)
+  // Load category/subcategory counts from API (stokta olan ürünler; navbar’da güncel sayı).
+  // API artık tüm ürünleri sayar ve iç içe alt kategorilerde alt dalları da toplar.
   useEffect(() => {
     let isMounted = true
     const loadCounts = async () => {
       try {
-        const res = await fetch('/api/products?view=counts&limit=500', { cache: 'no-store' })
+        const res = await fetch('/api/products?view=counts', { cache: 'no-store' })
         const json = await res.json()
-        if (json.success && Array.isArray(json.data)) {
-          const counts: Record<string, number> = {}
-          for (const p of json.data as any[]) {
-            const catSlug = p.category_slug || p.category
-            const subSlug = p.subcategory_slug
-            if (subSlug) {
-              counts[subSlug] = (counts[subSlug] || 0) + 1
-            }
-            if (catSlug) {
-              counts[catSlug] = (counts[catSlug] || 0) + 1
-            }
-          }
-          if (!isMounted) return
-          setCategoryCounts(counts)
+        if (!isMounted) return
+        if (json.success && json.counts && typeof json.counts === 'object') {
+          setCategoryCounts(json.counts as Record<string, number>)
         }
       } catch {}
     }
@@ -333,93 +323,7 @@ export default function Header() {
             <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
           </Link>
 
-          {/* Desktop: Nav links + Search + Actions */}
-          <div className="hidden lg:flex items-center gap-8">
-            {staticMenuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
-                  isActiveHref(item.href) ? 'text-pink-400' : 'text-white'
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-            {categories.map((category) => {
-              const active = isActiveHref(category.href)
-              return (
-              <div key={category.name} className="relative">
-                {category.hasDropdown ? (
-                  <div
-                    className="flex items-center gap-1 cursor-pointer"
-                    onMouseEnter={() => setHoveredCategory(category.name)}
-                  >
-                    <Link
-                      href={category.href}
-                      className={`text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
-                        active ? 'text-pink-400' : 'text-white'
-                      }`}
-                    >
-                      {category.name}
-                    </Link>
-                    <ChevronDown
-                      className={`w-4 h-4 drop-shadow transition-transform ${hoveredCategory === category.name || active ? 'text-pink-400' : 'text-white'} ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
-                    />
-                  </div>
-                ) : (
-                  <Link
-                    href={category.href}
-                    className={`text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] transition-colors hover:text-pink-400 ${
-                      active ? 'text-pink-400' : 'text-white'
-                    }`}
-                  >
-                    {category.name}
-                  </Link>
-                )}
-                {category.hasDropdown && hoveredCategory === category.name && (
-                  <div
-                    className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
-                    onMouseLeave={() => setHoveredCategory(null)}
-                  >
-                    {category.subcategories?.map((sub: Subcategory) => {
-                      const depth = sub.depth || 0
-                      const isTop = depth === 0
-                      return (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className={`flex items-center justify-between rounded-lg py-2 pr-2.5 transition-colors hover:bg-white/10 hover:text-white ${
-                            isTop
-                              ? 'mt-1 pl-3 text-[15px] font-bold text-white'
-                              : 'text-sm font-medium text-gray-400'
-                          }`}
-                          onClick={() => setHoveredCategory(null)}
-                        >
-                          <span
-                            className="flex items-center gap-1.5"
-                            style={{ paddingLeft: isTop ? 0 : `${depth * 14}px` }}
-                          >
-                            {!isTop && <span className="text-pink-400/60">└</span>}
-                            {sub.name}
-                          </span>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                              isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-white/10 text-gray-400'
-                            }`}
-                          >
-                            {categoryCounts[sub.key] ?? 0}
-                          </span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-              )
-            })}
-          </div>
-
+          {/* Desktop: Search + Actions (kategoriler ayrı barda, aşağıda) */}
           <div className="hidden lg:flex items-center gap-4">
             <form className="flex flex-1 max-w-[200px]" onSubmit={handleSearch}>
               <div className="relative">
@@ -544,6 +448,91 @@ export default function Header() {
             </button>
           </div>
         </nav>
+
+        {/* Kategori barı – her sayfada, ayrı satır (sadece desktop) */}
+        <div className="hidden lg:block border-t border-white/15 bg-black/40 backdrop-blur-md">
+          <div className="container mx-auto flex items-center justify-center gap-8 px-4 py-3">
+            {staticMenuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-white/10 ${
+                  isActiveHref(item.href) ? 'bg-white/10 text-pink-400' : 'text-white hover:text-pink-400'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {categories.map((category) => {
+              const active = isActiveHref(category.href)
+              return (
+                <div
+                  key={category.name}
+                  className="relative"
+                  onMouseLeave={() => setHoveredCategory(null)}
+                >
+                  <div
+                    className={`flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors hover:bg-white/10 ${
+                      active ? 'bg-white/10' : ''
+                    }`}
+                    onMouseEnter={() => category.hasDropdown && setHoveredCategory(category.name)}
+                  >
+                    <Link
+                      href={category.href}
+                      className={`text-base font-bold transition-colors hover:text-pink-400 ${
+                        active ? 'text-pink-400' : 'text-white'
+                      }`}
+                    >
+                      {category.name}
+                    </Link>
+                    {category.hasDropdown && (
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          hoveredCategory === category.name || active ? 'text-pink-400' : 'text-white'
+                        } ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
+                      />
+                    )}
+                  </div>
+                  {category.hasDropdown && hoveredCategory === category.name && (
+                    <div className="scrollbar-elegant absolute left-1/2 top-full z-50 mt-2 w-72 max-h-[70vh] -translate-x-1/2 overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm">
+                      {category.subcategories?.map((sub: Subcategory) => {
+                        const depth = sub.depth || 0
+                        const isTop = depth === 0
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className={`flex items-center justify-between rounded-lg py-2 pr-2.5 transition-colors hover:bg-white/10 hover:text-white ${
+                              isTop
+                                ? 'mt-1 pl-3 text-[15px] font-bold text-white'
+                                : 'text-sm font-medium text-gray-400'
+                            }`}
+                            onClick={() => setHoveredCategory(null)}
+                          >
+                            <span
+                              className="flex items-center gap-1.5"
+                              style={{ paddingLeft: isTop ? 0 : `${depth * 14}px` }}
+                            >
+                              {!isTop && <span className="text-pink-400/60">└</span>}
+                              {sub.name}
+                            </span>
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                                isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-white/10 text-gray-400'
+                              }`}
+                            >
+                              {categoryCounts[sub.key] ?? 0}
+                            </span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
