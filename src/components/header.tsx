@@ -505,20 +505,22 @@ export default function Header() {
                             className={`flex items-center justify-between rounded-lg py-2 pr-2.5 transition-colors hover:bg-white/10 hover:text-white ${
                               isTop
                                 ? 'mt-1 pl-3 text-[15px] font-bold text-white'
-                                : 'text-sm font-medium text-gray-400'
+                                : 'pl-2 text-sm font-semibold text-gray-100'
                             }`}
                             onClick={() => setHoveredCategory(null)}
                           >
                             <span
-                              className="flex items-center gap-1.5"
-                              style={{ paddingLeft: isTop ? 0 : `${depth * 14}px` }}
+                              className={`flex items-center gap-1.5 ${
+                                isTop ? '' : 'border-l-2 border-pink-400/40 pl-2'
+                              }`}
+                              style={{ marginLeft: isTop ? 0 : `${(depth - 1) * 14 + 6}px` }}
                             >
-                              {!isTop && <span className="text-pink-400/60">└</span>}
+                              {!isTop && <span className="text-pink-400">›</span>}
                               {sub.name}
                             </span>
                             <span
                               className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                                isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-white/10 text-gray-400'
+                                isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-pink-500/10 text-pink-200'
                               }`}
                             >
                               {categoryCounts[sub.key] ?? 0}
