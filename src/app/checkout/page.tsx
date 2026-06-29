@@ -605,8 +605,8 @@ export default function CheckoutPage() {
                             className="w-4 h-4"
                           />
                           <div>
-                            <div className="font-medium text-black">Standart Kargo</div>
-                            <div className="text-sm text-gray-600">2-4 iş günü</div>
+                            <div className="font-medium text-black">Bugün Kargoda</div>
+                            <div className="text-sm text-gray-600">Siparişin bugün kargoya verilir</div>
                           </div>
                         </div>
                         <div className="font-medium">
@@ -616,24 +616,6 @@ export default function CheckoutPage() {
                             <span>₺100</span>
                           )}
                         </div>
-                      </label>
-
-                      <label className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-black transition-all">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value="express"
-                            checked={formData.shippingMethod === 'express'}
-                            onChange={(e) => setFormData({ ...formData, shippingMethod: e.target.value })}
-                            className="w-4 h-4"
-                          />
-                          <div>
-                            <div className="font-medium text-black">Hızlı Kargo</div>
-                            <div className="text-sm text-gray-600">1-2 iş günü</div>
-                          </div>
-                        </div>
-                        <div className="font-medium">₺200</div>
                       </label>
                     </div>
                   </div>
@@ -909,7 +891,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">
-                    Kargo ({formData.shippingMethod === 'express' ? 'Hızlı' : 'Standart'})
+                    Kargo (Bugün Kargoda)
                   </span>
                   <span className={`font-medium ${shipping === 0 ? 'text-green-600' : 'text-black'}`}>
                     {shipping === 0 ? 'Ücretsiz' : `₺${(shipping / 10).toFixed(2)}`}
