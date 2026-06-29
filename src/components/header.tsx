@@ -382,19 +382,37 @@ export default function Header() {
                     className="scrollbar-elegant absolute left-1/2 top-full -translate-x-1/2 mt-1 w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm"
                     onMouseLeave={() => setHoveredCategory(null)}
                   >
-                    {category.subcategories?.map((sub: Subcategory) => (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
-                        onClick={() => setHoveredCategory(null)}
-                      >
-                        <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
-                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
-                          {categoryCounts[sub.key] ?? 0}
-                        </span>
-                      </Link>
-                    ))}
+                    {category.subcategories?.map((sub: Subcategory) => {
+                      const depth = sub.depth || 0
+                      const isTop = depth === 0
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`flex items-center justify-between rounded-lg py-2 pr-2.5 transition-colors hover:bg-white/10 hover:text-white ${
+                            isTop
+                              ? 'mt-1 pl-3 text-[15px] font-bold text-white'
+                              : 'text-sm font-medium text-gray-400'
+                          }`}
+                          onClick={() => setHoveredCategory(null)}
+                        >
+                          <span
+                            className="flex items-center gap-1.5"
+                            style={{ paddingLeft: isTop ? 0 : `${depth * 14}px` }}
+                          >
+                            {!isTop && <span className="text-pink-400/60">└</span>}
+                            {sub.name}
+                          </span>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                              isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-white/10 text-gray-400'
+                            }`}
+                          >
+                            {categoryCounts[sub.key] ?? 0}
+                          </span>
+                        </Link>
+                      )
+                    })}
                   </div>
                 )}
               </div>
