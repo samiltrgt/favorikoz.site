@@ -112,18 +112,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate shipping: free if >= 2000 TL (20000 in 10x format), otherwise 100 TL (1000 in 10x format)
-    // Optional one-time test override via env:
-    // TEST_FREE_SHIPPING_EMAIL=ornek@mail.com
     const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL (10x formatında)
     const SHIPPING_COST = 1000 // 100 TL (10x formatında)
-    const testFreeShippingEmail = (process.env.TEST_FREE_SHIPPING_EMAIL || '').trim().toLowerCase()
-    const customerEmail = (customer.email || '').toString().trim().toLowerCase()
-    const isOneTimeTestShippingFree = !!testFreeShippingEmail && customerEmail === testFreeShippingEmail
-    const shipping10x = isOneTimeTestShippingFree
-      ? 0
-      : subtotalAfterCoupon10x >= FREE_SHIPPING_THRESHOLD
-      ? 0
-      : SHIPPING_COST
+    const shipping10x = subtotalAfterCoupon10x >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
 
     // Total price in 10x format
     const totalPrice10x = subtotalAfterCoupon10x + shipping10x

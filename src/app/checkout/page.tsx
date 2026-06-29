@@ -115,12 +115,9 @@ export default function CheckoutPage() {
   // Calculations
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0)
   const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL in 10x format
-  const SHIPPING_COST = formData.shippingMethod === 'express' ? 2000 : 1000 // 200 TL or 100 TL
-  const testFreeShippingEmail = (process.env.NEXT_PUBLIC_TEST_FREE_SHIPPING_EMAIL || '').trim().toLowerCase()
-  const isOneTimeTestShippingFree =
-    !!testFreeShippingEmail && (formData.email || '').trim().toLowerCase() === testFreeShippingEmail
+  const SHIPPING_COST = 1000 // 100 TL
   const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscount)
-  const shipping = isOneTimeTestShippingFree ? 0 : (subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)
+  const shipping = subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = subtotalAfterCoupon + shipping
 
   const applyCoupon = async () => {
