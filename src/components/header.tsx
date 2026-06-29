@@ -499,7 +499,8 @@ export default function Header() {
                     )}
                   </div>
                   {category.hasDropdown && hoveredCategory === category.name && (
-                    <div className="scrollbar-elegant absolute left-1/2 top-full z-50 mt-2 w-72 max-h-[70vh] -translate-x-1/2 overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm">
+                    <div className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2">
+                    <div className="scrollbar-elegant w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm">
                       {category.subcategories?.map((sub: Subcategory) => {
                         const depth = sub.depth || 0
                         const isTop = depth === 0
@@ -533,6 +534,7 @@ export default function Header() {
                           </Link>
                         )
                       })}
+                    </div>
                     </div>
                   )}
                 </div>
