@@ -542,6 +542,29 @@ export default function Header() {
             })}
           </div>
         </div>
+
+        {/* Mobil kategori barı – yatay kaydırılabilir (sadece mobil/tablet) */}
+        <div className="lg:hidden border-t border-white/15 bg-black/40 backdrop-blur-md">
+          <div
+            className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4 py-2"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {categories.map((category) => {
+              const active = isActiveHref(category.href)
+              return (
+                <Link
+                  key={category.name}
+                  href={category.href}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    active ? 'bg-white/15 text-pink-400' : 'bg-white/5 text-white hover:text-pink-400'
+                  }`}
+                >
+                  {category.name}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
@@ -613,13 +636,16 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                  className={`rounded-lg py-3 px-3 text-base transition-colors hover:bg-white/10 ${
+                    isActiveHref(item.href) ? 'text-pink-400' : 'text-white/90 hover:text-white'
+                  }`}
                   onClick={closeMobileMenu}
                 >
                   {item.name}
                 </Link>
               ))}
               {categories.map((category: Category) => {
+                const active = isActiveHref(category.href)
                 if (category.hasDropdown) {
                   const isOpen = mobileCategoriesOpen[category.name] || false
                   return (
@@ -629,29 +655,49 @@ export default function Header() {
                         onClick={() =>
                           setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })
                         }
-                        className="flex w-full items-center justify-between rounded-lg py-3 px-3 text-lg font-semibold text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                        className={`flex w-full items-center justify-between rounded-lg py-3 px-3 text-lg font-semibold transition-colors hover:bg-white/10 ${
+                          active ? 'text-pink-400' : 'text-white/90 hover:text-white'
+                        }`}
                       >
                         <span>{category.name}</span>
-                        <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown
+                          className={`h-5 w-5 transition-transform ${active ? 'text-pink-400' : ''} ${isOpen ? 'rotate-180' : ''}`}
+                        />
                       </button>
                       {isOpen && category.subcategories && (
                         <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
-                          {category.subcategories.map((sub: Subcategory) => (
-                            <Link
-                              key={sub.href}
-                              href={sub.href}
-                              className="flex items-center justify-between py-2.5 text-base font-semibold text-white/80 hover:text-white transition-colors"
-                              onClick={() => {
-                                closeMobileMenu()
-                                setMobileCategoriesOpen({})
-                              }}
-                            >
-                              <span style={{ paddingLeft: `${(sub.depth || 0) * 10}px` }}>{sub.name}</span>
-                              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
-                                {categoryCounts[sub.key] ?? 0}
-                              </span>
-                            </Link>
-                          ))}
+                          {category.subcategories.map((sub: Subcategory) => {
+                            const depth = sub.depth || 0
+                            const isTop = depth === 0
+                            return (
+                              <Link
+                                key={sub.href}
+                                href={sub.href}
+                                className={`flex items-center justify-between py-2.5 transition-colors hover:text-white ${
+                                  isTop ? 'text-base font-bold text-white' : 'text-sm font-semibold text-gray-200'
+                                }`}
+                                onClick={() => {
+                                  closeMobileMenu()
+                                  setMobileCategoriesOpen({})
+                                }}
+                              >
+                                <span
+                                  className="flex items-center gap-1.5"
+                                  style={{ paddingLeft: isTop ? 0 : `${depth * 12}px` }}
+                                >
+                                  {!isTop && <span className="text-pink-400">›</span>}
+                                  {sub.name}
+                                </span>
+                                <span
+                                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                                    isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-pink-500/10 text-pink-200'
+                                  }`}
+                                >
+                                  {categoryCounts[sub.key] ?? 0}
+                                </span>
+                              </Link>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -661,7 +707,9 @@ export default function Header() {
                   <Link
                     key={category.href}
                     href={category.href}
-                    className="rounded-lg py-3 px-3 text-lg font-semibold text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                    className={`rounded-lg py-3 px-3 text-lg font-semibold transition-colors hover:bg-white/10 ${
+                      active ? 'text-pink-400' : 'text-white/90 hover:text-white'
+                    }`}
                     onClick={closeMobileMenu}
                   >
                     {category.name}
