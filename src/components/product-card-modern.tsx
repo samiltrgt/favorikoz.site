@@ -160,6 +160,9 @@ export default function ProductCardModern({ product, index = 0, showBrandBadge =
 
       {/* Product Info */}
       <div className={compact ? 'px-2 py-1.5 space-y-0.5' : 'p-4 space-y-2'}>
+        <div className={`flex items-center gap-1 font-semibold text-emerald-600 ${compact ? 'text-[9px]' : 'text-[11px]'}`}>
+          <span aria-hidden>🚚</span> Bugün Kargoda
+        </div>
         <Link href={`/urun/${product.slug}`}>
           <h3 className={`font-medium text-[hsl(24,15%,15%)] leading-tight hover:text-[hsl(24,15%,35%)] transition-colors ${compact ? 'text-[11px] leading-snug min-h-0' : 'text-sm min-h-[2.5rem]'}`}>
             {product.name}

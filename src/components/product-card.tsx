@@ -171,6 +171,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info - Minimal Zara style */}
       <div className="p-3 space-y-1">
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+          <span aria-hidden>🚚</span> Bugün Kargoda
+        </div>
         <Link href={`/urun/${product.slug}`}>
           <h3 className="font-light text-black text-sm leading-tight hover:text-gray-600 transition-colors">
             {product.name}

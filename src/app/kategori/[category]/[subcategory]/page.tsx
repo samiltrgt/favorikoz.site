@@ -219,6 +219,9 @@ export default function SubcategoryPage() {
 
                   <div className={`${viewMode === 'list' ? 'flex-1' : 'mt-4'}`}>
                     <div className="mb-2">
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mb-1">
+                        <span aria-hidden>🚚</span> Bugün Kargoda
+                      </div>
                       <h3 className="font-medium text-black text-sm leading-tight mb-1">
                         <Link href={`/urun/${product.slug}`} className="hover:text-gray-600">
                           {product.name}

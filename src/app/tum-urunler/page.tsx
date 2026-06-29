@@ -65,6 +65,9 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
           </div>
           <div className="flex-1 flex items-center justify-between">
             <div className="flex-1">
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mb-1">
+                <span aria-hidden>🚚</span> Bugün Kargoda
+              </div>
               <h3 className="font-medium text-black text-sm mb-1">{product.name}</h3>
               <p className="text-gray-400 text-xs mb-2 uppercase tracking-wide">{product.brand}</p>
               <div className="flex items-center gap-1">

@@ -179,6 +179,9 @@ export default function FavoritesPage() {
 
                 {/* Product Info */}
                 <div className="p-4 space-y-2">
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                    <span aria-hidden>🚚</span> Bugün Kargoda
+                  </div>
                   <Link href={`/urun/${product.slug}`}>
                     <h3 className="font-light text-black text-sm leading-tight hover:text-gray-600 transition-colors">
                       {product.name}
