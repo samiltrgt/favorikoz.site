@@ -197,7 +197,7 @@ export default function SubcategoryPage() {
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-contain p-1 transition-transform duration-300"
                       sizes={viewMode === 'list' ? '96px' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px'}
                     />
                     {product.is_new && (

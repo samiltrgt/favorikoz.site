@@ -283,11 +283,28 @@ function getCategoryFromLetter(letter: string): { subcategorySlug: string; categ
   return { subcategorySlug: sub, categorySlug: cat }
 }
 
+const BLOCKED_IMAGE_HOSTS = ['chatgpt.com', 'openai.com']
+
 function ensureHttps(url: string): string {
   if (!url) return ''
   const s = String(url).trim()
-  if (s.startsWith('http')) return s
-  return s
+  if (s.startsWith('file://') || s.startsWith('file:/')) return ''
+  if (s.startsWith('http://') || s.startsWith('https://')) return s
+  if (s.startsWith('//')) return `https:${s}`
+  return `https://${s}`
+}
+
+function isValidProductImageUrl(url: string): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    if (BLOCKED_IMAGE_HOSTS.some((blocked) => host === blocked || host.endsWith(`.${blocked}`))) {
+      return false
+    }
+    return url.startsWith('http://') || url.startsWith('https://')
+  } catch {
+    return false
+  }
 }
 
 // ============================================
@@ -309,6 +326,7 @@ interface ParsedProduct {
   isBestSeller: boolean
   image: string
   images: string[]
+  imageRejected?: boolean
   barcode: string
   rating: number
   reviews: number
@@ -378,14 +396,18 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
   const isNew = String(pick(row, ['yeni', 'new'])).toLowerCase().includes('evet') || false
   const isBestSeller = String(pick(row, ['çok satan', 'cok satan', 'bestseller'])).toLowerCase().includes('evet') || false
   
-  const image = ensureHttps(pick(row, [
+  const rawImage = ensureHttps(pick(row, [
     'Görsel 1',
     'görsel',
     'resim',
     'image',
     'image url',
     'foto'
-  ])) || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop'
+  ]))
+  const image = isValidProductImageUrl(rawImage)
+    ? rawImage
+    : 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop'
+  const imageRejected = !!rawImage && !isValidProductImageUrl(rawImage)
   
   const barcode = pick(row, [
     'Barkod',
@@ -404,7 +426,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     const imageValue = pick(row, [`Görsel ${i}`])
     if (imageValue) {
       const cleanUrl = ensureHttps(imageValue)
-      if (cleanUrl) images.push(cleanUrl)
+      if (isValidProductImageUrl(cleanUrl)) images.push(cleanUrl)
     }
   }
 
@@ -425,6 +447,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     isBestSeller,
     image,
     images,
+    imageRejected,
     barcode: barcode || `FK${String(idx + 1).padStart(6, '0')}`,
     rating: 4.6,
     reviews: Math.floor(Math.random() * 150) + 5,
@@ -470,10 +493,16 @@ async function importToSupabase(products: ParsedProduct[]) {
   let updateCount = 0
   let errorCount = 0
   let withSubcategoryCount = 0
+  let rejectedImageCount = 0
   const errors: Array<{ name: string; error: string }> = []
 
   for (const product of products) {
     try {
+      if (product.imageRejected) {
+        rejectedImageCount++
+        console.warn(`⚠️  Geçersiz görsel URL (ChatGPT vb.): ${product.name} — Excel'de Görsel 1 sütununu düzeltin`)
+      }
+
       // 1. Barcode'a göre mevcut ürünü kontrol et (önce aktif, yoksa soft-delete)
       const { data: activeList, error: activeFindError } = await supabase
         .from('products')
@@ -522,6 +551,8 @@ async function importToSupabase(products: ParsedProduct[]) {
           deleted_at: null;
           category_slug?: string | null;
           subcategory_slug?: string | null;
+          image?: string;
+          images?: string[];
         } = {
           price: Math.round(product.price * 100), // TL → kuruş
           original_price: product.originalPrice ? Math.round(product.originalPrice * 100) : null,
@@ -530,6 +561,11 @@ async function importToSupabase(products: ParsedProduct[]) {
           in_stock: isInStock,
           updated_at: new Date().toISOString(),
           deleted_at: null,
+        }
+        // Excel'de geçerli görsel varsa güncelle; yoksa panelden yükleneni koru
+        if (!product.imageRejected && isValidProductImageUrl(product.image)) {
+          updateData.image = product.image
+          updateData.images = product.images
         }
         if (product.subcategorySlug != null && product.categorySlugFromSub != null) {
           updateData.category_slug = product.categorySlugFromSub
@@ -605,6 +641,7 @@ async function importToSupabase(products: ParsedProduct[]) {
   console.log(`   ✨ New added:     ${newCount}`)
   console.log(`   🔄 Updated:       ${updateCount}`)
   console.log(`   📁 Alt kategori atanan: ${withSubcategoryCount}`)
+  console.log(`   ⚠️  Geçersiz görsel URL: ${rejectedImageCount}`)
   console.log(`   ❌ Errors:        ${errorCount}`)
   console.log('='.repeat(60))
 

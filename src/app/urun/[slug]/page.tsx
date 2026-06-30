@@ -107,7 +107,7 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                 src={allImages[selectedImageIndex]}
                 alt={product.name}
                 fill
-                className="object-cover"
+                className="object-contain p-2"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               
@@ -158,7 +158,7 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                       alt={`${product.name} - Görsel ${index + 1}`}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-1 bg-gray-50"
                     />
                   </button>
                 ))}

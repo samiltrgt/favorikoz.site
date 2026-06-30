@@ -102,13 +102,13 @@ export default function ProductCard({ product }: ProductCardProps) {
       data-testid="product-card"
     >
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden">
+      <div className="relative aspect-square overflow-hidden bg-gray-50">
         <Link href={`/urun/${product.slug}`}>
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-contain p-2 transition-transform duration-500"
             sizes="(max-width: 640px) 50vw, (max-width: 1200px) 33vw, 280px"
           />
         </Link>

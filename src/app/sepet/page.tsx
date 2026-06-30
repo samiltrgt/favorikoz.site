@@ -249,7 +249,7 @@ export default function CartPage() {
                         alt={item.name}
                         width={96}
                         height={96}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain p-1"
                       />
                     </div>
                   </div>

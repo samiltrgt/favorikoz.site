@@ -55,12 +55,12 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
         onClick={handleCardClick}
       >
         <div className="flex gap-6 p-4">
-          <div className="relative w-20 h-20 flex-shrink-0">
+          <div className="relative w-20 h-20 flex-shrink-0 bg-gray-50">
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain p-1"
             />
           </div>
           <div className="flex-1 flex items-center justify-between">

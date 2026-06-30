@@ -142,13 +142,13 @@ export default function FavoritesPage() {
                 className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
               >
                 {/* Image */}
-                <div className="relative aspect-square overflow-hidden">
+                <div className="relative aspect-square overflow-hidden bg-gray-50">
                   <Link href={`/urun/${product.slug}`}>
                     <Image
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-contain p-2 transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </Link>
