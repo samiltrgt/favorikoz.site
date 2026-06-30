@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { 
   Plus, 
   Search, 
@@ -333,11 +333,12 @@ export default function ProductsPage() {
               {sortedProducts.map((product) => (
                 <div key={product.id} className="group relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <Image
+                    <ProductImage
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-contain p-2 bg-gray-50 group-hover:scale-105 transition-transform duration-200"
+                      coverClassName="object-cover group-hover:scale-105 transition-transform duration-200"
+                      containClassName="object-contain p-2 bg-gray-50 transition-transform duration-200"
                     />
                     {product.is_new && (
                       <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">

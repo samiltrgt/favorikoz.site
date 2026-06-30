@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import '@/styles/home-products-bryhel.css'
 
 const MARQUEE_SPEED = 0.6 // px per frame
@@ -181,11 +181,12 @@ export default function HomeProductsBryhel({
                         className="block w-full h-full relative"
                         onClick={onLinkClick}
                       >
-                        <Image
+                        <ProductImage
                           src={product.image}
                           alt={product.name || ''}
                           fill
-                          className="object-contain object-center"
+                          coverClassName="object-cover object-center"
+                          containClassName="object-contain object-center"
                           sizes="(max-width: 1100px) 50vw, 20vw"
                         />
                       </Link>

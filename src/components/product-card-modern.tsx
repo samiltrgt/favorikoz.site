@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { Star, Heart, ShoppingCart, Loader2 } from 'lucide-react'
 import { toggleFavorite, isFavorite } from '@/lib/favorites'
 import { addToCart } from '@/lib/cart'
@@ -93,11 +93,12 @@ export default function ProductCardModern({ product, index = 0, showBrandBadge =
     >
       {/* Image Container */}
       <Link href={`/urun/${product.slug}`} className={`block relative overflow-hidden bg-gray-50 ${compact ? 'aspect-[5/6]' : 'aspect-square'}`}>
-        <Image
+        <ProductImage
           src={product.image}
           alt={product.name}
           fill
-          className="object-contain p-2 transition-transform duration-700"
+          coverClassName="object-cover group-hover:scale-110 transition-transform duration-700"
+          containClassName="object-contain p-2 transition-transform duration-700"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
         />
         

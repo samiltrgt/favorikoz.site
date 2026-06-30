@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { useSearchParams } from 'next/navigation'
 import { 
   SortAsc, 
@@ -56,11 +56,11 @@ function ProductCard({ product, viewMode }: { product: any, viewMode: 'grid' | '
       >
         <div className="flex gap-6 p-4">
           <div className="relative w-20 h-20 flex-shrink-0 bg-gray-50">
-            <Image
+            <ProductImage
               src={product.image}
               alt={product.name}
               fill
-              className="object-contain p-1"
+              sizes="80px"
             />
           </div>
           <div className="flex-1 flex items-center justify-between">

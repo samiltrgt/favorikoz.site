@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { ArrowLeft, Filter, Grid, List, Star } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
@@ -193,11 +193,12 @@ export default function SubcategoryPage() {
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="relative overflow-hidden bg-gray-50 w-24 h-24 flex-shrink-0">
-                    <Image
+                    <ProductImage
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-contain p-1 transition-transform duration-300"
+                      coverClassName="object-cover group-hover:scale-105 transition-transform duration-300"
+                      containClassName="object-contain p-1 transition-transform duration-300"
                       sizes={viewMode === 'list' ? '96px' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px'}
                     />
                     {product.is_new && (

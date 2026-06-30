@@ -1,6 +1,6 @@
 "use client"
 
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -103,11 +103,11 @@ export default function ProductDetailPage({ params }: { params: Params }) {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative w-full aspect-square bg-gray-50 overflow-hidden rounded-xl group">
-              <Image
+              <ProductImage
                 src={allImages[selectedImageIndex]}
                 alt={product.name}
                 fill
-                className="object-contain p-2"
+                containClassName="object-contain p-3"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               
@@ -153,12 +153,13 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                         : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    <Image
+                    <ProductImage
                       src={image}
                       alt={`${product.name} - Görsel ${index + 1}`}
                       width={80}
                       height={80}
-                      className="w-full h-full object-contain p-1 bg-gray-50"
+                      className="w-full h-full bg-gray-50"
+                      containClassName="object-contain p-0.5"
                     />
                   </button>
                 ))}

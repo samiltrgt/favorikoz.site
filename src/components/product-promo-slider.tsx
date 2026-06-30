@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -106,11 +107,12 @@ export default function ProductPromoSlider({ products = [] }: { products?: any[]
                     className="block text-center group"
                   >
                     <div className="relative aspect-square w-40 h-40 mx-auto mb-6 overflow-hidden rounded-2xl bg-white/80">
-                      <Image
+                      <ProductImage
                         src={slide.product.image}
                         alt={slide.product.name}
                         fill
-                        className="object-contain group-hover:scale-105 transition-transform"
+                        coverClassName="object-cover group-hover:scale-105 transition-transform"
+                        containClassName="object-contain group-hover:scale-105 transition-transform"
                         sizes="200px"
                       />
                     </div>

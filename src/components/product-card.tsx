@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { Heart, ShoppingCart, Star, Truck, RotateCcw } from 'lucide-react'
 import { toggleFavorite, isFavorite } from '@/lib/favorites'
 
@@ -104,11 +104,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         <Link href={`/urun/${product.slug}`}>
-          <Image
+          <ProductImage
             src={product.image}
             alt={product.name}
             fill
-            className="object-contain p-2 transition-transform duration-500"
+            coverClassName="object-cover group-hover:scale-105 transition-transform duration-500"
+            containClassName="object-contain p-2 transition-transform duration-500"
             sizes="(max-width: 640px) 50vw, (max-width: 1200px) 33vw, 280px"
           />
         </Link>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { Heart, ShoppingCart, Star, ArrowLeft } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
@@ -144,11 +144,12 @@ export default function FavoritesPage() {
                 {/* Image */}
                 <div className="relative aspect-square overflow-hidden bg-gray-50">
                   <Link href={`/urun/${product.slug}`}>
-                    <Image
+                    <ProductImage
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-contain p-2 transition-transform duration-500"
+                      coverClassName="object-cover group-hover:scale-105 transition-transform duration-500"
+                      containClassName="object-contain p-2 transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </Link>

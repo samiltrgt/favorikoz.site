@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
@@ -244,12 +244,13 @@ export default function CartPage() {
                   {/* Product Image */}
                   <div className="flex-shrink-0">
                     <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gray-100 rounded-xl overflow-hidden">
-                      <Image
+                      <ProductImage
                         src={item.image}
                         alt={item.name}
                         width={96}
                         height={96}
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full"
+                        sizes="96px"
                       />
                     </div>
                   </div>

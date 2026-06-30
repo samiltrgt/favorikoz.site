@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import ProductImage from '@/components/product-image'
 import { 
   ArrowLeft, 
   Check, 
@@ -831,11 +831,10 @@ export default function CheckoutPage() {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-3">
                     <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
+                      <ProductImage
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1"
                         sizes="64px"
                       />
                     </div>
