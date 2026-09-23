@@ -49,6 +49,8 @@ async function main() {
     const built = buildIyzicoPaidPriceFromOrder({
       items: withCoupon.items,
       shipping_cost: withCoupon.shipping_cost ?? 0,
+      total: withCoupon.total,
+      discount_amount: withCoupon.discount_amount,
     })
     const expected = ((withCoupon.total ?? 0) / 100).toFixed(2)
     console.log('\n=== Kuponlu pending sipariş tutar kontrolü ===')

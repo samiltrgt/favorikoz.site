@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder } from '@/lib/iyzico-payment-amount'
+import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
+import { trySendOrderConfirmationEmail } from '@/lib/order-email'
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     // mdStatus 1/2/3/4 başarılı kabul edilir
     if (mdStatus && !['1', '2', '3', '4'].includes(mdStatus)) {
+      await markOrderPaymentFailed(supabase, { paymentToken: conversationId })
       return NextResponse.redirect(
         `${baseUrl}/payment/callback?status=failed&token=${encodeURIComponent(conversationId)}&error=mdstatus_${mdStatus || 'unknown'}`,
         { status: 302 }
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     const { data: order } = await supabase
       .from('orders')
-      .select('order_number, iyzico_basket_id, items, shipping_cost')
+      .select('order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount')
       .eq('payment_token', conversationId)
       .maybeSingle()
 
@@ -117,6 +119,8 @@ export async function POST(request: NextRequest) {
       const paidPrice = buildIyzicoPaidPriceFromOrder({
         items: order.items,
         shipping_cost: order.shipping_cost ?? 0,
+        total: order.total,
+        discount_amount: order.discount_amount,
       })
       console.log('[3ds-callback] conversationData boş → 3DS v2 auth', {
         paymentId,
@@ -174,6 +178,11 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      await trySendOrderConfirmationEmail(supabase, {
+        orderNumber: orderNumber || null,
+        paymentToken: conversationId,
+      })
+
       const qs = new URLSearchParams({
         status: 'success',
         token: conversationId,
@@ -189,6 +198,11 @@ export async function POST(request: NextRequest) {
       if (orderNumber) qs.set('orderNumber', orderNumber)
       return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
     }
+
+    await markOrderPaymentFailed(supabase, {
+      paymentToken: conversationId,
+      orderNumber: orderNumber || null,
+    })
 
     const failed = new URLSearchParams({
       status: 'failed',

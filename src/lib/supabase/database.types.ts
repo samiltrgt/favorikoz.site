@@ -174,6 +174,7 @@ export interface Database {
           carrier: string | null
           created_at: string
           updated_at: string
+          confirmation_email_sent_at: string | null
         }
         Insert: {
           id?: string
@@ -207,6 +208,7 @@ export interface Database {
           carrier?: string | null
           created_at?: string
           updated_at?: string
+          confirmation_email_sent_at?: string | null
         }
         Update: {
           id?: string
@@ -240,6 +242,7 @@ export interface Database {
           carrier?: string | null
           created_at?: string
           updated_at?: string
+          confirmation_email_sent_at?: string | null
         }
       }
       favorites: {

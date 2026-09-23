@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
+import { markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 
 type BasketItem = {
   id: string
@@ -347,11 +348,17 @@ export async function POST(request: NextRequest) {
             orderNumber
           })
         }
+        if (ordersClient) {
+          await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
+        }
         return NextResponse.json({
           success: false,
           error: '3DS başlatılamadı',
         }, { status: 400 })
       } else {
+        if (ordersClient) {
+          await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
+        }
         return NextResponse.json({
           success: false,
           error: result.errorMessage || 'Ödeme işlemi başarısız',
@@ -361,6 +368,9 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
       console.error('❌ Iyzico error:', error)
+      if (ordersClient) {
+        await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
+      }
       return NextResponse.json({
         success: false,
         error: error.message || 'Ödeme başlatılamadı'

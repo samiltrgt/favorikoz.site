@@ -307,6 +307,69 @@ function isValidProductImageUrl(url: string): boolean {
   }
 }
 
+function isAutoBarcode(barcode: string | null | undefined): boolean {
+  return /^FK\d{6,}$/i.test(String(barcode || '').trim())
+}
+
+type ExistingProductRow = {
+  id: string
+  barcode: string | null
+  price: number | null
+  original_price: number | null
+  created_at: string | null
+}
+
+function pickExistingProduct(rows: ExistingProductRow[]): ExistingProductRow | null {
+  if (!rows.length) return null
+  const sorted = [...rows].sort((a, b) => {
+    const aAuto = isAutoBarcode(a.barcode)
+    const bAuto = isAutoBarcode(b.barcode)
+    if (aAuto !== bAuto) return aAuto ? 1 : -1
+    const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0
+    const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0
+    return aCreated - bCreated
+  })
+  return sorted[0]
+}
+
+async function findExistingProduct(
+  product: ParsedProduct
+): Promise<ExistingProductRow | null> {
+  const { data: activeList, error: activeFindError } = await supabase
+    .from('products')
+    .select('id, barcode, price, original_price, created_at')
+    .eq('barcode', product.barcode)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  if (activeFindError) throw activeFindError
+  if (activeList && activeList.length > 0) return activeList[0]
+
+  const { data: deletedList, error: deletedFindError } = await supabase
+    .from('products')
+    .select('id, barcode, price, original_price, created_at')
+    .eq('barcode', product.barcode)
+    .not('deleted_at', 'is', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  if (deletedFindError) throw deletedFindError
+  if (deletedList && deletedList.length > 0) return deletedList[0]
+
+  // Aynı isimli eski kayıt (farklı FK barkod) varsa güncelle — çift ilan oluşmasın
+  const { data: byNameList, error: byNameError } = await supabase
+    .from('products')
+    .select('id, barcode, price, original_price, created_at')
+    .eq('name', product.name)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+    .limit(5)
+
+  if (byNameError) throw byNameError
+  return pickExistingProduct((byNameList || []) as ExistingProductRow[])
+}
+
 // ============================================
 // EXCEL OKUMA VE PARSE
 // ============================================
@@ -503,36 +566,7 @@ async function importToSupabase(products: ParsedProduct[]) {
         console.warn(`⚠️  Geçersiz görsel URL (ChatGPT vb.): ${product.name} — Excel'de Görsel 1 sütununu düzeltin`)
       }
 
-      // 1. Barcode'a göre mevcut ürünü kontrol et (önce aktif, yoksa soft-delete)
-      const { data: activeList, error: activeFindError } = await supabase
-        .from('products')
-        .select('id, barcode, price, original_price, created_at')
-        .eq('barcode', product.barcode)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: true })
-        .limit(1)
-
-      if (activeFindError) {
-        throw activeFindError
-      }
-
-      let existing = activeList && activeList.length > 0 ? activeList[0] : null
-
-      if (!existing) {
-        const { data: deletedList, error: deletedFindError } = await supabase
-          .from('products')
-          .select('id, barcode, price, original_price, created_at')
-          .eq('barcode', product.barcode)
-          .not('deleted_at', 'is', null)
-          .order('created_at', { ascending: true })
-          .limit(1)
-
-        if (deletedFindError) {
-          throw deletedFindError
-        }
-
-        existing = deletedList && deletedList.length > 0 ? deletedList[0] : null
-      }
+      let existing = await findExistingProduct(product)
 
       if (existing) {
         // ✅ ÜRÜN VAR → Fiyat ve stok güncelle
@@ -553,6 +587,7 @@ async function importToSupabase(products: ParsedProduct[]) {
           subcategory_slug?: string | null;
           image?: string;
           images?: string[];
+          barcode?: string;
         } = {
           price: Math.round(product.price * 100), // TL → kuruş
           original_price: product.originalPrice ? Math.round(product.originalPrice * 100) : null,
@@ -571,6 +606,13 @@ async function importToSupabase(products: ParsedProduct[]) {
           updateData.category_slug = product.categorySlugFromSub
           updateData.subcategory_slug = product.subcategorySlug
           withSubcategoryCount++
+        }
+        if (
+          !isAutoBarcode(product.barcode) &&
+          isAutoBarcode(existing.barcode) &&
+          product.barcode !== existing.barcode
+        ) {
+          updateData.barcode = product.barcode
         }
 
         const { error: updateError } = await (supabase

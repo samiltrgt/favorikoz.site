@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPaymentV2, retrievePayment, retrievePaymentByPaymentId } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder } from '@/lib/iyzico-payment-amount'
+import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
+import { trySendOrderConfirmationEmail } from '@/lib/order-email'
 
 function getOrdersSupabase() {
   try {
@@ -48,6 +49,10 @@ export async function GET(request: NextRequest) {
             .eq('payment_token', token)
             .maybeSingle()
           if (existing?.payment_status === 'completed') {
+            await trySendOrderConfirmationEmail(ordersDb, {
+              orderNumber: orderNumber || null,
+              paymentToken: token || null,
+            })
             return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
           }
         } catch {}
@@ -65,6 +70,10 @@ export async function GET(request: NextRequest) {
               .eq('order_number', orderNumber)
             await recordCouponUsage(ordersDb, orderNumber, token)
             await tryCreateNesInvoice(ordersDb, orderNumber, token)
+            await trySendOrderConfirmationEmail(ordersDb, {
+              orderNumber,
+              paymentToken: token,
+            })
           } catch {}
         }
       }
@@ -85,13 +94,15 @@ export async function GET(request: NextRequest) {
       if (ordersDb) {
         const { data: orderRow } = await ordersDb
           .from('orders')
-          .select('iyzico_basket_id, items, shipping_cost')
+          .select('iyzico_basket_id, items, shipping_cost, total, discount_amount')
           .eq('payment_token', token)
           .maybeSingle()
         if (orderRow?.iyzico_basket_id) {
           const paidPrice = buildIyzicoPaidPriceFromOrder({
             items: orderRow.items,
             shipping_cost: orderRow.shipping_cost ?? 0,
+            total: orderRow.total,
+            discount_amount: orderRow.discount_amount,
           })
           console.log('[payment/status] CALLBACK_THREEDS → 3DS v2 auth denemesi', { paymentId, paidPrice })
           try {
@@ -141,6 +152,13 @@ export async function GET(request: NextRequest) {
           error: '3D doğrulama tamamlandı, banka provizyon onayı bekleniyor',
         })
       }
+      const ordersDb = getOrdersSupabase()
+      if (ordersDb) {
+        await markOrderPaymentFailed(ordersDb, {
+          paymentToken: token,
+          orderNumber: orderNumber || null,
+        })
+      }
       return NextResponse.json({
         success: false,
         status: 'failed',
@@ -172,6 +190,10 @@ export async function GET(request: NextRequest) {
 
     await recordCouponUsage(supabase, orderNumber || null, token || '')
     await tryCreateNesInvoice(supabase, orderNumber || null, token || '')
+    await trySendOrderConfirmationEmail(supabase, {
+      orderNumber: orderNumber || null,
+      paymentToken: token || null,
+    })
 
     return NextResponse.json({ success: true, status: 'success' })
   } catch (error: any) {
