@@ -1,5 +1,40 @@
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+
+function adminAuthCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  }
+}
+
+function createSupabaseForLoginResponse(response: NextResponse) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase env eksik')
+  }
+
+  const cookieStore = cookies()
+
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieStore.set({ name, value, ...options })
+          response.cookies.set(name, value, options)
+        })
+      },
+    },
+  })
+}
 
 export async function POST(req: Request) {
   try {
@@ -13,9 +48,9 @@ export async function POST(req: Request) {
       )
     }
 
-    const supabase = await createSupabaseServer()
+    const response = NextResponse.json({ ok: true, user: {} as Record<string, unknown> })
+    const supabase = createSupabaseForLoginResponse(response)
 
-    // Sign in with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -28,7 +63,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // Check if user has admin role
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -36,7 +70,6 @@ export async function POST(req: Request) {
       .single()
 
     if (profileError || !profile || profile.role !== 'admin') {
-      // Sign out if not admin
       await supabase.auth.signOut()
       return NextResponse.json(
         { ok: false, message: 'Bu hesap admin yetkisine sahip değil' },
@@ -44,15 +77,21 @@ export async function POST(req: Request) {
       )
     }
 
-    // Success - session cookie is automatically set by Supabase
-    return NextResponse.json({
-      ok: true,
-      user: {
-        id: authData.user.id,
-        email: authData.user.email,
-        role: profile.role,
+    response.cookies.set('adminAuthV2', authData.user.id, adminAuthCookieOptions())
+
+    return NextResponse.json(
+      {
+        ok: true,
+        user: {
+          id: authData.user.id,
+          email: authData.user.email,
+          role: profile.role,
+        },
       },
-    })
+      {
+        headers: response.headers,
+      }
+    )
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
@@ -61,5 +100,3 @@ export async function POST(req: Request) {
     )
   }
 }
-
-

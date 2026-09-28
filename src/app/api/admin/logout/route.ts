@@ -4,11 +4,19 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 export async function POST() {
   try {
     const supabase = await createSupabaseServer()
-    
-    // Sign out from Supabase
+
     await supabase.auth.signOut()
-    
-    return NextResponse.json({ ok: true })
+
+    const response = NextResponse.json({ ok: true })
+    response.cookies.set('adminAuthV2', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    })
+
+    return response
   } catch (error) {
     console.error('Logout error:', error)
     return NextResponse.json(
@@ -17,5 +25,3 @@ export async function POST() {
     )
   }
 }
-
-
