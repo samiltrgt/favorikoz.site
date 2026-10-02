@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { revalidateProductCatalog } from '@/lib/product-cache'
 
 async function checkAdminAccess(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -17,6 +18,7 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
 
     const { error } = await supabase.from('promo_banner_products').delete().eq('id', params.id)
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    revalidateProductCatalog()
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('promo-banner-products DELETE error:', err)

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAnon } from '@/lib/supabase/server'
 import { getSiteUrl } from '@/lib/site-url'
 import { collectDescendantSlugsFromFlat } from '@/lib/category-tree'
 
 const siteUrl = getSiteUrl()
 const ITEMLIST_LIMIT = 50
+
+export const revalidate = 60
 
 type Props = {
   children: React.ReactNode
@@ -15,7 +17,7 @@ async function getSubcategoryName(
   parentSlug: string,
   subSlug: string
 ): Promise<{ subName: string; parentName: string } | null> {
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAnon()
   const { data: sub } = await supabase
     .from('categories')
     .select('name')
@@ -56,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SubcategoryLayout({ children, params }: Props) {
   const { category, subcategory } = await params
 
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAnon()
   const { data: categoryRows } = await supabase
     .from('categories')
     .select('slug, parent_slug')
@@ -72,6 +74,8 @@ export default async function SubcategoryLayout({ children, params }: Props) {
     .is('deleted_at', null)
     .eq('in_stock', true)
     .gt('stock_quantity', 0)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true })
     .limit(ITEMLIST_LIMIT)
 
   const names = await getSubcategoryName(category, subcategory)

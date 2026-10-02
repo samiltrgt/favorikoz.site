@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { dbToDisplay } from '@/lib/price'
 
 // Helper function to check admin access
 async function checkAdminAccess(supabase: any) {
@@ -38,6 +39,7 @@ export async function GET() {
       `)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
+      .order('id', { ascending: true })
     
     if (error) {
       console.error('Supabase error:', error)
@@ -54,8 +56,8 @@ export async function GET() {
         ...fp,
         products: product ? {
           ...product,
-          price: (product.price / 100) / 10, // Kuruş → TL → /10
-          original_price: product.original_price ? (product.original_price / 100) / 10 : null,
+          price: dbToDisplay(product.price),
+          original_price: product.original_price ? dbToDisplay(product.original_price) : null,
         } : null
       }
     })

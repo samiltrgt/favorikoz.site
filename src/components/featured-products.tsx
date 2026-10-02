@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import ProductCard from './product-card'
+import ProductCard from '@/components/product-card'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -105,10 +105,10 @@ export default function FeaturedProducts({
           
           {/* Products Grid - Clean Layout */}
           {displayProducts.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <div className="grid grid-cols-2 max-[360px]:grid-cols-1 lg:grid-cols-4 gap-4 xl:gap-6 mb-8">
               {displayProducts.slice(0, 8).map((product) => {
                 if (!product || !product.id) return null
-                return <ProductCard key={product.id} product={product} />
+                return <ProductCard key={product.id} product={product} variant="grid" />
               })}
             </div>
           )}
@@ -148,10 +148,10 @@ export default function FeaturedProducts({
         
         {/* Desktop Products Grid */}
         {displayProducts.length > 0 && (
-          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6 mb-12">
             {displayProducts.slice(0, 4).map((product) => {
               if (!product || !product.id) return null
-              return <ProductCard key={product.id} product={product} />
+              return <ProductCard key={product.id} product={product} variant="grid" />
             })}
           </div>
         )}
@@ -164,7 +164,7 @@ export default function FeaturedProducts({
                 if (!product || !product.id) return null
                 return (
                   <div key={product.id} className="flex-shrink-0 w-[calc(50%-8px)]">
-                    <ProductCard product={product} />
+                    <ProductCard product={product} variant="grid" />
                   </div>
                 )
               })}

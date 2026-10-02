@@ -2,35 +2,147 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Lenis smooth-scroll (FAZ 1C) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 @layer base {
   :root {
-    /* Minimal warm palette */
-    /* Ecru / Beige / Powder / Light Brown */
-    --background: 36 33% 96%; /* ecru background */
-    --foreground: 24 15% 15%; /* deep taupe text */
+    /* ── Brand typeface ── */
+    --font-brand: var(--font-onest), 'Inter', 'DM Sans', system-ui, sans-serif;
+
+    /*
+      Type scale — Major Second (1.125) from 16px base
+      16 values spanning 9–152px. Named steps match brand samples.
+      Letter-spacing: -0.019em @ 14px → -0.091em @ 152px (always negative).
+      Display (48+) uses whisper weights 200–300.
+      Body/UI: 400–500. Emphasis only: 600–800.
+    */
+    --text-9: 9px;
+    --text-10: 10px;
+    --text-11: 11px;
+    --text-12: 12px;
+    --text-14: 14px;
+    --text-16: 16px;
+    --text-18: 18px;
+    --text-20: 20px;
+    --text-23: 23px;
+    --text-26: 26px;
+    --text-29: 29px;
+    --text-32: 32px;
+    --text-36: 36px;
+    --text-48: 48px;
+    --text-86: 86px;
+    --text-152: 152px;
+
+    --lh-display: 1;
+    --lh-display-md: 1.04;
+    --lh-title: 1.56;
+    --lh-title-sm: 1;
+    --lh-lead: 1;
+    --lh-body: 1.2;
+    --lh-sm: 1.55;
+    --lh-sm-loose: 1.57;
+
+    --tracking-14: -0.019em;
+    --tracking-16: -0.020em;
+    --tracking-20: -0.022em;
+    --tracking-23: -0.024em;
+    --tracking-32: -0.028em;
+    --tracking-48: -0.037em;
+    --tracking-86: -0.057em;
+    --tracking-152: -0.091em;
+
+    --weight-whisper: 200;
+    --weight-thin: 300;
+    --weight-body: 400;
+    --weight-ui: 500;
+    --weight-emphasis: 600;
+    --weight-strong: 800;
+
+    /* ── Spacing (compact density) ── */
+    --space-element: 10px;
+    --space-card: 20px;
+    --space-section: 80px;
+    --max-width: 1280px;
+
+    /* ── Border radius ── */
+    --radius-card: 10px;
+    --radius-image: 15px;
+    --radius-tag: 30px;
+    --radius-input: 30px;
+    --radius-button: 600px;
+    /* shadcn/tailwind alias — maps to card radius */
+    --radius: 10px;
+
+    /*
+      Favori Kozmetik — FK logo (rose / magenta ağırlıklı, premium & minimal).
+      Indigo bilinçli olarak geri çekildi.
+    */
+    --color-ink: #1c161a;
+    --color-paper: #fbf6f8;
+    --color-surface: #ffffff;
+    --color-mist: #f5e8ef;
+    --color-border-hex: #eadce4;
+    --color-muted-fg: #7a6570;
+    --color-rose: #d45a8f;
+    --color-rose-soft: #e891b3;
+    --color-mauve: #c47a9a;
+    --color-rose-deep: #9a3d6a;
+    --color-bloom: #f0d4e0;
+    --color-bloom-deep: #d49bb4;
+
+    /* Compatibility aliases */
+    --color-lilac: var(--color-mauve);
+    --color-indigo: var(--color-rose-deep);
+    --color-powder-blue: var(--color-bloom);
+    --color-slate-bloom: var(--color-bloom-deep);
+    --color-warm-ink: var(--color-ink);
+    --color-paper-white: var(--color-surface);
+
+    /* Soft blush system */
+    --background: 330 33% 98%;
+    --foreground: 330 12% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 330 12% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
-    --primary: 24 15% 15%; /* dark cocoa */
-    --primary-foreground: 36 33% 96%;
-    --secondary: 30 25% 90%; /* light beige */
-    --secondary-foreground: 24 15% 20%;
-    --muted: 26 28% 92%; /* soft ecru */
-    --muted-foreground: 24 10% 40%;
-    --accent: 10 40% 90%; /* powder blush */
-    --accent-foreground: 20 15% 20%;
-    --destructive: 0 84% 60%;
+    --popover-foreground: 330 12% 10%;
+    --primary: 330 12% 10%;
+    --primary-foreground: 330 33% 98%;
+    --secondary: 330 28% 95%;
+    --secondary-foreground: 330 14% 18%;
+    --muted: 330 24% 94%;
+    --muted-foreground: 330 10% 42%;
+    --accent: 330 42% 94%;
+    --accent-foreground: 330 35% 28%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 20% 85%;
-    --input: 30 20% 85%;
-    --ring: 24 15% 15%;
-    --radius: 0.25rem;
-    --chart-1: 0 0% 13%;
-    --chart-2: 0 0% 45%;
-    --chart-3: 0 0% 70%;
-    --chart-4: 0 0% 85%;
-    --chart-5: 0 0% 95%;
+    --border: 330 18% 90%;
+    --input: 330 18% 90%;
+    --ring: 330 45% 58%;
+    --chart-1: 330 12% 10%;
+    --chart-2: 330 10% 42%;
+    --chart-3: 330 30% 70%;
+    --chart-4: 330 18% 90%;
+    --chart-5: 330 33% 98%;
   }
 
   .dark {
@@ -61,6 +173,29 @@
   }
 }
 
+/* FAZ 1D: reduced motion + offscreen section paint skip */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-in-up,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-slide-in-up,
+  .animate-float,
+  .animate-pulse-slow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -71,8 +206,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-brand);
+    font-size: var(--text-16);
+    font-weight: var(--weight-body);
+    line-height: var(--lh-body);
+    letter-spacing: var(--tracking-16);
     font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -81,23 +220,109 @@
 
 @layer components {
   .container {
-    @apply max-w-screen-xl mx-auto px-4;
+    @apply mx-auto px-4;
+    max-width: var(--max-width);
   }
-  
+
+  /* Type utilities — Major Second named steps */
+  .type-display {
+    font-family: var(--font-brand);
+    font-size: var(--text-152);
+    font-weight: var(--weight-whisper);
+    line-height: var(--lh-display);
+    letter-spacing: var(--tracking-152);
+  }
+
+  .type-display-md {
+    font-family: var(--font-brand);
+    font-size: var(--text-48);
+    font-weight: var(--weight-thin);
+    line-height: var(--lh-display-md);
+    letter-spacing: var(--tracking-48);
+  }
+
+  .type-title {
+    font-family: var(--font-brand);
+    font-size: var(--text-32);
+    font-weight: var(--weight-ui);
+    line-height: var(--lh-title);
+    letter-spacing: var(--tracking-32);
+  }
+
+  .type-title-sm {
+    font-family: var(--font-brand);
+    font-size: var(--text-23);
+    font-weight: var(--weight-ui);
+    line-height: var(--lh-title-sm);
+    letter-spacing: var(--tracking-23);
+  }
+
+  .type-lead {
+    font-family: var(--font-brand);
+    font-size: var(--text-20);
+    font-weight: var(--weight-ui);
+    line-height: var(--lh-lead);
+    letter-spacing: var(--tracking-20);
+  }
+
+  .type-body {
+    font-family: var(--font-brand);
+    font-size: var(--text-16);
+    font-weight: var(--weight-body);
+    line-height: var(--lh-body);
+    letter-spacing: var(--tracking-16);
+  }
+
+  .type-sm {
+    font-family: var(--font-brand);
+    font-size: var(--text-14);
+    font-weight: var(--weight-body);
+    line-height: var(--lh-sm);
+    letter-spacing: var(--tracking-14);
+  }
+
   .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    @apply inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    border-radius: var(--radius-button);
+    box-shadow: none;
   }
-  
+
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 py-2 px-4;
   }
-  
+
   .btn-outline {
     @apply border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4;
+  }
+
+  .ui-card {
+    border-radius: var(--radius-card);
+    padding: var(--space-card);
+    box-shadow: none;
+  }
+
+  .ui-image {
+    border-radius: var(--radius-image);
+  }
+
+  .ui-tag {
+    border-radius: var(--radius-tag);
+  }
+
+  .ui-input {
+    border-radius: var(--radius-input);
+  }
+
+  .section-gap {
+    margin-block: var(--space-section);
+  }
+
+  .element-gap {
+    gap: var(--space-element);
   }
 }
 
@@ -256,5 +481,10 @@
 
   .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .section-content-visibility {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 520px;
   }
 }

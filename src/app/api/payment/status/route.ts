@@ -4,12 +4,52 @@ import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyz
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
 import { trySendOrderConfirmationEmail } from '@/lib/order-email'
+import { trySendPurchaseOnce } from '@/lib/analytics/meta-capi'
+import { adItemsFromOrder, adValueFromOrder, AD_CURRENCY } from '@/lib/analytics/value'
+import { kurusToTl } from '@/lib/price'
 
 function getOrdersSupabase() {
   try {
     return createSupabaseAdmin()
   } catch (e) {
     console.error('[payment/status] SUPABASE_SERVICE_ROLE_KEY eksik — sipariş/3DS tamamlama RLS yüzünden kırılabilir', e)
+    return null
+  }
+}
+
+async function buildPurchaseAnalytics(
+  supabase: { from: (t: string) => any },
+  orderNumber: string | null,
+  paymentToken: string | null
+) {
+  try {
+    let q = supabase
+      .from('orders')
+      .select(
+        'order_number, items, shipping_cost, total, discount_amount, customer_email, customer_phone'
+      )
+    if (orderNumber) q = q.eq('order_number', orderNumber)
+    else if (paymentToken) q = q.eq('payment_token', paymentToken)
+    else return null
+    const { data } = await q.maybeSingle()
+    if (!data?.order_number) return null
+    const value = adValueFromOrder({
+      items: data.items,
+      shipping_cost: Number(data.shipping_cost) || 0,
+      total: data.total,
+      discount_amount: data.discount_amount,
+    })
+    const contents = adItemsFromOrder({ items: data.items })
+    return {
+      order_number: data.order_number as string,
+      value,
+      currency: AD_CURRENCY,
+      contents,
+      shipping: kurusToTl(Number(data.shipping_cost) || 0),
+      email: data.customer_email || undefined,
+      phone: data.customer_phone || undefined,
+    }
+  } catch {
     return null
   }
 }
@@ -53,31 +93,45 @@ export async function GET(request: NextRequest) {
               orderNumber: orderNumber || null,
               paymentToken: token || null,
             })
-            return NextResponse.json({ success: true, status: 'success', message: 'Payment already completed' })
+            const analytics = await buildPurchaseAnalytics(ordersDb, orderNumber, token)
+            if (analytics?.order_number) trySendPurchaseOnce(analytics.order_number)
+            return NextResponse.json({
+              success: true,
+              status: 'success',
+              message: 'Payment already completed',
+              analytics,
+            })
           }
         } catch {}
       }
     }
 
     if (token?.startsWith('test-token-')) {
-      if (orderNumber) {
-        const ordersDb = getOrdersSupabase()
-        if (ordersDb) {
-          try {
-            await ordersDb
-              .from('orders')
-              .update({ status: 'paid', payment_status: 'completed', payment_token: token })
-              .eq('order_number', orderNumber)
-            await recordCouponUsage(ordersDb, orderNumber, token)
-            await tryCreateNesInvoice(ordersDb, orderNumber, token)
-            await trySendOrderConfirmationEmail(ordersDb, {
-              orderNumber,
-              paymentToken: token,
-            })
-          } catch {}
-        }
+      const ordersDb = getOrdersSupabase()
+      if (orderNumber && ordersDb) {
+        try {
+          await ordersDb
+            .from('orders')
+            .update({ status: 'paid', payment_status: 'completed', payment_token: token })
+            .eq('order_number', orderNumber)
+          await recordCouponUsage(ordersDb, orderNumber, token)
+          await tryCreateNesInvoice(ordersDb, orderNumber, token)
+          await trySendOrderConfirmationEmail(ordersDb, {
+            orderNumber,
+            paymentToken: token,
+          })
+          trySendPurchaseOnce(orderNumber)
+        } catch {}
       }
-      return NextResponse.json({ success: true, status: 'success', message: 'Test payment' })
+      const analytics = ordersDb
+        ? await buildPurchaseAnalytics(ordersDb, orderNumber || null, token || null)
+        : null
+      return NextResponse.json({
+        success: true,
+        status: 'success',
+        message: 'Test payment',
+        analytics,
+      })
     }
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -195,7 +249,26 @@ export async function GET(request: NextRequest) {
       paymentToken: token || null,
     })
 
-    return NextResponse.json({ success: true, status: 'success' })
+    // Purchase: order_number yoksa token ile çöz
+    let purchaseOrderNumber = orderNumber || null
+    if (!purchaseOrderNumber && token) {
+      const { data: paid } = await supabase
+        .from('orders')
+        .select('order_number')
+        .eq('payment_token', token)
+        .eq('payment_status', 'completed')
+        .maybeSingle()
+      purchaseOrderNumber = paid?.order_number || null
+    }
+    trySendPurchaseOnce(purchaseOrderNumber)
+
+    const analytics = await buildPurchaseAnalytics(
+      supabase,
+      purchaseOrderNumber,
+      token || null
+    )
+
+    return NextResponse.json({ success: true, status: 'success', analytics })
   } catch (error: any) {
     console.error('Payment status error:', error)
     return NextResponse.json(

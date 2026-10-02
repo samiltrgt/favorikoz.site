@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import ProductCardModern from './product-card-modern'
+import ProductCard from './product-card'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface PromoBannerData {
@@ -19,15 +19,6 @@ interface PromoBannerData {
   display_order: number
 }
 
-function getCategorySlugFromLink(link: string | undefined): string | null {
-  if (!link || !link.trim()) return null
-  const trimmed = link.trim()
-  const match = trimmed.match(/\/kategori\/([^/?#]+)/)
-  if (match) return match[1]
-  if (trimmed.startsWith('/')) return trimmed.replace(/^\/+/, '').split('/')[0] || null
-  return trimmed.split('/')[0] || null
-}
-
 const PRODUCTS_PER_PAGE = 5
 const MAX_PROMO_PRODUCTS = 5
 const MOBILE_PRODUCTS_COUNT = 3
@@ -40,45 +31,16 @@ const MOBILE_BANNER_FALLBACKS = [
   'https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/banners/mobil-tirnak.jpg',
 ]
 
-export default function PromoBannerCarousel({ products = [] }: { products?: any[] }) {
-  const [banners, setBanners] = useState<PromoBannerData[]>([])
-  const [managedProductsByBanner, setManagedProductsByBanner] = useState<Record<string, any[]>>({})
+interface PromoBannerCarouselProps {
+  banners?: PromoBannerData[]
+  productsByBanner?: any[][]
+}
+
+export default function PromoBannerCarousel({
+  banners = [],
+  productsByBanner = [],
+}: PromoBannerCarouselProps) {
   const [current, setCurrent] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [legacyRes, managedRes] = await Promise.all([
-          fetch('/api/promo-banners', { cache: 'no-store' }),
-          fetch('/api/promo-banner-products', { cache: 'no-store' }),
-        ])
-
-        const legacyJson = await legacyRes.json()
-        const managedJson = await managedRes.json()
-
-        if (managedJson.success && Array.isArray(managedJson.data)) {
-          const grouped: Record<string, any[]> = {}
-          ;(managedJson.data as any[]).forEach((row) => {
-            if (!row.banner_id || !row.products) return
-            if (!grouped[row.banner_id]) grouped[row.banner_id] = []
-            grouped[row.banner_id].push(row.products)
-          })
-          setManagedProductsByBanner(grouped)
-        }
-
-        if (legacyJson.success && Array.isArray(legacyJson.data) && legacyJson.data.length > 0) {
-          setBanners(legacyJson.data)
-          setCurrent(0)
-        }
-      } catch (e) {
-        console.error('PromoBannerCarousel load error:', e)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    load()
-  }, [])
 
   const goTo = useCallback((index: number) => {
     setCurrent(Math.max(0, Math.min(index, banners.length - 1)))
@@ -90,24 +52,7 @@ export default function PromoBannerCarousel({ products = [] }: { products?: any[
     return isTirnak ? '/kategori/tirnak' : (b.link?.trim() || '')
   }, [])
 
-  const getProductsForBanner = useCallback(
-    (b: PromoBannerData) => {
-      const managed = managedProductsByBanner[b.id]
-      if (managed && managed.length > 0) return managed.slice(0, MAX_PROMO_PRODUCTS)
-      const link = getBannerLink(b)
-      const slug = getCategorySlugFromLink(link) || (b.image?.includes('bannertirnak') || b.title?.toUpperCase() === 'TIRNAK ÜRÜNLERİMİZ' ? 'tirnak' : null)
-      const list = slug ? products.filter((p: any) => p.category_slug === slug) : products
-      return (list.length > 0 ? list : products).slice(0, MAX_PROMO_PRODUCTS)
-    },
-    [products, getBannerLink, managedProductsByBanner]
-  )
-
-  const productsByBanner = useMemo(
-    () => banners.map((b) => getProductsForBanner(b)),
-    [banners, getProductsForBanner]
-  )
-
-  if (isLoading || banners.length === 0) return null
+  if (banners.length === 0) return null
 
   const totalBanners = banners.length
   const slidePercent = totalBanners > 0 ? 100 / totalBanners : 100
@@ -288,11 +233,11 @@ function PromoCategoryProductsByBanner({
                     if (!product?.id) return <div key={index} />
                     return (
                       <div key={product.id} className="min-w-0">
-                        <ProductCardModern
+                        <ProductCard
                           product={product}
                           index={pageIndex * MAX_PROMO_PRODUCTS + index}
                           showBrandBadge={false}
-                          compact
+                          variant="compact"
                         />
                       </div>
                     )

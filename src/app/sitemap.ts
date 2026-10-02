@@ -51,6 +51,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('categories')
       .select('slug, parent_slug')
       .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     const categoryEntries: MetadataRoute.Sitemap = []
     if (categoriesData?.length) {
@@ -85,6 +87,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .is('deleted_at', null)
       .eq('in_stock', true)
       .gt('stock_quantity', 0)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     const productEntries: MetadataRoute.Sitemap = (productsData || []).map((p) => ({
       url: `${BASE_URL}/urun/${p.slug}`,

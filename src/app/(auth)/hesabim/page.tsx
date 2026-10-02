@@ -6,6 +6,7 @@ import { User, Mail, Phone, Package, LogOut, Edit2, Save } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import Link from 'next/link'
+import { kurusToTl } from '@/lib/price'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -272,7 +273,7 @@ export default function ProfilePage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">₺{(order.total / 100).toFixed(2)}</p>
+                      <p className="font-semibold text-gray-900">₺{kurusToTl(order.total).toFixed(2)}</p>
                       <p className="text-sm text-gray-500">{order.status}</p>
                     </div>
                   </div>

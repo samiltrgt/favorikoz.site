@@ -1,9 +1,22 @@
 import type { Metadata, Viewport } from 'next'
+import { Suspense } from 'react'
+import { Onest } from 'next/font/google'
 import { GoogleTagManager } from '@next/third-parties/google'
 import { getSiteUrl } from '@/lib/site-url'
 import { getPublicCategories } from '@/lib/categories-server'
 import { CategoriesProvider } from '@/components/categories-provider'
+import { SmoothScroll } from '@/components/smooth-scroll'
+import ConsentBanner, { consentDefaultSnippet } from '@/components/consent-banner'
+import AnalyticsRouteListener from '@/components/analytics-route-listener'
 import './globals.css'
+
+const onest = Onest({
+  subsets: ['latin', 'latin-ext'],
+  weight: 'variable',
+  display: 'swap',
+  variable: '--font-onest',
+  fallback: ['Inter', 'DM Sans', 'system-ui', 'sans-serif'],
+})
 
 const siteUrl = getSiteUrl()
 const GTM_ID = 'GTM-57BVM8H7'
@@ -98,14 +111,25 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="tr">
-      <head />
-      <body>
+    <html lang="tr" className={onest.variable}>
+      <head>
+        {/* Consent Mode v2 varsayılan DENIED — GTM'den ÖNCE */}
+        <script
+          dangerouslySetInnerHTML={{ __html: consentDefaultSnippet() }}
+        />
+      </head>
+      <body className={onest.className}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <CategoriesProvider categories={menuCategories}>{children}</CategoriesProvider>
+        <SmoothScroll>
+          <CategoriesProvider categories={menuCategories}>{children}</CategoriesProvider>
+        </SmoothScroll>
+        <Suspense fallback={null}>
+          <AnalyticsRouteListener />
+        </Suspense>
+        <ConsentBanner />
       </body>
       <GoogleTagManager gtmId={GTM_ID} />
     </html>

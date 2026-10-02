@@ -3,6 +3,7 @@ import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
 import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 import { trySendOrderConfirmationEmail } from '@/lib/order-email'
+import { trySendPurchaseOnce } from '@/lib/analytics/meta-capi'
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
@@ -182,6 +183,19 @@ export async function POST(request: NextRequest) {
         orderNumber: orderNumber || null,
         paymentToken: conversationId,
       })
+
+      // Purchase: sunucu tek kaynak; kilit ile çift gönderim engellenir
+      let purchaseOrderNumber = orderNumber || null
+      if (!purchaseOrderNumber && conversationId) {
+        const { data: paid } = await supabase
+          .from('orders')
+          .select('order_number')
+          .eq('payment_token', conversationId)
+          .eq('payment_status', 'completed')
+          .maybeSingle()
+        purchaseOrderNumber = paid?.order_number || null
+      }
+      trySendPurchaseOnce(purchaseOrderNumber)
 
       const qs = new URLSearchParams({
         status: 'success',

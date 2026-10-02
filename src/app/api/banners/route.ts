@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { revalidateProductCatalog } from '@/lib/product-cache'
+import { HOME_LAYOUT_LINK } from '@/lib/home-layout'
 
 // Helper function to check admin access
 async function checkAdminAccess(supabase: any) {
@@ -30,6 +32,7 @@ export async function GET() {
       .from('banners')
       .select('*')
       .order('display_order', { ascending: true })
+      .order('id', { ascending: true })
     
     if (error) {
       console.error('Supabase error:', error)
@@ -39,7 +42,10 @@ export async function GET() {
       )
     }
     
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({
+      success: true,
+      data: (data || []).filter((banner) => banner.link !== HOME_LAYOUT_LINK),
+    })
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(
@@ -86,6 +92,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    revalidateProductCatalog()
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('API error:', error)

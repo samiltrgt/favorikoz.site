@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
-import ProductCardModern from './product-card-modern'
+import ProductCard from './product-card'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface ProductsCarouselProps {
@@ -16,34 +16,11 @@ export default function ProductsCarousel({
   title = 'ÜRÜNLER',
   viewAllLink = '/tum-urunler',
 }: ProductsCarouselProps) {
-  const [managedProducts, setManagedProducts] = useState<any[] | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    const loadManaged = async () => {
-      try {
-        const res = await fetch('/api/home-carousel-products', { cache: 'no-store' })
-        const json = await res.json()
-        if (cancelled) return
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const mapped = (json.data as any[]).map((row) => row.products).filter(Boolean)
-          setManagedProducts(mapped)
-          return
-        }
-      } catch {}
-      if (!cancelled) setManagedProducts([])
-    }
-    loadManaged()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const sourceProducts = managedProducts && managedProducts.length > 0 ? managedProducts : products
-  const displayProducts = sourceProducts.slice(0, 20)
+  const displayProducts = products.slice(0, 20)
 
   const scroll = (dir: 'left' | 'right') => {
     const el = scrollRef.current
@@ -80,11 +57,6 @@ export default function ProductsCarousel({
 
   return (
     <section className="relative py-12 sm:py-16 bg-white overflow-hidden">
-      <div
-        className="absolute top-0 left-0 right-0 h-56 pointer-events-none bg-gradient-to-b from-[#AEAFAF] to-white z-0"
-        aria-hidden
-      />
-
       <div className="container max-w-7xl relative z-10">
         <div className="flex items-center justify-between gap-4 mb-2">
           <h2 className="text-2xl sm:text-3xl font-light text-black tracking-tight">
@@ -133,7 +105,7 @@ export default function ProductsCarousel({
                 key={product.id}
                 className="flex-shrink-0 w-[72vw] sm:w-72 md:w-80 snap-start"
               >
-                <ProductCardModern
+                <ProductCard
                   product={product}
                   index={index}
                   showBrandBadge={false}

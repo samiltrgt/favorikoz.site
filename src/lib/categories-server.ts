@@ -1,4 +1,4 @@
-import { createSupabaseAdmin } from '@/lib/supabase/server'
+import { createSupabaseAnon } from '@/lib/supabase/server'
 import { loadCategorySortConfig, MENU_SORT_SLUG } from '@/lib/category-sort-config'
 import { buildCategoryTree, type CategoryTreeRow } from '@/lib/category-tree'
 
@@ -8,7 +8,8 @@ export async function getPublicCategories(): Promise<{
   tree: PublicCategoryNode[]
   flat: CategoryTreeRow[]
 }> {
-  const supabase = createSupabaseAdmin()
+  // Public reads via anon + RLS (categories_public_read); no service_role.
+  const supabase = createSupabaseAnon()
   const sortConfig = await loadCategorySortConfig(supabase)
 
   const { data, error } = await supabase
@@ -16,6 +17,7 @@ export async function getPublicCategories(): Promise<{
     .select('slug, name, description, parent_slug, deleted_at')
     .is('deleted_at', null)
     .order('name', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) throw error
 

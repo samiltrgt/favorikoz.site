@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     if (!isAdminScope) {
       query = query.eq('is_active', true)

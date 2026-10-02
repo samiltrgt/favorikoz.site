@@ -22,6 +22,7 @@ export async function GET() {
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
     
     if (error) {
       console.error('Orders error:', error)

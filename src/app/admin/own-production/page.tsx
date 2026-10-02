@@ -34,9 +34,30 @@ export default function OwnProductionAdminPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [ownProducts, setOwnProducts] = useState<OwnProductionItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [section, setSection] = useState({
+    title: 'Fontenay Paris',
+    subtitle: '',
+    href: '/tum-urunler',
+    cta: 'Tümünü Gör',
+  })
+  const [sectionMessage, setSectionMessage] = useState('')
 
   useEffect(() => {
     loadData()
+    fetch('/api/admin/home-layout', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success && result.data?.fontenay) {
+          const fontenay = result.data.fontenay
+          setSection({
+            title: fontenay.title,
+            subtitle: fontenay.subtitle,
+            href: fontenay.href,
+            cta: fontenay.cta,
+          })
+        }
+      })
+      .catch((error) => console.error(error))
   }, [])
 
   const loadData = async () => {
@@ -106,15 +127,69 @@ export default function OwnProductionAdminPage() {
             </Link>
             <div>
               <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                Exclusive Collection (Kendi Üretimimiz)
+                Fontenay Paris
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Anasayfadaki &quot;Exclusive Collection&quot; bölümünde gösterilecek ürünleri seçin
+                Ana sayfanın altındaki Fontenay Paris şeridinde görünen ürünler
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      <form
+        className="grid grid-cols-1 gap-4 rounded-lg bg-white p-6 shadow md:grid-cols-2"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          setSectionMessage('')
+          const response = await fetch('/api/admin/home-layout', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fontenay: section }),
+          })
+          const result = await response.json()
+          setSectionMessage(result.success ? 'Bölüm metni güncellendi.' : result.error || 'Kaydedilemedi')
+        }}
+      >
+        <label className="text-sm text-gray-700">
+          Başlık
+          <input
+            value={section.title}
+            onChange={(event) => setSection({ ...section, title: event.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm text-gray-700">
+          Buton yazısı
+          <input
+            value={section.cta}
+            onChange={(event) => setSection({ ...section, cta: event.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm text-gray-700 md:col-span-2">
+          Alt başlık
+          <input
+            value={section.subtitle}
+            onChange={(event) => setSection({ ...section, subtitle: event.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm text-gray-700 md:col-span-2">
+          Buton linki
+          <input
+            value={section.href}
+            onChange={(event) => setSection({ ...section, href: event.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+        <div className="flex items-center gap-3 md:col-span-2">
+          <button type="submit" className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white">
+            Metni kaydet
+          </button>
+          {sectionMessage && <p className="text-sm text-gray-600">{sectionMessage}</p>}
+        </div>
+      </form>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white shadow rounded-lg">

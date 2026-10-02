@@ -8,6 +8,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { getCart, setCart } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
+import { formatTRY, toDisplayPrice } from '@/lib/price'
 
 // UI tipinde sepet öğesi
 type UIItem = {
@@ -283,11 +284,11 @@ export default function CartPage() {
                       <div className="flex items-center gap-3">
                         {item.originalPrice && (
                           <span className="text-sm text-gray-500 line-through">
-                            ₺{(item.originalPrice / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₺{formatTRY(toDisplayPrice(item.originalPrice))}
                           </span>
                         )}
                         <span className="text-lg lg:text-xl font-light text-black">
-                          ₺{(item.price / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₺{formatTRY(toDisplayPrice(item.price))}
                         </span>
                       </div>
 
@@ -350,34 +351,34 @@ export default function CartPage() {
 
                 <div className="flex justify-between text-gray-600">
                   <span>Ara Toplam</span>
-                  <span>₺{(subtotal / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>₺{formatTRY(toDisplayPrice(subtotal))}</span>
                 </div>
                 
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>İndirim</span>
-                    <span>-₺{(discount / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>-₺{formatTRY(toDisplayPrice(discount))}</span>
                   </div>
                 )}
 
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Kupon İndirimi</span>
-                    <span>-₺{(couponDiscount / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>-₺{formatTRY(toDisplayPrice(couponDiscount))}</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between text-gray-600">
                   <span>Kargo</span>
                   <span className={shipping === 0 ? 'text-green-600' : ''}>
-                    {shipping === 0 ? 'Ücretsiz' : `₺${(shipping / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    {shipping === 0 ? 'Ücretsiz' : `₺${formatTRY(toDisplayPrice(shipping))}`}
                   </span>
                 </div>
                 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-xl font-light text-black">
                     <span>Toplam</span>
-                    <span>₺{(total / 10).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>₺{formatTRY(toDisplayPrice(total))}</span>
                   </div>
                 </div>
               </div>
@@ -398,7 +399,7 @@ export default function CartPage() {
                     ></div>
                   </div>
                   <p className="text-xs text-orange-700">
-                    ₺{((FREE_SHIPPING_THRESHOLD - subtotal) / 10).toFixed(2)} daha ekleyin
+                    ₺{toDisplayPrice(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} daha ekleyin
                   </p>
                 </div>
               )}

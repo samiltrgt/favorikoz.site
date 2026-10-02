@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAnon, createSupabaseServer } from '@/lib/supabase/server'
+import { PRIVATE_NO_STORE, revalidateProductCatalog } from '@/lib/product-cache'
+import { dbToDisplay, displayToDb } from '@/lib/price'
 
 type CategoryLookupRow = {
   slug: string
@@ -56,7 +58,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createSupabaseServer()
+    const supabase = createSupabaseAnon()
     
     const { data, error } = await supabase
       .from('products')
@@ -72,14 +74,16 @@ export async function GET(
       )
     }
     
-    // Convert price from kuruş to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: (data.price / 100) / 10, // Kuruş → TL → /10
-      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
+      price: dbToDisplay(data.price),
+      original_price: data.original_price ? dbToDisplay(data.original_price) : null,
     }
     
-    return NextResponse.json({ success: true, data: product })
+    return NextResponse.json(
+      { success: true, data: product },
+      { headers: { 'Cache-Control': PRIVATE_NO_STORE } }
+    )
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(
@@ -149,16 +153,14 @@ export async function PUT(
     // Stock quantity
     if (body.stock_quantity !== undefined) updateData.stock_quantity = body.stock_quantity
     
-    // Price conversion (TL/10 → kuruş)
-    // Admin panelden gelen fiyat zaten /10 formatında, bu yüzden *1000 yapıyoruz (TL/10 * 10 * 100 = kuruş)
     if (body.price !== undefined) {
-      updateData.price = Math.round(body.price * 1000)
+      updateData.price = displayToDb(body.price)
     }
     if (body.original_price !== undefined) {
-      updateData.original_price = body.original_price ? Math.round(body.original_price * 1000) : null
+      updateData.original_price = body.original_price ? displayToDb(body.original_price) : null
     }
     if (body.originalPrice !== undefined) {
-      updateData.original_price = body.originalPrice ? Math.round(body.originalPrice * 1000) : null
+      updateData.original_price = body.originalPrice ? displayToDb(body.originalPrice) : null
     }
     
     const { data, error } = await supabase
@@ -175,12 +177,13 @@ export async function PUT(
       )
     }
     
-    // Convert back to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: (data.price / 100) / 10, // Kuruş → TL → /10
-      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
+      price: dbToDisplay(data.price),
+      original_price: data.original_price ? dbToDisplay(data.original_price) : null,
     }
+
+    revalidateProductCatalog()
     
     return NextResponse.json({ success: true, data: product })
   } catch (error) {
@@ -222,6 +225,8 @@ export async function DELETE(
       )
     }
     
+    revalidateProductCatalog()
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API error:', error)

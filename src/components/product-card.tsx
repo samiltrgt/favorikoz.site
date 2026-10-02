@@ -1,210 +1,317 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import ProductImage from '@/components/product-image'
-import { Heart, ShoppingCart, Star, Truck, RotateCcw } from 'lucide-react'
-import { toggleFavorite, isFavorite } from '@/lib/favorites'
+import { Check, Star } from 'lucide-react'
+import { addToCart } from '@/lib/cart'
+import { formatTRY, toCartPrice } from '@/lib/price'
+import { adItemsFromCart, adValueFromCart } from '@/lib/analytics/value'
+import { trackAddToCart } from '@/lib/analytics/datalayer'
+import './product-card.css'
 
-interface ProductCardProps {
-  product: {
-    id: string
-    slug: string
-    name: string
-    brand: string
-    price: number
-    original_price?: number
-    image: string
-    rating: number
-    reviews_count: number
-    is_new?: boolean
-    is_best_seller?: boolean
-    discount?: number
-    in_stock: boolean
-  }
+export interface ProductCardProduct {
+  id: string
+  slug: string
+  name: string
+  brand?: string
+  price: number
+  original_price?: number | null
+  image: string
+  rating?: number
+  reviews_count?: number
+  in_stock?: boolean
+  is_new?: boolean
+  is_best_seller?: boolean
+  images?: string[] | null
+  subtitle?: string
+  /** Gerçek ödül rozeti görselleri; yoksa uydurma rozet üretilmez */
+  award_badges?: string[] | null
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
-  const [isFavoriteState, setIsFavoriteState] = useState(false)
-  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+export type ProductCardVariant = 'grid' | 'list' | 'compact'
+
+interface ProductCardProps {
+  product: ProductCardProduct
+  variant?: ProductCardVariant
+  index?: number
+  showBrandBadge?: boolean
+}
+
+export default function ProductCard({
+  product,
+  variant = 'grid',
+  index = 0,
+}: ProductCardProps) {
+  const compact = variant === 'compact'
   const [isCartLoading, setIsCartLoading] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  const router = useRouter()
+  const [justAdded, setJustAdded] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const addedTimer = useRef<number | null>(null)
+  const [fadeIn, setFadeIn] = useState(false)
 
-  // Load favorite status on mount
   useEffect(() => {
-    const loadFavoriteStatus = async () => {
-      try {
-        const fav = await isFavorite(product.id)
-        setIsFavoriteState(fav)
-      } catch (err) {
-        console.error('Error loading favorite status:', err)
-      }
+    return () => {
+      if (addedTimer.current) window.clearTimeout(addedTimer.current)
     }
-    loadFavoriteStatus()
-  }, [product.id])
+  }, [])
 
-  const handleAddToCart = async () => {
-    if (!product.in_stock) {
-      return // Stokta yoksa sepete ekleme
-    }
-    
-    setIsCartLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-    setIsCartLoading(false)
-    // TODO: Add to cart logic
-  }
+  useEffect(() => {
+    if (variant === 'list') return
+    const el = cardRef.current
+    if (!el || fadeIn) return
 
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click
-    setIsFavoriteLoading(true)
-    
-    try {
-      const result = await toggleFavorite(product.id)
-      if (result.success) {
-        setIsFavoriteState(result.isFavorite)
-      } else {
-        // If error is about authentication, show message
-        if (result.error?.includes('giriş')) {
-          if (confirm('Favorilere eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?')) {
-            window.location.href = '/giris'
-          }
-        } else {
-          console.error('Error toggling favorite:', result.error)
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setFadeIn(true)
+          io.disconnect()
         }
+      },
+      { rootMargin: '80px 0px', threshold: 0.01 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [fadeIn, variant])
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (product.in_stock === false) return
+    setIsCartLoading(true)
+    try {
+      const cartItem = {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: product.image,
+        price: toCartPrice(product.price),
+        qty: 1,
       }
-    } catch (err) {
-      console.error('Error toggling favorite:', err)
+      addToCart(cartItem)
+      const contents = adItemsFromCart([cartItem])
+      trackAddToCart({
+        value: adValueFromCart([cartItem]),
+        contents,
+        items: contents.map((c) => ({
+          item_id: c.id,
+          item_name: product.name,
+          quantity: c.quantity,
+          price: c.item_price,
+        })),
+      })
+      setJustAdded(true)
+      if (addedTimer.current) window.clearTimeout(addedTimer.current)
+      addedTimer.current = window.setTimeout(() => setJustAdded(false), 1100)
     } finally {
-      setIsFavoriteLoading(false)
+      setIsCartLoading(false)
     }
   }
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Eğer tıklanan element bir button veya link ise, kartın tıklanmasını engelle
-    const target = e.target as HTMLElement
-    if (target.closest('button') || target.closest('a')) {
-      return
-    }
-    
-    // Kartın tıklanması durumunda ürün sayfasına git
-    router.push(`/urun/${product.slug}`)
+  const discount =
+    product.original_price && product.original_price > product.price
+      ? Math.round(
+          ((product.original_price - product.price) / product.original_price) * 100
+        )
+      : 0
+
+  if (variant === 'list') {
+    return (
+      <div
+        className="bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
+        data-testid="product-card"
+      >
+        <Link href={`/urun/${product.slug}`} className="flex gap-6 p-4">
+          <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-image bg-gray-50">
+            <ProductImage
+              src={product.image}
+              alt={product.name}
+              fill
+              coverClassName="object-cover"
+              containClassName="object-cover"
+              sizes="80px"
+            />
+          </div>
+          <div className="flex-1 flex items-center justify-between min-w-0">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mb-1">
+                <span aria-hidden>🚚</span> Bugün Kargoda
+              </div>
+              <h3 className="font-medium text-black text-sm mb-1 truncate">{product.name}</h3>
+              {product.brand && (
+                <p className="text-gray-400 text-xs mb-2 uppercase tracking-wide">{product.brand}</p>
+              )}
+              <div
+                className="flex items-center gap-1"
+                role="img"
+                aria-label={`5 üzerinden ${product.rating || 0}`}
+              >
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    aria-hidden
+                    className={`w-3 h-3 ${
+                      i < Math.floor(product.rating || 0)
+                        ? 'text-black'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-xs text-gray-400 ml-1" aria-hidden>
+                  ({product.reviews_count ?? 0})
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <div className="text-right">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-light text-black">
+                    ₺{formatTRY(product.price)}
+                  </span>
+                  {product.original_price != null &&
+                    product.original_price > product.price && (
+                      <span className="text-xs text-gray-400 line-through">
+                        ₺{formatTRY(product.original_price)}
+                      </span>
+                    )}
+                </div>
+                {discount > 0 && (
+                  <span className="text-xs text-red-500">-{discount}%</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={product.in_stock === false || isCartLoading}
+                className="bg-brand-rose text-white px-6 py-2 text-xs hover:bg-brand-rose-deep transition-colors uppercase tracking-wide rounded-button disabled:bg-brand-bloom disabled:text-muted-foreground disabled:cursor-not-allowed"
+              >
+                {product.in_stock === false ? 'Stok Yok' : isCartLoading ? '...' : 'Ekle'}
+              </button>
+            </div>
+          </div>
+        </Link>
+      </div>
+    )
   }
+
+  const cornerLabel =
+    discount > 0
+      ? `SAVE ${discount}%`
+      : product.is_new
+        ? 'NEW'
+        : product.is_best_seller
+          ? 'BESTSELLER'
+          : null
+
+  const brandLine =
+    product.brand &&
+    product.brand.trim().toLowerCase() !== product.name.trim().toLowerCase()
+      ? product.brand
+      : ''
+  const subtitle = product.subtitle?.trim() || brandLine
+  const ratingValue = product.rating || 0
+  const outOfStock = product.in_stock === false
+  const awards = (product.award_badges || []).filter(Boolean)
 
   return (
-    <div 
-      className="group bg-white cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
+    <article
+      ref={cardRef}
+      className={`pcard${compact ? ' pcard--compact' : ''}${fadeIn ? ' animate-fade-in-up' : ''}`}
+      style={fadeIn ? { animationDelay: `${index * 50}ms` } : undefined}
       data-testid="product-card"
     >
-      {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
-        <Link href={`/urun/${product.slug}`}>
+      <div className="pcard__media">
+        <Link
+          href={`/urun/${product.slug}`}
+          aria-label={product.name}
+          className="pcard__media-link"
+        >
           <ProductImage
             src={product.image}
             alt={product.name}
             fill
-            coverClassName="object-cover group-hover:scale-105 transition-transform duration-500"
-            containClassName="object-contain p-2 transition-transform duration-500"
-            sizes="(max-width: 640px) 50vw, (max-width: 1200px) 33vw, 280px"
+            coverClassName="object-cover"
+            containClassName="object-cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
           />
         </Link>
-        
-        {/* Badges - Minimal style */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.is_new && (
-            <span className="bg-black text-white text-xs px-2 py-1 uppercase tracking-wide">New</span>
-          )}
-          {product.is_best_seller && (
-            <span className="bg-orange-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
-              Best Seller
-            </span>
-          )}
-          {product.original_price && product.original_price > product.price && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 uppercase tracking-wide">
-              -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
-            </span>
-          )}
-        </div>
 
-        {/* Quick actions - Hidden by default, show on hover */}
-        <div className={`absolute top-3 right-3 flex flex-col gap-2 transition-all duration-300 ${
-          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-        }`}>
-          <button
-            onClick={handleToggleFavorite}
-            disabled={isFavoriteLoading}
-            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title={isFavoriteState ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-          >
-            <Heart 
-              className={`w-4 h-4 transition-all ${
-                isFavoriteState 
-                  ? 'fill-red-500 text-red-500' 
-                  : 'text-black'
-              } ${isFavoriteLoading ? 'animate-pulse' : ''}`} 
-            />
-          </button>
-          <button 
-            className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleAddToCart()
-            }}
-            disabled={!product.in_stock || isCartLoading}
-            title="Sepete ekle"
-          >
-            <ShoppingCart className="w-4 h-4 text-black" />
-          </button>
-        </div>
+        {cornerLabel && <span className="pcard__label">{cornerLabel}</span>}
 
-        {/* Stock Status */}
-        {!product.in_stock && (
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-            <span className="text-black text-sm font-light uppercase tracking-wide">Out of Stock</span>
+        {awards.length > 0 && (
+          <div className="pcard__awards" aria-hidden>
+            {awards.map((src) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={src} src={src} alt="" className="pcard__award" />
+            ))}
           </div>
         )}
+
+        {outOfStock && (
+          <div className="pcard__oos">
+            <span>Stok Yok</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={isCartLoading || outOfStock}
+          aria-label={justAdded ? 'Sepete eklendi' : 'Sepete ekle'}
+          className={`pcard__add${justAdded ? ' pcard__add--added' : ''}`}
+        >
+          <span key={justAdded ? 'added' : 'idle'} className="pcard__add-label">
+            {outOfStock ? (
+              'Stok Yok'
+            ) : justAdded ? (
+              <>
+                <Check className="pcard__add-check" strokeWidth={2.5} aria-hidden />
+                Eklendi
+              </>
+            ) : (
+              'Sepete Ekle'
+            )}
+          </span>
+        </button>
       </div>
 
-      {/* Product Info - Minimal Zara style */}
-      <div className="p-3 space-y-1">
-        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-          <span aria-hidden>🚚</span> Bugün Kargoda
-        </div>
-        <Link href={`/urun/${product.slug}`}>
-          <h3 className="font-light text-black text-sm leading-tight hover:text-gray-600 transition-colors">
+      <div className="pcard__info">
+        <div className="pcard__row">
+          <Link href={`/urun/${product.slug}`} className="pcard__name">
             {product.name}
-          </h3>
-        </Link>
-        <p className="text-gray-400 text-xs uppercase tracking-wide">{product.brand}</p>
-        
-        {/* Rating - Minimal */}
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-3 h-3 ${
-                i < Math.floor(product.rating)
-                  ? 'text-black'
-                  : 'text-gray-300'
-              }`}
-            />
-          ))}
-          <span className="text-xs text-gray-400 ml-1">({product.reviews_count})</span>
+          </Link>
+          <div className="pcard__price-col">
+            <div className="pcard__price">₺{formatTRY(product.price)}</div>
+            {product.original_price != null &&
+              product.original_price > product.price && (
+                <div className="pcard__price-was">
+                  ₺{formatTRY(product.original_price)}
+                </div>
+              )}
+          </div>
         </div>
 
-        {/* Price - Clean and minimal */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-light text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          {product.original_price && (
-            <span className="text-xs text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          )}
+        {subtitle ? <p className="pcard__desc">{subtitle}</p> : null}
+
+        <div
+          className="pcard__rating"
+          role="img"
+          aria-label={`5 üzerinden ${ratingValue}`}
+        >
+          <div className="pcard__stars" aria-hidden>
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className="pcard__star pcard__star--on"
+                strokeWidth={0}
+              />
+            ))}
+          </div>
+          <span className="pcard__count" aria-hidden>
+            ({product.reviews_count || 0})
+          </span>
         </div>
       </div>
-    </div>
+    </article>
   )
 }

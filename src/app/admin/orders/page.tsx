@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Filter, Package, Truck, CheckCircle, XCircle, Clock, Eye, Edit2, X, Printer } from 'lucide-react'
 import Link from 'next/link'
+import { formatTRY, kurusToTl } from '@/lib/price'
 
 interface Order {
   id: string
@@ -132,12 +133,7 @@ export default function AdminOrdersPage() {
     })
   }
 
-  const formatPrice = (price: number) => {
-    return (price / 100).toLocaleString('tr-TR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })
-  }
+  const formatPrice = (price: number) => formatTRY(kurusToTl(price))
 
   const getStatusStats = () => {
     return {

@@ -14,7 +14,7 @@ export interface FrameDraw {
 
 /**
  * Common renderer contract. `HeroSection`/`useSpriteScroll` depend only on this
- * interface, so frame-sequence and sprite-sheet sources are interchangeable.
+ * interface so frame-sequence sources stay swappable.
  */
 export interface ISequenceRenderer {
   readonly frameCount: number
@@ -32,7 +32,9 @@ export abstract class BaseCanvasRenderer implements ISequenceRenderer {
   protected disposed = false
 
   constructor(protected readonly canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext('2d', { alpha: true })
+    // Opaque scene: alpha:false lets the compositor skip per-pixel blending, and
+    // desynchronized reduces present latency for scroll-driven redraws.
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true })
     if (!ctx) {
       throw new Error('Canvas 2D context is unavailable')
     }
@@ -81,7 +83,8 @@ export abstract class BaseCanvasRenderer implements ISequenceRenderer {
     const dx = (cssWidth - dw) / 2
     const dy = (cssHeight - dh) / 2
 
-    this.ctx.clearRect(0, 0, cssWidth, cssHeight)
+    // cover scaling guarantees the frame fully overpaints the canvas, so with an
+    // opaque (alpha:false) context there is nothing to clear between frames.
     this.ctx.drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh)
   }
 }

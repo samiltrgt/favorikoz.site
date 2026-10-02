@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAnon, createSupabaseServer } from '@/lib/supabase/server'
+import {
+  PRIVATE_NO_STORE,
+  PUBLIC_CATALOG_CACHE_CONTROL,
+  revalidateProductCatalog,
+} from '@/lib/product-cache'
+import { dbToDisplay, displayToDb } from '@/lib/price'
+
+function catalogJson(body: unknown, status = 200, cache: 'public' | 'private' = 'private') {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      'Cache-Control': cache === 'public' ? PUBLIC_CATALOG_CACHE_CONTROL : PRIVATE_NO_STORE,
+    },
+  })
+}
 
 type CategoryLookupRow = {
   slug: string
@@ -31,31 +45,29 @@ async function resolveRootCategorySlug(supabase: any, categorySlug: string) {
   return null
 }
 
-async function isAdminRequest(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
+async function isAdminRequest(supabase: { auth: { getUser: () => Promise<any> }; from: (table: string) => any }) {
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (profile?.role === 'admin') return true
-  }
+  if (!user) return false
 
-  const cookieStore = await cookies()
-  return Boolean(cookieStore.get('adminAuthV2')?.value)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  return profile?.role === 'admin'
 }
 
 function mapProductPrices(products: any[]) {
   return products.map((p) => ({
     ...p,
-    price: (p.price / 100) / 10,
-    original_price: p.original_price ? (p.original_price / 100) / 10 : null,
+    price: dbToDisplay(p.price),
+    original_price: p.original_price ? dbToDisplay(p.original_price) : null,
   }))
 }
 
 async function fetchAllProducts(
-  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
+  supabase: { from: (table: string) => any },
   applyFilters: (query: any) => any
 ) {
   const pageSize = 1000
@@ -65,7 +77,10 @@ async function fetchAllProducts(
   while (true) {
     let query = supabase.from('products').select('*').is('deleted_at', null)
     query = applyFilters(query)
-    query = query.order('created_at', { ascending: false }).range(from, from + pageSize - 1)
+    query = query
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1)
 
     const { data, error } = await query
     if (error) throw error
@@ -82,7 +97,6 @@ async function fetchAllProducts(
 // GET /api/products - Get all products
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServer()
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
@@ -93,6 +107,8 @@ export async function GET(request: NextRequest) {
     const view = searchParams.get('view') // view=counts -> lightweight response for header counts
     const idsParam = searchParams.get('ids') // comma-separated IDs (e.g. for favorites page)
     const scopeAdmin = searchParams.get('scope') === 'admin' // Admin paneli: tüm ürünler (stok filtresi yok)
+    const supabase = scopeAdmin ? await createSupabaseServer() : createSupabaseAnon()
+    const cacheMode: 'public' | 'private' = scopeAdmin ? 'private' : 'public'
     
     const ids = idsParam
       ? idsParam.split(',').map((s) => s.trim()).filter(Boolean)
@@ -120,7 +136,10 @@ export async function GET(request: NextRequest) {
         if (!skipStockFilter) {
           countsQuery = countsQuery.eq('in_stock', true).gt('stock_quantity', 0)
         }
-        countsQuery = countsQuery.range(fromIdx, fromIdx + pageSize - 1)
+        countsQuery = countsQuery
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: true })
+          .range(fromIdx, fromIdx + pageSize - 1)
 
         const { data, error } = await countsQuery
         if (error) {
@@ -130,12 +149,13 @@ export async function GET(request: NextRequest) {
             code: error.code,
             hint: error.hint,
           })
-          return NextResponse.json(
+          return catalogJson(
             {
               success: false,
               error: error.message || 'Failed to fetch products',
             },
-            { status: 500 }
+            500,
+            'private'
           )
         }
 
@@ -151,9 +171,10 @@ export async function GET(request: NextRequest) {
         .select('slug, parent_slug')
         .is('deleted_at', null)
       if (catError) {
-        return NextResponse.json(
+        return catalogJson(
           { success: false, error: catError.message || 'Failed to load categories' },
-          { status: 500 }
+          500,
+          'private'
         )
       }
 
@@ -188,7 +209,7 @@ export async function GET(request: NextRequest) {
       const counts: Record<string, number> = {}
       for (const c of cats || []) counts[c.slug] = aggregate(c.slug, new Set())
 
-      return NextResponse.json({ success: true, counts, total: rows.length })
+      return catalogJson({ success: true, counts, total: rows.length }, 200, cacheMode)
     }
 
     if (fetchByIds) {
@@ -204,7 +225,7 @@ export async function GET(request: NextRequest) {
           code: error.code,
           hint: error.hint,
         })
-        return NextResponse.json(
+        return catalogJson(
           {
             success: false,
             error: error.message || 'Failed to fetch products',
@@ -214,10 +235,11 @@ export async function GET(request: NextRequest) {
               details: error.details,
             } : undefined,
           },
-          { status: 500 }
+          500,
+          'private'
         )
       }
-      return NextResponse.json({ success: true, data: mapProductPrices(data || []) })
+      return catalogJson({ success: true, data: mapProductPrices(data || []) }, 200, cacheMode)
     }
 
     const applyListFilters = (baseQuery: any) => {
@@ -238,11 +260,14 @@ export async function GET(request: NextRequest) {
 
     if (skipStockFilter && scopeAdmin) {
       const data = await fetchAllProducts(supabase, applyListFilters)
-      return NextResponse.json({ success: true, data: mapProductPrices(data) })
+      return catalogJson({ success: true, data: mapProductPrices(data) }, 200, cacheMode)
     }
 
     let query = applyListFilters(supabase.from('products').select('*').is('deleted_at', null))
-    query = query.order('created_at', { ascending: false }).limit(limit || 1000)
+    query = query
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .limit(limit || 1000)
 
     const { data, error } = await query
     
@@ -253,7 +278,7 @@ export async function GET(request: NextRequest) {
         code: error.code,
         hint: error.hint
       })
-      return NextResponse.json(
+      return catalogJson(
         { 
           success: false, 
           error: error.message || 'Failed to fetch products',
@@ -263,16 +288,18 @@ export async function GET(request: NextRequest) {
             details: error.details
           } : undefined
         },
-        { status: 500 }
+        500,
+        'private'
       )
     }
     
-    return NextResponse.json({ success: true, data: mapProductPrices(data || []) })
+    return catalogJson({ success: true, data: mapProductPrices(data || []) }, 200, cacheMode)
   } catch (error) {
     console.error('API error:', error)
-    return NextResponse.json(
+    return catalogJson(
       { success: false, error: 'Failed to fetch products' },
-      { status: 500 }
+      500,
+      'private'
     )
   }
 }
@@ -341,10 +368,13 @@ export async function POST(request: NextRequest) {
       is_best_seller: body.isBestSeller || false,
       in_stock: body.inStock !== undefined ? body.inStock : true,
       stock_quantity: body.stock_quantity || 300,
-      // Price conversion (TL/10 → kuruş)
-      // Admin panelden gelen fiyat zaten /10 formatında, bu yüzden *1000 yapıyoruz (TL/10 * 10 * 100 = kuruş)
-      price: Math.round(body.price * 1000),
-      original_price: body.original_price ? Math.round(body.original_price * 1000) : (body.originalPrice ? Math.round(body.originalPrice * 1000) : null),
+      // Price conversion (display → DB)
+      price: displayToDb(body.price),
+      original_price: body.original_price
+        ? displayToDb(body.original_price)
+        : body.originalPrice
+          ? displayToDb(body.originalPrice)
+          : null,
     }
     
     const { data, error } = await supabase
@@ -364,9 +394,11 @@ export async function POST(request: NextRequest) {
     // Convert back to TL, then divide by 10 for display
     const product = {
       ...data,
-      price: (data.price / 100) / 10, // Kuruş → TL → /10
-      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
+      price: dbToDisplay(data.price),
+      original_price: data.original_price ? dbToDisplay(data.original_price) : null,
     }
+
+    revalidateProductCatalog()
     
     return NextResponse.json({ success: true, data: product })
   } catch (error) {

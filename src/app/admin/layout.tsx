@@ -14,7 +14,6 @@ import {
   ShoppingCart,
   Users,
   BarChart3,
-  Star,
   Sparkles,
   Gem,
   FolderTree,
@@ -47,14 +46,10 @@ export default function AdminLayout({
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Ürün Yönetimi', href: '/admin/products', icon: Package },
     { name: 'Kategori Yönetimi', href: '/admin/categories', icon: FolderTree },
-    { name: 'Öne Çıkan Ürünler', href: '/admin/featured-products', icon: Star },
-    { name: 'Exclusive Collection', href: '/admin/own-production', icon: Gem },
-    { name: 'Ana Sayfa Ürün Sliderı', href: '/admin/home-carousel-products', icon: Star },
-    { name: 'Hero Ürünleri', href: '/admin/hero-products', icon: Sparkles },
-    { name: 'Scroll Hero Kartları', href: '/admin/scroll-hero-cards', icon: ImageIcon },
-    { name: 'Banner Yönetimi', href: '/admin/banners', icon: Image },
-    { name: 'Promo Banner', href: '/admin/promo-banners', icon: Image },
-    { name: 'Promo Carousel', href: '/admin/promo-carousel', icon: Image },
+    { name: 'Kampanya Bannerları', href: '/admin/banners', icon: Image },
+    { name: 'Öne Çıkanlar', href: '/admin/one-cikanlar', icon: Sparkles },
+    { name: 'Kategori Satırları', href: '/admin/kategori-satirlari', icon: ImageIcon },
+    { name: 'Fontenay Paris', href: '/admin/own-production', icon: Gem },
     { name: 'Kuponlar', href: '/admin/coupons', icon: Ticket },
     { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Müşteriler', href: '/admin/customers', icon: Users },
@@ -135,7 +130,10 @@ export default function AdminLayout({
             })}
           </nav>
           <div className="border-t border-gray-200 p-4">
-            <button className="flex w-full items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
+            <button
+              onClick={async () => { try { await fetch('/api/admin/logout', { method: 'POST' }); location.href = '/admin/login' } catch {} }}
+              className="flex w-full items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            >
               <LogOut className="mr-3 h-5 w-5" />
               Çıkış Yap
             </button>

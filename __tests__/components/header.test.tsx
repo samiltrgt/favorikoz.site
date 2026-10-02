@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import Header from '@/components/header'
 import '@testing-library/jest-dom'
 
-// Mock next/navigation
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -11,10 +10,16 @@ jest.mock('next/navigation', () => ({
     prefetch: jest.fn(),
   }),
   usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock cart
+jest.mock('next/link', () => {
+  return ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  )
+})
+
 jest.mock('@/lib/cart', () => ({
   getCart: jest.fn(() => [
     { id: '1', name: 'Product 1', price: 100, qty: 2, image: '/test.jpg' },
@@ -22,202 +27,161 @@ jest.mock('@/lib/cart', () => ({
   ]),
 }))
 
+jest.mock('@/components/categories-provider', () => ({
+  useMenuCategories: () => [
+    {
+      name: 'Tırnak',
+      slug: 'tirnak',
+      subcategories: [
+        { name: 'Protez Tırnak', slug: 'protez-tirnak', subcategories: [] },
+        {
+          name: 'Oje',
+          slug: 'oje',
+          subcategories: [{ name: 'Kalıcı Oje', slug: 'kalici-oje', subcategories: [] }],
+        },
+      ],
+    },
+    { name: 'Saç Bakımı', slug: 'sac-bakimi', subcategories: [] },
+  ],
+}))
+
 describe('Header Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    // Mock fetch for auth
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({ success: false }),
-      })
-    ) as jest.Mock
+    // jsdom does not implement HTMLDialogElement.showModal
+    HTMLDialogElement.prototype.showModal = jest.fn(function (this: HTMLDialogElement) {
+      this.setAttribute('open', '')
+    })
+    HTMLDialogElement.prototype.close = jest.fn(function (this: HTMLDialogElement) {
+      this.removeAttribute('open')
+    })
   })
 
   describe('Rendering', () => {
-    it('should render logo and brand name', () => {
+    it('should render brand wordmark', () => {
       render(<Header />)
-      expect(screen.getByText('Favori Kozmetik')).toBeInTheDocument()
-    })
-
-    it('should render contact information', () => {
-      render(<Header />)
-      expect(screen.getByText(/0537 647 07 10/)).toBeInTheDocument()
-      expect(screen.getByText(/mervesaat@gmail.com/)).toBeInTheDocument()
+      expect(screen.getAllByLabelText(/Favori Kozmetik — Ana sayfa/).length).toBeGreaterThan(0)
+      expect(document.querySelectorAll('.rh-wordmark').length).toBeGreaterThan(0)
+      expect(document.querySelector('.rh-wordmark')?.textContent).toMatch(/FAVORİ/)
+      expect(document.querySelector('.rh-wordmark')?.textContent).toMatch(/KOZMETİK/)
     })
 
     it('should render navigation links', () => {
       render(<Header />)
-      expect(screen.getByText('Anasayfa')).toBeInTheDocument()
-      expect(screen.getByText('Tüm Ürünler')).toBeInTheDocument()
-      expect(screen.getByText('Çok Satanlar')).toBeInTheDocument()
+      expect(screen.getAllByText('Anasayfa').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Tüm Ürünler').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Tırnak').length).toBeGreaterThan(0)
     })
 
-    it('should render search input', () => {
+    it('should render subcategory links under their parent category', () => {
       render(<Header />)
-      const searchInputs = screen.getAllByPlaceholderText(/Ürün ara/)
-      expect(searchInputs.length).toBeGreaterThan(0)
+
+      const subcategory = screen.getByRole('link', { name: 'Protez Tırnak' })
+      expect(subcategory).toHaveAttribute('href', '/kategori/tirnak/protez-tirnak')
+
+      const nested = screen.getByRole('link', { name: 'Kalıcı Oje' })
+      expect(nested).toHaveAttribute('href', '/kategori/tirnak/oje/kalici-oje')
+    })
+
+    it('should reveal subcategories in the mobile menu', () => {
+      render(<Header />)
+
+      fireEvent.click(screen.getByTestId('mobile-menu-button'))
+      expect(screen.queryByRole('link', { name: 'Protez Tırnak', hidden: false })).toBeTruthy()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tırnak alt kategorilerini göster' }))
+      expect(screen.getByRole('button', { name: 'Tırnak listesine dön' })).toBeInTheDocument()
+      const drawerLinks = screen.getAllByRole('link', { name: 'Protez Tırnak' })
+      expect(drawerLinks.length).toBeGreaterThan(1)
+      expect(drawerLinks.some((link) => link.getAttribute('href') === '/kategori/tirnak/protez-tirnak')).toBe(true)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tırnak listesine dön' }))
+      expect(screen.queryByRole('button', { name: 'Tırnak listesine dön' })).not.toBeInTheDocument()
     })
 
     it('should render cart with item count', async () => {
       render(<Header />)
       await waitFor(() => {
-        const cartCount = screen.getByText('3')
-        expect(cartCount).toBeInTheDocument()
+        expect(screen.getByText('3')).toBeInTheDocument()
       })
+    })
+
+    it('should render announcement and contact email in drawer footer', () => {
+      render(<Header />)
+      expect(screen.getByText(/profesyonel kozmetik/i)).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('mobile-menu-button'))
+      expect(screen.getByText('mervesaat@gmail.com')).toBeInTheDocument()
     })
   })
 
   describe('Mobile Menu', () => {
-    it('should toggle mobile menu on button click', () => {
+    it('should open mobile menu on button click', () => {
       render(<Header />)
-      
-      const mobileMenuButton = screen.getByTestId('mobile-menu-button')
-      expect(screen.queryByTestId('mobile-menu')).not.toBeInTheDocument()
-      
-      fireEvent.click(mobileMenuButton)
-      expect(screen.getByTestId('mobile-menu')).toBeInTheDocument()
-      
-      fireEvent.click(mobileMenuButton)
-      expect(screen.queryByTestId('mobile-menu')).not.toBeInTheDocument()
-    })
 
-    it('should have proper accessibility attributes on mobile menu button', () => {
-      render(<Header />)
-      
       const mobileMenuButton = screen.getByTestId('mobile-menu-button')
-      expect(mobileMenuButton).toHaveAttribute('aria-label')
       expect(mobileMenuButton).toHaveAttribute('aria-expanded', 'false')
-      
+
       fireEvent.click(mobileMenuButton)
       expect(mobileMenuButton).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByTestId('mobile-menu')).toBeInTheDocument()
+    })
+
+    it('should have proper accessibility attributes on menu button', () => {
+      render(<Header />)
+
+      const mobileMenuButton = screen.getByTestId('mobile-menu-button')
+      expect(mobileMenuButton).toHaveAttribute('aria-label', 'Menüyü aç')
+      expect(mobileMenuButton).toHaveAttribute('aria-haspopup', 'dialog')
     })
   })
 
   describe('Search Functionality', () => {
-    it('should update search query on input change', () => {
+    it('should open search dialog and navigate on submit', () => {
       render(<Header />)
-      
-      const searchInput = screen.getAllByPlaceholderText(/Ürün ara/)[0]
-      fireEvent.change(searchInput, { target: { value: 'şampuan' } })
-      
-      expect(searchInput).toHaveValue('şampuan')
-    })
 
-    it('should show search input in both desktop and mobile', () => {
-      render(<Header />)
-      
-      // Desktop search
-      const searchInputs = screen.getAllByPlaceholderText(/Ürün ara/)
-      expect(searchInputs.length).toBeGreaterThanOrEqual(1)
+      fireEvent.click(screen.getByTestId('header-search-button'))
+      expect(screen.getByTestId('header-search-dialog')).toBeInTheDocument()
+
+      const searchInput = screen.getByPlaceholderText(/Ürün ara/)
+      fireEvent.change(searchInput, { target: { value: 'şampuan' } })
+      fireEvent.submit(searchInput.closest('form')!)
+
+      expect(mockPush).toHaveBeenCalledWith('/tum-urunler?search=%C5%9Fampuan')
     })
   })
 
   describe('Cart Display', () => {
-    it('should display cart icon', () => {
+    it('should navigate to cart on cart button click', () => {
       render(<Header />)
-      
-      const cartLink = screen.getByRole('link', { name: /Sepet.*ürün/ })
-      expect(cartLink).toBeInTheDocument()
-      expect(cartLink).toHaveAttribute('href', '/sepet')
+
+      fireEvent.click(screen.getByTestId('header-cart-button'))
+      expect(mockPush).toHaveBeenCalledWith('/sepet')
     })
 
-    it('should have proper accessibility on cart link', () => {
+    it('should have accessible cart label with count', async () => {
       render(<Header />)
-      
-      const cartLink = screen.getByRole('link', { name: /Sepet.*ürün/ })
-      expect(cartLink).toHaveAttribute('aria-label')
-      expect(cartLink).toHaveAttribute('title')
-    })
 
-    it('should update cart count when cart changes', async () => {
-      render(<Header />)
-      
       await waitFor(() => {
-        expect(screen.getByText('3')).toBeInTheDocument() // 2 + 1 = 3 items
-      })
-    })
-
-    it('should not show cart badge when cart is empty', () => {
-      // Mock empty cart
-      const { getCart } = require('@/lib/cart')
-      getCart.mockReturnValue([])
-      
-      render(<Header />)
-      
-      expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument()
-    })
-  })
-
-  describe('User Authentication', () => {
-    it('should show login link when user is not authenticated', async () => {
-      render(<Header />)
-      
-      await waitFor(() => {
-        const userIcon = screen.getByTestId('user-icon')
-        expect(userIcon).toBeInTheDocument()
-        expect(userIcon).toHaveAttribute('href', '/giris')
-      })
-    })
-
-    it('should show user menu when user is authenticated', async () => {
-      global.fetch = jest.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve({
-            success: true,
-            user: { name: 'Test User', email: 'test@example.com' },
-          }),
-        })
-      ) as jest.Mock
-      
-      render(<Header />)
-      
-      await waitFor(() => {
-        expect(screen.getByText('Test')).toBeInTheDocument() // First name
+        expect(screen.getByRole('button', { name: /Sepetim, 3 ürün/ })).toBeInTheDocument()
       })
     })
   })
 
-  describe('Categories Dropdown', () => {
-    it('should show categories dropdown on hover', () => {
+  describe('Account', () => {
+    it('should navigate to account on Hesabım click', () => {
       render(<Header />)
-      
-      const kategorilerButton = screen.getByText('Kategoriler')
-      expect(kategorilerButton).toBeInTheDocument()
-    })
 
-    it('should render categories button', () => {
-      render(<Header />)
-      
-      const kategorilerButton = screen.getByRole('button', { name: /Kategoriler/ })
-      expect(kategorilerButton).toBeInTheDocument()
-      expect(kategorilerButton).toHaveClass('flex', 'items-center')
+      fireEvent.click(screen.getByRole('button', { name: 'Hesabım' }))
+      expect(mockPush).toHaveBeenCalledWith('/hesabim')
     })
   })
 
-  describe('Admin Link', () => {
-    it('should not show admin link in top bar (admin only via direct URL)', () => {
+  describe('Favorites', () => {
+    it('should navigate to favorites on heart click', () => {
       render(<Header />)
-      
-      const adminLink = screen.queryByText('Admin')
-      expect(adminLink).not.toBeInTheDocument()
-    })
-  })
 
-  describe('Responsive Behavior', () => {
-    it('should show mobile menu button on small screens', () => {
-      render(<Header />)
-      
-      const mobileMenuButton = screen.getByTestId('mobile-menu-button')
-      expect(mobileMenuButton).toBeInTheDocument()
-      expect(mobileMenuButton).toHaveClass('lg:hidden')
-    })
-
-    it('should hide desktop navigation on small screens', () => {
-      render(<Header />)
-      
-      const nav = screen.getByRole('navigation')
-      const desktopNav = nav.querySelector('.hidden.lg\\:flex')
-      expect(desktopNav).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Favorilerim' }))
+      expect(mockPush).toHaveBeenCalledWith('/favorilerim')
     })
   })
 })

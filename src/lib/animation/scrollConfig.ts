@@ -32,26 +32,49 @@ export const FRAME_CONFIG = {
   },
 } as const
 
+/**
+ * Constant-velocity auto-play. A small downward scroll inside the hero plays the
+ * whole sequence start→end at a fixed speed (the smooth feel of a fast manual swipe),
+ * instead of snapping with a variable, ease-in/out duration.
+ */
+const DESKTOP_AUTOPLAY = {
+  enabled: true,
+  /** Travel speed in CSS px per second (matches the smooth manual-scroll feel). */
+  pixelsPerSecond: 1200,
+  /** Minimum progress the user must scroll into the hero before auto-play kicks in. */
+  startThreshold: 0.015,
+  /** Linear motion = even frame cadence, no mid-scroll stall. */
+  ease: 'none',
+} as const
+
+const MOBILE_AUTOPLAY = {
+  // Scroll-hijack disabled on touch: native momentum scroll drives the sequence,
+  // which feels far better than fighting the OS scroller.
+  enabled: false,
+  pixelsPerSecond: 1200,
+  startThreshold: 0.015,
+  ease: 'none',
+} as const
+
 export const SCROLL_CONFIG = {
-  scrollDistanceVh: 300,
-  /** Slight smoothing — easier on slow scroll without hurting scrub fidelity much. */
-  scrub: 0.5,
   pin: true,
   overlayFadeStart: 0.8,
   overlayFadeEnd: 1,
   /**
-   * Constant-velocity auto-play. A small downward scroll inside the hero plays the
-   * whole sequence start→end at a fixed speed (the smooth feel of a fast manual swipe),
-   * instead of snapping with a variable, ease-in/out duration.
+   * Single-clock smoothing. ScrollTrigger only writes the raw target frame; one
+   * gsap.ticker loop eases current→target by this factor per 60fps frame. Replaces
+   * the old ScrollTrigger `scrub` + separate rAF draw (double smoothing layer).
    */
-  autoPlay: {
-    enabled: true,
-    /** Travel speed in CSS px per second (matches the smooth manual-scroll feel). */
-    pixelsPerSecond: 1200,
-    /** Minimum progress the user must scroll into the hero before auto-play kicks in. */
-    startThreshold: 0.015,
-    /** Linear motion = even frame cadence, no mid-scroll stall. */
-    ease: 'none',
+  frameLerp: 0.18,
+  /** Desktop: longer pin distance + optional scroll-hijack auto-play. */
+  desktop: {
+    scrollDistanceVh: 300,
+    autoPlay: DESKTOP_AUTOPLAY,
+  },
+  /** Mobile: shorter pin distance, no scroll-hijack (native scroll). */
+  mobile: {
+    scrollDistanceVh: 200,
+    autoPlay: MOBILE_AUTOPLAY,
   },
 } as const
 

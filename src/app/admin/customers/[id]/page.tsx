@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Mail, Phone, Calendar, ShoppingBag, TrendingUp, Package, CreditCard } from 'lucide-react'
+import { formatTRY } from '@/lib/price'
 
 interface Customer {
   id: string
@@ -188,10 +189,7 @@ export default function CustomerDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">Toplam Harcama</p>
                 <p className="text-2xl font-light text-gray-900 mt-1">
-                  ₺{stats.totalSpent.toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
+                  ₺{formatTRY(stats.totalSpent)}
                 </p>
               </div>
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -206,10 +204,7 @@ export default function CustomerDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">Ortalama Sepet</p>
                 <p className="text-2xl font-light text-gray-900 mt-1">
-                  ₺{stats.averageOrderValue.toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
+                  ₺{formatTRY(stats.averageOrderValue)}
                 </p>
               </div>
               <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -307,10 +302,7 @@ export default function CustomerDetailPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-semibold text-gray-900">
-                          ₺{order.total.toLocaleString('tr-TR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
+                          ₺{formatTRY(order.total)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

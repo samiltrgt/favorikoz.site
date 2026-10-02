@@ -3,6 +3,7 @@ import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
 import { markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { dbToDisplay, toCartPrice, toDisplayPrice } from '@/lib/price'
 
 type BasketItem = {
   id: string
@@ -31,6 +32,31 @@ export async function POST(request: NextRequest) {
     const items: BasketItem[] = body.items || []
     const customer = body.customerInfo || {}
     const couponCode = (body.couponCode || '').toString()
+    const tracking = (body.tracking && typeof body.tracking === 'object' ? body.tracking : {}) as Record<
+      string,
+      unknown
+    >
+
+    // IP istemciden alınmaz — yalnızca proxy başlığı
+    const forwarded = request.headers.get('x-forwarded-for') || ''
+    const clientIp = forwarded.split(',')[0]?.trim() || request.headers.get('x-real-ip') || null
+    const clientUa = request.headers.get('user-agent') || null
+
+    const trackingFields = {
+      fbp: typeof tracking.fbp === 'string' ? tracking.fbp.slice(0, 256) : null,
+      fbc: typeof tracking.fbc === 'string' ? tracking.fbc.slice(0, 256) : null,
+      fbclid: typeof tracking.fbclid === 'string' ? tracking.fbclid.slice(0, 256) : null,
+      gclid: typeof tracking.gclid === 'string' ? tracking.gclid.slice(0, 256) : null,
+      gbraid: typeof tracking.gbraid === 'string' ? tracking.gbraid.slice(0, 256) : null,
+      wbraid: typeof tracking.wbraid === 'string' ? tracking.wbraid.slice(0, 256) : null,
+      utm_source: typeof tracking.utm_source === 'string' ? tracking.utm_source.slice(0, 256) : null,
+      utm_medium: typeof tracking.utm_medium === 'string' ? tracking.utm_medium.slice(0, 256) : null,
+      utm_campaign: typeof tracking.utm_campaign === 'string' ? tracking.utm_campaign.slice(0, 256) : null,
+      utm_content: typeof tracking.utm_content === 'string' ? tracking.utm_content.slice(0, 256) : null,
+      utm_term: typeof tracking.utm_term === 'string' ? tracking.utm_term.slice(0, 256) : null,
+      client_ip: clientIp ? clientIp.slice(0, 64) : null,
+      client_user_agent: clientUa ? clientUa.slice(0, 512) : null,
+    }
 
     if (!items.length) {
       return NextResponse.json({ success: false, error: 'Sepet boş' }, { status: 400 })
@@ -71,8 +97,8 @@ export async function POST(request: NextRequest) {
       if (!product.in_stock || product.stock_quantity < quantity) {
         throw new Error(`${product.name} için yeterli stok bulunmuyor`)
       }
-      // products.price is kuruş, convert to 10x display format
-      const unitPrice10x = Math.round(Number(product.price) / 100)
+      // products.price is DB; convert to cart 10x
+      const unitPrice10x = Math.round(toCartPrice(dbToDisplay(Number(product.price))))
       return {
         id: product.id,
         name: product.name,
@@ -122,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Iyzico: Gönderilen tutar = tüm kırılımların toplamı olmalı. Basket kalemleri satır toplamı + kargo.
     const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = canonicalItems.map((item) => {
-      const lineTotalTL = (item.unitPrice10x * item.quantity) / 10
+      const lineTotalTL = toDisplayPrice(item.unitPrice10x * item.quantity)
       return {
         id: item.id,
         name: item.name,
@@ -139,7 +165,7 @@ export async function POST(request: NextRequest) {
         name: `Kupon İndirimi${appliedCoupon ? ` (${appliedCoupon.code})` : ''}`,
         category1: 'İndirim',
         itemType: 'VIRTUAL',
-        price: toPriceString(-(discountAmount10x / 10)),
+        price: toPriceString(-toDisplayPrice(discountAmount10x)),
       })
     }
 
@@ -149,7 +175,7 @@ export async function POST(request: NextRequest) {
         name: 'Kargo',
         category1: 'Kargo',
         itemType: 'VIRTUAL',
-        price: toPriceString(shipping10x / 10),
+        price: toPriceString(toDisplayPrice(shipping10x)),
       })
     }
     const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
@@ -288,23 +314,24 @@ export async function POST(request: NextRequest) {
             items: canonicalItems.map((item) => ({
               product_id: item.id,
               name: item.name,
-              price: item.unitPrice10x * 10, // 10x to kuruş
+              price: toCartPrice(item.unitPrice10x), // cart 10x → order kuruş-like
               quantity: item.quantity,
             })) as any,
-            subtotal: Math.round(subtotalAfterCoupon10x * 10),
-            shipping_cost: Math.round(shipping10x * 10),
-            total: Math.round(totalPrice10x * 10),
+            subtotal: Math.round(toCartPrice(subtotalAfterCoupon10x)),
+            shipping_cost: Math.round(toCartPrice(shipping10x)),
+            total: Math.round(toCartPrice(totalPrice10x)),
             coupon_code: appliedCoupon?.code || null,
             coupon_discount_type: appliedCoupon?.discount_type || null,
             coupon_discount_value: appliedCoupon?.discount_value || null,
-            discount_amount: Math.round(discountAmount10x * 10),
-            subtotal_before_coupon: Math.round(subtotalBeforeCoupon10x * 10),
-            subtotal_after_coupon: Math.round(subtotalAfterCoupon10x * 10),
+            discount_amount: Math.round(toCartPrice(discountAmount10x)),
+            subtotal_before_coupon: Math.round(toCartPrice(subtotalBeforeCoupon10x)),
+            subtotal_after_coupon: Math.round(toCartPrice(subtotalAfterCoupon10x)),
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',
             payment_token: conversationId,
             iyzico_basket_id: basketId,
+            ...trackingFields,
           })
 
         if (orderError) {

@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       `, { count: 'exact' })
       .eq('role', 'customer')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     // Apply search filter
     if (search) {
@@ -89,6 +90,7 @@ export async function GET(request: NextRequest) {
           .select('created_at')
           .eq('user_id', customer.id)
           .order('created_at', { ascending: false })
+          .order('id', { ascending: true })
           .limit(1)
           .single()
 

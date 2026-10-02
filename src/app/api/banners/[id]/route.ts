@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { revalidateProductCatalog } from '@/lib/product-cache'
+import { HOME_LAYOUT_LINK } from '@/lib/home-layout'
 
 // Helper function to check admin access
 async function checkAdminAccess(supabase: any) {
@@ -39,6 +41,9 @@ export async function PUT(
     }
     
     const body = await request.json()
+    if (body.link === HOME_LAYOUT_LINK) {
+      return NextResponse.json({ success: false, error: 'Bu kayıt düzenlenemez' }, { status: 400 })
+    }
     
     const { data, error } = await supabase
       .from('banners')
@@ -61,6 +66,7 @@ export async function PUT(
       )
     }
     
+    revalidateProductCatalog()
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('API error:', error)
@@ -100,6 +106,7 @@ export async function DELETE(
       )
     }
     
+    revalidateProductCatalog()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API error:', error)

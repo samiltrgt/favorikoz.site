@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .order('slide_index', { ascending: true })
       .order('slot_index', { ascending: true })
+      .order('id', { ascending: true })
     
     if (!isAdminScope) {
       query = query.eq('is_active', true)

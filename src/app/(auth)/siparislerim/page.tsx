@@ -6,6 +6,7 @@ import { Package, Truck, CheckCircle, XCircle, Clock, ChevronRight, Search, Filt
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import Link from 'next/link'
+import { formatTRY, kurusToTl } from '@/lib/price'
 
 interface Order {
   id: string
@@ -128,12 +129,7 @@ export default function OrdersPage() {
     })
   }
 
-  const formatPrice = (price: number) => {
-    return (price / 100).toLocaleString('tr-TR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })
-  }
+  const formatPrice = (price: number) => formatTRY(kurusToTl(price))
 
   if (isLoading) {
     return (

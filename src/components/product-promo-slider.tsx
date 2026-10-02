@@ -5,6 +5,7 @@ import Image from 'next/image'
 import ProductImage from '@/components/product-image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { formatTRY } from '@/lib/price'
 
 interface PromoBannerData {
   id: string
@@ -28,9 +29,9 @@ function getCategorySlugFromLink(link: string | undefined): string | null {
 }
 
 const SLIDE_BG_COLORS = [
-  'rgb(236, 245, 233)',   // soft green
-  'rgb(247, 242, 233)',   // warm beige
-  'rgb(243, 236, 245)',   // soft lavender
+  'var(--color-mist)',     /* soft lilac mist */
+  'var(--color-bloom)',    /* powder bloom */
+  'var(--color-paper)',    /* cool paper */
 ]
 
 export default function ProductPromoSlider({ products = [] }: { products?: any[] }) {
@@ -92,7 +93,7 @@ export default function ProductPromoSlider({ products = [] }: { products?: any[]
     <section className="relative w-full bg-white border-t border-gray-100 overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[320px] lg:min-h-[420px]">
         {/* Sol: Ürün slider (fade) */}
-        <div className="relative flex items-center justify-center overflow-hidden order-2 lg:order-1" style={{ backgroundColor: slides[current]?.bgColor || '#f5f0e8' }}>
+        <div className="relative flex items-center justify-center overflow-hidden order-2 lg:order-1" style={{ backgroundColor: slides[current]?.bgColor || 'var(--color-paper)' }}>
           <div className="relative w-full max-w-md px-6 py-8">
             {slides.map((slide, i) => (
               <div
@@ -120,7 +121,7 @@ export default function ProductPromoSlider({ products = [] }: { products?: any[]
                       {slide.product.name}
                     </h3>
                     <div className="text-xl font-bold text-gray-900">
-                      ₺{slide.product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₺{formatTRY(slide.product.price)}
                     </div>
                   </Link>
                 ) : (

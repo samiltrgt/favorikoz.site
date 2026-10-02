@@ -2,6 +2,35 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { trackPurchaseBrowser } from '@/lib/analytics/datalayer'
+import type { AdContentItem } from '@/lib/analytics/value'
+
+type AnalyticsPayload = {
+  order_number: string
+  value: number
+  contents: AdContentItem[]
+  shipping?: number
+  email?: string
+  phone?: string
+}
+
+function fireBrowserPurchase(analytics: AnalyticsPayload) {
+  const key = `purchase_sent_${analytics.order_number}`
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return
+    sessionStorage.setItem(key, '1')
+  } catch {
+    // sessionStorage yoksa yine dene; dedup Meta tarafında event_id ile
+  }
+  trackPurchaseBrowser({
+    orderNumber: analytics.order_number,
+    value: analytics.value,
+    contents: analytics.contents || [],
+    shipping: analytics.shipping,
+    email: analytics.email,
+    phone: analytics.phone,
+  })
+}
 
 export default function PaymentCallbackPage() {
   const searchParams = useSearchParams()
@@ -32,7 +61,6 @@ export default function PaymentCallbackPage() {
       (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('paymentId') : null)
     if (order) setOrderNumber(order)
 
-    // Debug: Tarayıcıda F12 → Console'da görünür
     const urlParams = { token: token ? `${token.slice(0, 12)}...` : null, orderNumber: order }
     console.log('[Ödeme callback] Sayfa açıldı, URL parametreleri:', urlParams)
 
@@ -59,7 +87,6 @@ export default function PaymentCallbackPage() {
         if (order) params.set('orderNumber', order)
         if (paymentId) params.set('paymentId', paymentId)
         const url = `/api/payment/status?${params.toString()}`
-        // Sunucu bir istekte v2 tamamlama + kısa retry yapabilir; istemci tarafı sınırlı tekrar.
         for (let i = 0; i < 12; i += 1) {
           let res: Response
           try {
@@ -70,7 +97,11 @@ export default function PaymentCallbackPage() {
             await sleep(2500)
             continue
           }
-          let json: { status?: string; error?: string }
+          let json: {
+            status?: string
+            error?: string
+            analytics?: AnalyticsPayload
+          }
           try {
             json = await res.json()
           } catch {
@@ -81,6 +112,10 @@ export default function PaymentCallbackPage() {
           console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error, try: i + 1 })
 
           if (json.status === 'success') {
+            if (json.analytics?.order_number) {
+              setOrderNumber(json.analytics.order_number)
+              fireBrowserPurchase(json.analytics)
+            }
             setStatus('success')
             return
           }
@@ -202,5 +237,3 @@ export default function PaymentCallbackPage() {
     </div>
   )
 }
-
-

@@ -13,6 +13,7 @@ import {
   MoreVertical,
   Package
 } from 'lucide-react'
+import { formatTRY } from '@/lib/price'
 
 type CategoryRow = { slug: string; name: string; parent_slug?: string | null }
 
@@ -203,8 +204,11 @@ export default function ProductsPage() {
         return a.price - b.price
       case 'brand':
         return a.brand.localeCompare(b.brand)
-      case 'created':
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'created': {
+        const byDate = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        if (byDate !== 0) return byDate
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+      }
       default:
         return 0
     }
@@ -369,9 +373,9 @@ export default function ProductsPage() {
                       </p>
                     )}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-lg font-bold text-gray-900">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-lg font-bold text-gray-900">₺{formatTRY(product.price)}</span>
                       {product.original_price && (
-                        <span className="text-sm text-gray-500 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-sm text-gray-500 line-through">₺{formatTRY(product.original_price)}</span>
                       )}
                     </div>
                     

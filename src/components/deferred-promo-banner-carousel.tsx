@@ -7,7 +7,15 @@ const PromoBannerCarousel = dynamic(() => import('@/components/promo-banner-caro
   ssr: false,
 })
 
-export default function DeferredPromoBannerCarousel({ products = [] }: { products?: any[] }) {
+interface DeferredPromoBannerCarouselProps {
+  banners?: any[]
+  productsByBanner?: any[][]
+}
+
+export default function DeferredPromoBannerCarousel({
+  banners = [],
+  productsByBanner = [],
+}: DeferredPromoBannerCarouselProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [shouldRender, setShouldRender] = useState(false)
 
@@ -30,7 +38,11 @@ export default function DeferredPromoBannerCarousel({ products = [] }: { product
 
   return (
     <div ref={sentinelRef}>
-      {shouldRender ? <PromoBannerCarousel products={products} /> : <div className="h-24" aria-hidden />}
+      {shouldRender ? (
+        <PromoBannerCarousel banners={banners} productsByBanner={productsByBanner} />
+      ) : (
+        <div className="h-24" aria-hidden />
+      )}
     </div>
   )
 }

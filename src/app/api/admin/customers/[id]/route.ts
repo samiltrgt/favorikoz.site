@@ -52,6 +52,7 @@ export async function GET(
       .select('*')
       .eq('user_id', id)
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     if (ordersError) {
       console.error('Orders error:', ordersError)

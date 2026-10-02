@@ -1,26 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAnon } from '@/lib/supabase/server'
+import { getProductBySlug } from '@/lib/get-product-by-slug'
 import { getSiteUrl } from '@/lib/site-url'
+import { formatTRY } from '@/lib/price'
 
 const siteUrl = getSiteUrl()
 
-async function getProductBySlug(slug: string) {
-  const supabase = await createSupabaseServer()
-  const { data, error } = await supabase
-    .from('products')
-    .select('id, slug, name, brand, description, image, price, original_price, in_stock, category_slug, subcategory_slug, rating, reviews_count')
-    .eq('slug', slug)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error || !data) return null
-  const price = (data.price / 100) / 10
-  const originalPrice = data.original_price ? (data.original_price / 100) / 10 : null
-  return { ...data, price, original_price: originalPrice }
-}
+export const revalidate = 60
 
 async function getCategoryName(slug: string): Promise<string | null> {
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAnon()
   const { data } = await supabase
     .from('categories')
     .select('name')
@@ -32,7 +22,7 @@ async function getCategoryName(slug: string): Promise<string | null> {
 }
 
 async function getSubcategoryName(parentSlug: string, subSlug: string): Promise<string | null> {
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAnon()
   const { data } = await supabase
     .from('categories')
     .select('name')
@@ -52,12 +42,13 @@ type ReviewRow = {
 }
 
 async function getProductReviews(productId: string): Promise<{ author: string; datePublished: string; reviewBody: string; ratingValue: number }[]> {
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAnon()
   const { data } = await supabase
     .from('reviews')
     .select('rating, comment, created_at, guest_name, profiles:user_id(name)')
     .eq('product_id', productId)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: true })
     .limit(10)
   if (!data?.length) return []
   return (data as ReviewRow[]).map((r) => {
@@ -80,8 +71,8 @@ function productJsonLd(
     slug: string
     in_stock: boolean
     brand?: string | null
-    rating?: number
-    reviews_count?: number
+    rating?: number | null
+    reviews_count?: number | null
   },
   reviews: { author: string; datePublished: string; reviewBody: string; ratingValue: number }[]
 ) {
@@ -225,31 +216,35 @@ export default async function ProductLayout({ children, params }: Props) {
 
   return (
     <>
-      {product && (
-        <>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(productJsonLd(product, reviews)),
-            }}
-          />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(
-                breadcrumbJsonLd({
-                  productSlug: product.slug,
-                  productName: product.name,
-                  categorySlug: product.category_slug ?? null,
-                  categoryName,
-                  subcategorySlug: product.subcategory_slug ?? null,
-                  subcategoryName,
-                })
-              ),
-            }}
-          />
-        </>
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd(product, reviews)),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            breadcrumbJsonLd({
+              productSlug: product.slug,
+              productName: product.name,
+              categorySlug: product.category_slug ?? null,
+              categoryName,
+              subcategorySlug: product.subcategory_slug ?? null,
+              subcategoryName,
+            })
+          ),
+        }}
+      />
+      {/* SSR SEO özeti (sayfa gövdesindeki h1 ile çift h1 yok — özet düz metin) */}
+      <div className="sr-only">
+        <p>
+          {product.name}
+          {product.brand ? ` — ${product.brand}` : ''} — ₺{formatTRY(product.price)}
+        </p>
+        {product.description && <p>{product.description}</p>}
+      </div>
       {children}
     </>
   )

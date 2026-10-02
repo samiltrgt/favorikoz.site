@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { dbToDisplay } from '@/lib/price'
+import { revalidateProductCatalog } from '@/lib/product-cache'
 
 async function checkAdminAccess(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,6 +27,7 @@ export async function GET() {
       `)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
+      .order('id', { ascending: true })
 
     if (error) {
       console.error('own-production GET error:', error)
@@ -38,8 +41,8 @@ export async function GET() {
         products: product
           ? {
               ...product,
-              price: (product.price / 100) / 10,
-              original_price: product.original_price ? (product.original_price / 100) / 10 : null,
+              price: dbToDisplay(product.price),
+              original_price: product.original_price ? dbToDisplay(product.original_price) : null,
             }
           : null,
       }
@@ -86,6 +89,7 @@ export async function POST(request: NextRequest) {
       if (error.code === '23505') return NextResponse.json({ success: false, error: 'Bu ürün zaten listede' }, { status: 409 })
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
+    revalidateProductCatalog()
     return NextResponse.json({ success: true, data })
   } catch (err) {
     console.error('API own-production POST:', err)

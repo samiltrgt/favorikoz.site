@@ -35,6 +35,9 @@ export function addToCart(item: CartItem) {
     cart.push(item)
   }
   setCart(cart)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cartItemAdded', { detail: { id: item.id } }))
+  }
 }
 
 export function removeFromCart(id: string) {

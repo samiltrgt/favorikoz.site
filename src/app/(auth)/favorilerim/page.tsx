@@ -9,6 +9,9 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { getFavorites, toggleFavorite } from '@/lib/favorites'
 import { addToCart } from '@/lib/cart'
+import { formatTRY, toCartPrice } from '@/lib/price'
+import { adItemsFromCart, adValueFromCart } from '@/lib/analytics/value'
+import { trackAddToCart } from '@/lib/analytics/datalayer'
 
 export default function FavoritesPage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
@@ -70,15 +73,26 @@ export default function FavoritesPage() {
 
   const handleAddToCart = (product: any) => {
     if (!product.in_stock) return
-    addToCart({
+    const cartItem = {
       id: product.id,
       slug: product.slug,
       name: product.name,
       image: product.image,
-      price: product.price * 10, // API'den /10 formatında geliyor, sepete 10x formatında kaydediyoruz
+      price: toCartPrice(product.price),
       qty: 1,
+    }
+    addToCart(cartItem)
+    const contents = adItemsFromCart([cartItem])
+    trackAddToCart({
+      value: adValueFromCart([cartItem]),
+      contents,
+      items: contents.map((c) => ({
+        item_id: c.id,
+        item_name: product.name,
+        quantity: c.quantity,
+        price: c.item_price,
+      })),
     })
-    // Show notification or feedback
   }
 
   if (isLoading) {
@@ -193,10 +207,15 @@ export default function FavoritesPage() {
                   </p>
 
                   {/* Rating */}
-                  <div className="flex items-center gap-1">
+                  <div
+                    className="flex items-center gap-1"
+                    role="img"
+                    aria-label={`5 üzerinden ${product.rating || 0}`}
+                  >
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
+                        aria-hidden
                         className={`w-3 h-3 ${
                           i < Math.floor(product.rating)
                             ? 'text-black fill-black'
@@ -204,7 +223,7 @@ export default function FavoritesPage() {
                         }`}
                       />
                     ))}
-                    <span className="text-xs text-gray-400 ml-1">
+                    <span className="text-xs text-gray-400 ml-1" aria-hidden>
                       ({product.reviews_count || 0})
                     </span>
                   </div>
@@ -212,20 +231,12 @@ export default function FavoritesPage() {
                   {/* Price */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-light text-black">
-                      ₺
-                      {product.price.toLocaleString('tr-TR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      ₺{formatTRY(product.price)}
                     </span>
                     {product.original_price &&
                       product.original_price > product.price && (
                         <span className="text-xs text-gray-400 line-through">
-                          ₺
-                          {product.original_price.toLocaleString('tr-TR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
+                          ₺{formatTRY(product.original_price)}
                         </span>
                       )}
                   </div>
@@ -234,7 +245,7 @@ export default function FavoritesPage() {
                   <button
                     onClick={() => handleAddToCart(product)}
                     disabled={!product.in_stock}
-                    className="w-full mt-3 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full mt-3 py-2 bg-brand-rose text-white text-sm font-medium rounded-button hover:bg-brand-rose-deep transition-colors disabled:bg-brand-bloom disabled:text-muted-foreground disabled:cursor-not-allowed"
                   >
                     {product.in_stock ? 'Sepete Ekle' : 'Stokta Yok'}
                   </button>

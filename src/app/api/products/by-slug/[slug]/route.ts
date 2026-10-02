@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseAnon } from '@/lib/supabase/server'
+import { PUBLIC_CATALOG_CACHE_CONTROL } from '@/lib/product-cache'
+import { dbToDisplay } from '@/lib/price'
 
 // GET /api/products/by-slug/[slug] - Get single product by slug (for detail page)
 // Does NOT filter by in_stock so out-of-stock products can still be viewed
@@ -16,7 +18,7 @@ export async function GET(
       )
     }
 
-    const supabase = await createSupabaseServer()
+    const supabase = createSupabaseAnon()
 
     const { data, error } = await supabase
       .from('products')
@@ -40,14 +42,16 @@ export async function GET(
       )
     }
 
-    // Same price format as list API: kuruş → TL → /10
     const product = {
       ...data,
-      price: (data.price / 100) / 10,
-      original_price: data.original_price ? (data.original_price / 100) / 10 : null,
+      price: dbToDisplay(data.price),
+      original_price: data.original_price ? dbToDisplay(data.original_price) : null,
     }
 
-    return NextResponse.json({ success: true, data: product })
+    return NextResponse.json(
+      { success: true, data: product },
+      { headers: { 'Cache-Control': PUBLIC_CATALOG_CACHE_CONTROL } }
+    )
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(

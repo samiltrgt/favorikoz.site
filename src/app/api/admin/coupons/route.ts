@@ -28,7 +28,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
     }
 
-    const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
     if (error) {
       return NextResponse.json({ success: false, error: 'Kuponlar alınamadı' }, { status: 500 })
     }

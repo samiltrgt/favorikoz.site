@@ -1,11 +1,13 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { gsap } from 'gsap'
 import ProductImage from '@/components/product-image'
 import '@/styles/home-products-bryhel.css'
 
 const MARQUEE_SPEED = 0.6 // px per frame
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
 interface HomeProductsBryhelProps {
   products: any[]
@@ -15,6 +17,13 @@ interface HomeProductsBryhelProps {
   viewAllText?: string
 }
 
+function wrapOffset(offset: number, half: number) {
+  if (!(half > 0)) return offset
+  let next = offset % half
+  if (next > 0) next -= half
+  return next
+}
+
 export default function HomeProductsBryhel({
   products = [],
   title = 'Fontenay Paris',
@@ -22,44 +31,26 @@ export default function HomeProductsBryhel({
   viewAllLink = '/tum-urunler',
   viewAllText = 'Tümünü Gör',
 }: HomeProductsBryhelProps) {
+  const carouselRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef<number>(0)
+  const offsetRef = useRef(0)
+  const halfWidthRef = useRef(0)
   const didDragRef = useRef(false)
-  const translateXRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const dragStartRef = useRef<{ x: number; startTranslate: number } | null>(null)
+  const visibleRef = useRef(false)
+  const reducedRef = useRef(false)
 
-  const [translateX, setTranslateX] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState<{ x: number; startTranslate: number } | null>(null)
-  const [managedProducts, setManagedProducts] = useState<any[] | null>(null)
-
-  translateXRef.current = translateX
-
-  useEffect(() => {
-    let cancelled = false
-    async function loadManaged() {
-      try {
-        const res = await fetch('/api/own-production', { cache: 'no-store' })
-        const json = await res.json()
-        if (cancelled) return
-        if (json.success && json.data?.length > 0) {
-          const list = (json.data as any[]).map((row) => row.products).filter(Boolean)
-          setManagedProducts(list)
-          return
-        }
-      } catch {}
-      if (!cancelled) setManagedProducts([])
-    }
-    loadManaged()
-    return () => {
-      cancelled = true
-    }
+  const syncMoving = useCallback(() => {
+    const moving =
+      isDraggingRef.current ||
+      (!reducedRef.current && visibleRef.current && !document.hidden)
+    innerRef.current?.classList.toggle('is-moving', moving)
   }, [])
 
-  const sourceProducts = managedProducts && managedProducts.length > 0 ? managedProducts : products
-  const displayProducts = sourceProducts.slice(0, 12)
+  const displayProducts = products.slice(0, 12)
   const duplicatedProducts = [...displayProducts, ...displayProducts]
 
-  const halfWidthRef = useRef(0)
   const updateHalfWidth = useCallback(() => {
     requestAnimationFrame(() => {
       if (innerRef.current) halfWidthRef.current = innerRef.current.offsetWidth / 2
@@ -74,55 +65,102 @@ export default function HomeProductsBryhel({
   }, [duplicatedProducts.length, updateHalfWidth])
 
   useEffect(() => {
-    if (isDragging) return
-    const tick = () => {
-      setTranslateX((prev) => {
-        const half = halfWidthRef.current || 10000
-        let next = prev - MARQUEE_SPEED
-        if (next <= -half) next += half
-        return next
-      })
-      rafRef.current = requestAnimationFrame(tick)
+    const mq = window.matchMedia(REDUCED_MOTION_QUERY)
+    const applyReduced = () => {
+      reducedRef.current = mq.matches
+      syncMoving()
     }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [isDragging])
+    applyReduced()
 
-  const getClientX = (e: React.PointerEvent | PointerEvent) => e.clientX
+    const onVisibility = () => syncMoving()
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    didDragRef.current = false
-    setIsDragging(true)
-    setDragStart({ x: getClientX(e), startTranslate: translateXRef.current })
-  }
+    const tick = () => {
+      if (
+        isDraggingRef.current ||
+        reducedRef.current ||
+        !visibleRef.current ||
+        document.hidden
+      ) {
+        return
+      }
+      const half = halfWidthRef.current
+      if (!(half > 0)) return
+      const next = wrapOffset(offsetRef.current - MARQUEE_SPEED, half)
+      offsetRef.current = next
+      const el = innerRef.current
+      if (el) el.style.transform = `translate3d(${next}px,0,0)`
+    }
+
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', applyReduced)
+    } else {
+      mq.addListener(applyReduced)
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    gsap.ticker.add(tick)
+
+    return () => {
+      gsap.ticker.remove(tick)
+      if (typeof mq.removeEventListener === 'function') {
+        mq.removeEventListener('change', applyReduced)
+      } else {
+        mq.removeListener(applyReduced)
+      }
+      document.removeEventListener('visibilitychange', onVisibility)
+      innerRef.current?.classList.remove('is-moving')
+    }
+  }, [syncMoving])
 
   useEffect(() => {
-    if (!isDragging || dragStart === null) return
-    const onMove = (e: PointerEvent) => {
-      didDragRef.current = true
-      const dx = e.clientX - dragStart.x
-      setTranslateX((prev) => {
-        const start = dragStart.startTranslate
-        const half = halfWidthRef.current
-        let next = start + dx
-        while (next > 0) next -= half
-        while (next < -half) next += half
-        return next
-      })
+    const node = carouselRef.current
+    if (!node) return
+    const io = new IntersectionObserver(([entry]) => {
+      visibleRef.current = !!entry?.isIntersecting
+      syncMoving()
+    })
+    io.observe(node)
+    return () => io.disconnect()
+  }, [duplicatedProducts.length, syncMoving])
+
+  useEffect(() => {
+    syncMoving()
+  }, [duplicatedProducts.length, syncMoving])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    didDragRef.current = false
+    isDraggingRef.current = true
+    dragStartRef.current = { x: e.clientX, startTranslate: offsetRef.current }
+    e.currentTarget.classList.add('is-dragging')
+    innerRef.current?.classList.add('is-moving')
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Pointer capture is unavailable for this event; moves still update while the pointer stays over the strip.
     }
-    const onUp = () => {
-      setIsDragging(false)
-      setDragStart(null)
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = dragStartRef.current
+    if (!isDraggingRef.current || !start) return
+    const dx = e.clientX - start.x
+    if (dx !== 0) didDragRef.current = true
+    const next = wrapOffset(start.startTranslate + dx, halfWidthRef.current)
+    offsetRef.current = next
+    const el = innerRef.current
+    if (el) el.style.transform = `translate3d(${next}px,0,0)`
+  }
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
+    dragStartRef.current = null
+    e.currentTarget.classList.remove('is-dragging')
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
     }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-    }
-  }, [isDragging, dragStart])
+    syncMoving()
+  }
 
   const onLinkClick = (e: React.MouseEvent) => {
     if (didDragRef.current) e.preventDefault()
@@ -162,15 +200,16 @@ export default function HomeProductsBryhel({
         </div>
 
         <div
-          className={`carousel carousel--marquee ${isDragging ? 'is-dragging' : ''}`}
+          ref={carouselRef}
+          className="carousel carousel--marquee"
+          role="region"
+          aria-label={`${title} ürünleri`}
           onPointerDown={onPointerDown}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
         >
-          <div
-            ref={innerRef}
-            className="carousel__inner"
-            style={{ transform: `translateX(${translateX}px)` }}
-          >
+          <div ref={innerRef} className="carousel__inner">
             {duplicatedProducts.map((product, index) => (
               <div key={`${product.id}-${index}`} className="carousel__item">
                 <div className="product product--card">

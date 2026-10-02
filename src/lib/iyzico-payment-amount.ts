@@ -4,6 +4,8 @@
  * orders.total = ödeme başlatılırken Iyzico'ya gönderilen nihai tutar (kuruş).
  */
 
+import { kurusToTl, toDisplayPrice } from '@/lib/price'
+
 export function toPriceString(value: number): string {
   return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2)
 }
@@ -19,23 +21,23 @@ type OrderAmountInput = {
 
 export function buildIyzicoPaidPriceFromOrder(order: OrderAmountInput): string {
   if (order.total != null && Number(order.total) > 0) {
-    return toPriceString(Number(order.total) / 100)
+    return toPriceString(kurusToTl(Number(order.total)))
   }
 
   const items = (order.items as OrderItemRow[]) || []
   let sumBasketTL = 0
   for (const item of items) {
     const qty = item.quantity || 1
-    const price10x = item.price / 10
-    const lineTotalTL = (price10x * qty) / 10
+    const price10x = toDisplayPrice(item.price)
+    const lineTotalTL = toDisplayPrice(price10x * qty)
     sumBasketTL += parseFloat(toPriceString(lineTotalTL))
   }
   if (order.shipping_cost > 0) {
-    sumBasketTL += parseFloat(toPriceString(order.shipping_cost / 100))
+    sumBasketTL += parseFloat(toPriceString(kurusToTl(order.shipping_cost)))
   }
   const discount = Number(order.discount_amount ?? 0)
   if (discount > 0) {
-    sumBasketTL -= parseFloat(toPriceString(discount / 100))
+    sumBasketTL -= parseFloat(toPriceString(kurusToTl(discount)))
   }
   return toPriceString(Math.max(0, sumBasketTL))
 }

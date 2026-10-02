@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       .from('orders')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     // Apply search filter
     if (search) {

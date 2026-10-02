@@ -1,779 +1,213 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
-import { getCart } from '@/lib/cart'
-import { getFavorites } from '@/lib/favorites'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import ReferenceHeader, { type HeaderLink } from '@/components/ReferenceHeader'
+import MiniCart from '@/components/mini-cart'
+import { getCart, type CartItem } from '@/lib/cart'
 import { useMenuCategories } from '@/components/categories-provider'
 
-// Static menu items (not categories)
-const staticMenuItems = [
-  { name: 'Anasayfa', href: '/' },
-  { name: 'Tüm Ürünler', href: '/tum-urunler' },
+const STATIC_LINKS: HeaderLink[] = [
+  { label: 'Anasayfa', href: '/' },
+  { label: 'Tüm Ürünler', href: '/tum-urunler' },
 ]
 
-interface Subcategory {
-  name: string
-  href: string
-  key: string
-  depth?: number
-  children?: Subcategory[]
+function isActiveHref(pathname: string, href: string) {
+  if (href === '/') return pathname === '/'
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-interface Category {
-  name: string
-  href: string
-  hasDropdown: boolean
-  subcategories?: Subcategory[]
-}
-
-function transformCategoryTree(apiData: any[]): Category[] {
-  const flattenForMenu = (
-    node: any,
-    rootSlug: string,
-    depth: number = 0,
-    ancestors: string[] = []
-  ): Subcategory[] => {
+function toCategoryLinks(
+  nodes: NonNullable<ReturnType<typeof useMenuCategories>>,
+  ancestors: string[],
+  pathname: string
+): HeaderLink[] {
+  return nodes.map((node) => {
     const path = [...ancestors, node.slug]
-    const href = `/kategori/${rootSlug}/${path.join('/')}`
-    const current: Subcategory = {
-      name: node.name,
+    const href = `/kategori/${path.join('/')}`
+    const children = node.subcategories?.length
+      ? toCategoryLinks(node.subcategories, path, pathname)
+      : undefined
+    return {
+      label: node.name,
       href,
-      key: node.slug,
-      depth,
-      children: node.subcategories || [],
+      current: isActiveHref(pathname, href),
+      children,
     }
-    const children = (node.subcategories || []).flatMap((child: any) =>
-      flattenForMenu(child, rootSlug, depth + 1, path)
-    )
-    return [current, ...children]
-  }
-
-  return apiData.map((cat: any) => ({
-    name: cat.name,
-    href: `/kategori/${cat.slug}`,
-    hasDropdown: cat.subcategories && cat.subcategories.length > 0,
-    subcategories: (cat.subcategories || []).flatMap((sub: any) => flattenForMenu(sub, cat.slug)),
-  }))
+  })
 }
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [cartCount, setCartCount] = useState(0)
-  const [favoritesCount, setFavoritesCount] = useState(0)
-  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
-  const [user, setUser] = useState<any>(null)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState<Record<string, boolean>>({})
-  const [headerHeight, setHeaderHeight] = useState(0)
-  const headerRef = useRef<HTMLElement>(null)
-  const menuCategoriesFromServer = useMenuCategories()
-  const [fetchedCategories, setFetchedCategories] = useState<Category[]>([])
-  const categories =
-    menuCategoriesFromServer && menuCategoriesFromServer.length > 0
-      ? transformCategoryTree(menuCategoriesFromServer)
-      : fetchedCategories
-  const [mobileMenuClosing, setMobileMenuClosing] = useState(false)
-  const [mobileMenuAnimated, setMobileMenuAnimated] = useState(false)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [miniOpen, setMiniOpen] = useState(false)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
+  const holdRef = useRef(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const menuCategories = useMenuCategories()
 
-  // Sync search query from URL when on tum-urunler page
+  const categoryLinks: HeaderLink[] = toCategoryLinks(menuCategories ?? [], [], pathname)
+
+  const desktopLinks: HeaderLink[] = [
+    ...STATIC_LINKS.map((link) => ({
+      ...link,
+      current: isActiveHref(pathname, link.href),
+    })),
+    ...categoryLinks,
+  ]
+
+  const menuLinks: HeaderLink[] = [
+    ...desktopLinks,
+    {
+      label: 'Hakkımızda',
+      href: '/hakkimizda',
+      current: isActiveHref(pathname, '/hakkimizda'),
+    },
+  ]
+
+  // Campaign banners are light product photos, so the header text stays dark.
+  // The capsule frame appears only after scroll.
+  const overlay = false
+
+  const closeMini = useCallback(() => setMiniOpen(false), [])
+  const quietCartPath = pathname === '/sepet' || pathname.startsWith('/checkout')
+
   useEffect(() => {
-    if (pathname === '/tum-urunler') {
-      const urlSearch = searchParams.get('search') || ''
-      setSearchQuery(urlSearch)
-    } else {
-      // Clear search when navigating away from search page
-      setSearchQuery('')
-    }
-  }, [pathname, searchParams])
+    setMiniOpen(false)
+  }, [pathname])
 
-  // Calculate header height for mobile menu positioning (rAF ile reflow'u kritik yoldan çıkarır)
   useEffect(() => {
-    let rafId = 0
-    const updateHeaderHeight = () => {
-      rafId = requestAnimationFrame(() => {
-        if (headerRef.current) {
-          setHeaderHeight(headerRef.current.offsetHeight)
-        }
-      })
-    }
-
-    updateHeaderHeight()
-    window.addEventListener('resize', updateHeaderHeight)
-
-    return () => {
-      cancelAnimationFrame(rafId)
-      window.removeEventListener('resize', updateHeaderHeight)
-    }
-  }, [])
-
-  // Lock body scroll when mobile menu is open + trigger slide-down animation
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden'
-      setMobileMenuAnimated(false)
-      const t = setTimeout(() => setMobileMenuAnimated(true), 50)
-      return () => clearTimeout(t)
-    } else {
-      document.body.style.overflow = ''
-      setMobileMenuAnimated(false)
-    }
-  }, [isMenuOpen])
-
-  const handleSearch = (e?: React.FormEvent) => {
-    e?.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/tum-urunler?search=${encodeURIComponent(searchQuery.trim())}`)
-      setIsMenuOpen(false) // Close mobile menu if open
-    }
-  }
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch(e)
-    }
-  }
-
-  // Load user on mount (safe for unmount)
-  useEffect(() => {
-    let isMounted = true
-    const load = async () => {
-      try {
-        const response = await fetch('/api/auth/me')
-        const result = await response.json()
-        if (!isMounted) return
-        setUser(result.success ? result.user : null)
-      } catch {
-        if (!isMounted) return
-        setUser(null)
-      }
-    }
-
-    load()
-    
-    // Listen for auth changes
-    const handleAuthChange = () => {
-      load()
-    }
-    
-    window.addEventListener('authChanged', handleAuthChange)
-    return () => {
-      isMounted = false
-      window.removeEventListener('authChanged', handleAuthChange)
-    }
-  }, [])
-
-  const handleSignOut = async () => {
-    try {
-      await fetch('/api/auth/signout', { method: 'POST' })
-      setUser(null)
-      setShowUserMenu(false)
-      window.dispatchEvent(new Event('authChanged'))
-    } catch (error) {
-      console.error('Sign out error:', error)
-    }
-  }
-
-  // Sepet sayısını güncelle
-  useEffect(() => {
-    const updateCartCount = () => {
+    const syncCart = () => {
       const cart = getCart()
-      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0)
-      setCartCount(totalItems)
+      setCartItems(cart)
+      setCartCount(cart.reduce((sum, item) => sum + item.qty, 0))
+      if (cart.length === 0) setMiniOpen(false)
     }
-
-    // İlk yükleme
-    updateCartCount()
-
-    // Storage değişikliklerini dinle
-    const handleStorageChange = () => {
-      updateCartCount()
+    const onAdded = (event: Event) => {
+      syncCart()
+      if (quietCartPath) return
+      const id = (event as CustomEvent<{ id?: string }>).detail?.id ?? null
+      holdRef.current = true
+      setHighlightId(id)
+      setMiniOpen(true)
+      window.setTimeout(() => {
+        holdRef.current = false
+      }, 0)
     }
-
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Custom event dinle (aynı tab içinde değişiklikler için)
-    window.addEventListener('cartUpdated', handleStorageChange)
-
+    syncCart()
+    window.addEventListener('storage', syncCart)
+    window.addEventListener('cartUpdated', syncCart)
+    window.addEventListener('cartItemAdded', onAdded)
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('cartUpdated', handleStorageChange)
+      window.removeEventListener('storage', syncCart)
+      window.removeEventListener('cartUpdated', syncCart)
+      window.removeEventListener('cartItemAdded', onAdded)
     }
-  }, [])
+  }, [quietCartPath])
 
-  // Favoriler sayısını güncelle
   useEffect(() => {
-    const updateFavoritesCount = async () => {
-      try {
-        const favorites = await getFavorites()
-        setFavoritesCount(favorites.length)
-      } catch (error) {
-        // If not authenticated, count will be 0
-        setFavoritesCount(0)
-      }
-    }
-
-    // İlk yükleme
-    updateFavoritesCount()
-
-    // Favoriler değiştiğinde güncelle
-    const handleFavoritesChange = () => {
-      updateFavoritesCount()
-    }
-
-    window.addEventListener('favoritesUpdated', handleFavoritesChange)
-
+    if (!searchOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const focusId = window.setTimeout(() => searchInputRef.current?.focus(), 50)
     return () => {
-      window.removeEventListener('favoritesUpdated', handleFavoritesChange)
+      document.body.style.overflow = previousOverflow
+      window.clearTimeout(focusId)
     }
-  }, [])
+  }, [searchOpen])
 
-  // API fallback when server categories are unavailable
-  useEffect(() => {
-    if (menuCategoriesFromServer && menuCategoriesFromServer.length > 0) return
-
-    let isMounted = true
-    const loadCategories = async () => {
-      try {
-        const response = await fetch('/api/categories', {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
-        })
-        const result = await response.json()
-        if (!isMounted) return
-
-        if (result.success && result.data) {
-          setFetchedCategories(transformCategoryTree(result.data))
-        }
-      } catch (error) {
-        console.error('Error loading categories:', error)
-        if (isMounted) setFetchedCategories([])
-      }
+  const submitSearch = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    const q = searchQuery.trim()
+    setSearchOpen(false)
+    if (q) {
+      router.push(`/tum-urunler?search=${encodeURIComponent(q)}`)
+    } else {
+      router.push('/tum-urunler')
     }
-
-    loadCategories()
-    return () => {
-      isMounted = false
-    }
-  }, [menuCategoriesFromServer])
-
-  // Load category/subcategory counts from API (stokta olan ürünler; navbar’da güncel sayı).
-  // API artık tüm ürünleri sayar ve iç içe alt kategorilerde alt dalları da toplar.
-  useEffect(() => {
-    let isMounted = true
-    const loadCounts = async () => {
-      try {
-        const res = await fetch('/api/products?view=counts', { cache: 'no-store' })
-        const json = await res.json()
-        if (!isMounted) return
-        if (json.success && json.counts && typeof json.counts === 'object') {
-          setCategoryCounts(json.counts as Record<string, number>)
-        }
-      } catch {}
-    }
-    loadCounts()
-    return () => { isMounted = false }
-  }, [])
-
-  const closeMobileMenu = () => {
-    setMobileMenuClosing(true)
-    setTimeout(() => {
-      setIsMenuOpen(false)
-      setMobileMenuClosing(false)
-    }, 300)
-  }
-
-  const isActiveHref = (href: string) => {
-    if (href === '/') return pathname === '/'
-    return pathname === href || pathname.startsWith(`${href}/`)
   }
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-[100] bg-black/35 backdrop-blur-md">
-      {/* Gradient orbs – clipped inside this wrapper so header has no overflow (mobile menu can show) */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -right-60 -top-10 flex flex-col items-end blur-xl">
-          <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#2c2520] to-[#f5f0e8] blur-3xl" />
-          <div className="h-40 w-[90rem] rounded-full bg-gradient-to-b from-[#c4a090] to-[#e8dfd4] blur-3xl" />
-          <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#d4c4b0] to-[#f5f0e8] blur-3xl" />
-        </div>
-      </div>
-
-      <div className="relative z-10">
-        <nav className="container relative mx-auto flex items-center justify-between px-4 py-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/fk-amblem.png"
-              alt="Favori Kozmetik"
-              width={36}
-              height={36}
-              priority
-              className="h-9 w-9 rounded-full"
+    <>
+      <ReferenceHeader
+        brandName="Favori Kozmetik"
+        homeHref="/"
+        links={desktopLinks}
+        menuLinks={menuLinks}
+        overlay={overlay}
+        cartCount={cartCount}
+        contactEmail="mervesaat@gmail.com"
+        socialLinks={[{ platform: 'instagram', href: 'https://www.instagram.com/favorikozmetik/' }]}
+        announcement={
+          <>
+            Türkiye&apos;nin profesyonel kozmetik mağazası · Ücretsiz kargo fırsatlarını kaçırmayın
+          </>
+        }
+        cartPreview={
+          miniOpen && cartItems.length > 0 && !quietCartPath ? (
+            <MiniCart
+              items={cartItems}
+              highlightId={highlightId}
+              holdRef={holdRef}
+              onClose={closeMini}
             />
-            <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
-          </Link>
+          ) : null
+        }
+        onSearch={() => {
+          setMiniOpen(false)
+          setSearchQuery('')
+          setSearchOpen(true)
+        }}
+        onCart={() => router.push('/sepet')}
+        onAccount={() => router.push('/hesabim')}
+        onFavorites={() => router.push('/favorilerim')}
+      />
 
-          {/* Orta slogan – tam ortada (sadece geniş ekran) */}
-          <span className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-sm font-medium tracking-wide text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] xl:block">
-            Türkiye&apos;nin Profesyonel Kozmetik Mağazası
-          </span>
-
-          {/* Desktop: Search + Actions (kategoriler ayrı barda, aşağıda) */}
-          <div className="hidden lg:flex items-center gap-4">
-            <form className="flex flex-1 max-w-[200px]" onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
-                <input
-                  type="text"
-                  placeholder="Ürün ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  className="w-full rounded-full border border-white/20 bg-white/5 py-2 pl-8 pr-3 text-sm text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
-                />
-              </div>
-            </form>
-            <Link
-              href="/favorilerim"
-              className="relative text-white/90 hover:text-white transition-colors"
-              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`}
+      {searchOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-4 pt-28"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ürün ara"
+          data-testid="header-search-dialog"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSearchOpen(false)
+          }}
+        >
+          <form
+            onSubmit={submitSearch}
+            className="flex w-full max-w-xl items-center gap-2 rounded-full bg-white p-2 shadow-2xl"
+          >
+            <input
+              ref={searchInputRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Ürün ara..."
+              className="min-w-0 flex-1 rounded-full border-0 bg-transparent px-4 py-3 text-base text-neutral-900 outline-none placeholder:text-neutral-400"
+              aria-label="Ürün ara"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:bg-neutral-800"
             >
-              <Heart className="h-5 w-5" />
-              {favoritesCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-                  {favoritesCount > 99 ? '99+' : favoritesCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/sepet"
-              className="relative text-white/90 hover:text-white transition-colors"
-              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount})` : ''}`}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </Link>
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors"
-                >
-                  {user.name?.split(' ')[0] || 'Hesabım'}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                </button>
-                {showUserMenu && (
-                  <div
-                    className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-gray-900/95 py-2 shadow-xl backdrop-blur-sm"
-                    onMouseLeave={() => setShowUserMenu(false)}
-                  >
-                    <Link
-                      href="/hesabim"
-                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      Hesabım
-                    </Link>
-                    <Link
-                      href="/siparislerim"
-                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      Siparişlerim
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/10"
-                    >
-                      Çıkış Yap
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/giris"
-                className="rounded-full bg-white px-6 py-2.5 text-sm font-medium text-black hover:bg-white/90 transition-colors"
-                data-testid="user-icon"
-              >
-                Giriş Yap
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile: Favoriler + Sepet + menu button */}
-          <div className="flex items-center gap-1 lg:hidden">
-            <Link
-              href="/favorilerim"
-              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center text-white/90 hover:text-white touch-manipulation"
-              aria-label={`Favoriler${favoritesCount > 0 ? ` (${favoritesCount})` : ''}`}
-            >
-              <Heart className="h-5 w-5" />
-              {favoritesCount > 0 && (
-                <span className="absolute right-0 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-                  {favoritesCount > 99 ? '99+' : favoritesCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/sepet"
-              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center text-white/90 hover:text-white touch-manipulation"
-              aria-label={`Sepet${cartCount > 0 ? ` (${cartCount})` : ''}`}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute right-0 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </Link>
+              Ara
+            </button>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); isMenuOpen ? closeMobileMenu() : setIsMenuOpen(true); }}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
-              aria-label="Menüyü aç/kapat"
-              aria-expanded={isMenuOpen}
-              data-testid="mobile-menu-button"
+              className="shrink-0 rounded-full px-3 py-3 text-sm text-neutral-500 hover:text-neutral-900"
+              aria-label="Aramayı kapat"
+              onClick={() => setSearchOpen(false)}
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              Kapat
             </button>
-          </div>
-        </nav>
-
-        {/* Kategori barı – her sayfada, ayrı satır (sadece desktop) */}
-        <div className="hidden lg:block border-t border-white/15 bg-black/40 backdrop-blur-md">
-          <div className="container mx-auto flex items-center justify-center gap-8 px-4 py-3">
-            {staticMenuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-white/10 ${
-                  isActiveHref(item.href) ? 'bg-white/10 text-pink-400' : 'text-white hover:text-pink-400'
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-            {categories.map((category) => {
-              const active = isActiveHref(category.href)
-              return (
-                <div
-                  key={category.name}
-                  className="relative"
-                  onMouseLeave={() => setHoveredCategory(null)}
-                >
-                  <div
-                    className={`flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors hover:bg-white/10 ${
-                      active ? 'bg-white/10' : ''
-                    }`}
-                    onMouseEnter={() => category.hasDropdown && setHoveredCategory(category.name)}
-                  >
-                    <Link
-                      href={category.href}
-                      className={`text-base font-bold transition-colors hover:text-pink-400 ${
-                        active ? 'text-pink-400' : 'text-white'
-                      }`}
-                    >
-                      {category.name}
-                    </Link>
-                    {category.hasDropdown && (
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          hoveredCategory === category.name || active ? 'text-pink-400' : 'text-white'
-                        } ${hoveredCategory === category.name ? 'rotate-180' : ''}`}
-                      />
-                    )}
-                  </div>
-                  {category.hasDropdown && hoveredCategory === category.name && (
-                    <div className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2">
-                    <div className="scrollbar-elegant w-72 max-h-[70vh] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-gray-900/95 p-3 shadow-xl backdrop-blur-sm">
-                      {category.subcategories?.map((sub: Subcategory) => {
-                        const depth = sub.depth || 0
-                        const isTop = depth === 0
-                        return (
-                          <Link
-                            key={sub.href}
-                            href={sub.href}
-                            className={`flex items-center justify-between rounded-lg py-2 pr-2.5 transition-colors hover:bg-white/10 hover:text-white ${
-                              isTop
-                                ? 'mt-1 pl-3 text-[15px] font-bold text-white'
-                                : 'pl-2 text-sm font-semibold text-gray-100'
-                            }`}
-                            onClick={() => setHoveredCategory(null)}
-                          >
-                            <span
-                              className={`flex items-center gap-1.5 ${
-                                isTop ? '' : 'border-l-2 border-pink-400/40 pl-2'
-                              }`}
-                              style={{ marginLeft: isTop ? 0 : `${(depth - 1) * 14 + 6}px` }}
-                            >
-                              {!isTop && <span className="text-pink-400">›</span>}
-                              {sub.name}
-                            </span>
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                                isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-pink-500/10 text-pink-200'
-                              }`}
-                            >
-                              {categoryCounts[sub.key] ?? 0}
-                            </span>
-                          </Link>
-                        )
-                      })}
-                    </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          </form>
         </div>
-
-        {/* Mobil kategori barı – yatay kaydırılabilir (sadece mobil/tablet, ana sayfa hariç) */}
-        {pathname !== '/' && (
-          <div className="lg:hidden border-t border-white/15 bg-black/40 backdrop-blur-md">
-            <div
-              className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4 py-2"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {categories.map((category) => {
-                const active = isActiveHref(category.href)
-                return (
-                  <Link
-                    key={category.name}
-                    href={category.href}
-                    className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-                      active ? 'bg-white/15 text-pink-400' : 'bg-white/5 text-white hover:text-pink-400'
-                    }`}
-                  >
-                    {category.name}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile menu – full-screen overlay, portaled to body so height is correct */}
-      {typeof document !== 'undefined' &&
-        (isMenuOpen || mobileMenuClosing) &&
-        createPortal(
-          <div
-            id="mobile-menu"
-            data-testid="mobile-menu"
-            className="fixed inset-0 z-[100] flex flex-col bg-black lg:hidden"
-            style={{
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              minHeight: '100dvh',
-              height: '100dvh',
-              transform: mobileMenuClosing ? 'translateY(-100%)' : mobileMenuAnimated ? 'translateY(0)' : 'translateY(-100%)',
-              transition: 'transform 0.3s ease-out',
-              willChange: 'transform',
-            }}
-          >
-            {/* Aynı gradient orblar – header ile aynı renk / görünüm */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -right-60 -top-10 flex flex-col items-end blur-xl">
-                <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#2c2520] to-[#f5f0e8] blur-3xl" />
-                <div className="h-40 w-[90rem] rounded-full bg-gradient-to-b from-[#c4a090] to-[#e8dfd4] blur-3xl" />
-                <div className="h-40 w-[60rem] rounded-full bg-gradient-to-b from-[#d4c4b0] to-[#f5f0e8] blur-3xl" />
-              </div>
-            </div>
-            <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 overscroll-contain" style={{ minHeight: 0 }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Image
-                  src="/fk-amblem.png"
-                  alt="Favori Kozmetik"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 rounded-full"
-                />
-                <span className="ml-2 text-xl font-bold text-white">Favori Kozmetik</span>
-              </div>
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeMobileMenu(); }}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-white touch-manipulation"
-                aria-label="Menüyü kapat"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <form className="mt-6 mb-4" onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" />
-                <input
-                  type="text"
-                  placeholder="Ürün, kategori veya marka ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  className="w-full rounded-xl border border-white/20 bg-white/10 py-3 pl-10 pr-4 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
-                />
-              </div>
-            </form>
-
-            <nav className="flex flex-col space-y-1">
-              {staticMenuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-lg py-3 px-3 text-base transition-colors hover:bg-white/10 ${
-                    isActiveHref(item.href) ? 'text-pink-400' : 'text-white/90 hover:text-white'
-                  }`}
-                  onClick={closeMobileMenu}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              {categories.map((category: Category) => {
-                const active = isActiveHref(category.href)
-                if (category.hasDropdown) {
-                  const isOpen = mobileCategoriesOpen[category.name] || false
-                  return (
-                    <div key={category.name}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMobileCategoriesOpen({ ...mobileCategoriesOpen, [category.name]: !isOpen })
-                        }
-                        className={`flex w-full items-center justify-between rounded-lg py-3 px-3 text-lg font-semibold transition-colors hover:bg-white/10 ${
-                          active ? 'text-pink-400' : 'text-white/90 hover:text-white'
-                        }`}
-                      >
-                        <span>{category.name}</span>
-                        <ChevronDown
-                          className={`h-5 w-5 transition-transform ${active ? 'text-pink-400' : ''} ${isOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      {isOpen && category.subcategories && (
-                        <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
-                          {category.subcategories.map((sub: Subcategory) => {
-                            const depth = sub.depth || 0
-                            const isTop = depth === 0
-                            return (
-                              <Link
-                                key={sub.href}
-                                href={sub.href}
-                                className={`flex items-center justify-between py-2.5 transition-colors hover:text-white ${
-                                  isTop ? 'text-base font-bold text-white' : 'text-sm font-semibold text-gray-200'
-                                }`}
-                                onClick={() => {
-                                  closeMobileMenu()
-                                  setMobileCategoriesOpen({})
-                                }}
-                              >
-                                <span
-                                  className="flex items-center gap-1.5"
-                                  style={{ paddingLeft: isTop ? 0 : `${depth * 12}px` }}
-                                >
-                                  {!isTop && <span className="text-pink-400">›</span>}
-                                  {sub.name}
-                                </span>
-                                <span
-                                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                                    isTop ? 'bg-pink-500/20 text-pink-300' : 'bg-pink-500/10 text-pink-200'
-                                  }`}
-                                >
-                                  {categoryCounts[sub.key] ?? 0}
-                                </span>
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )
-                }
-                return (
-                  <Link
-                    key={category.href}
-                    href={category.href}
-                    className={`rounded-lg py-3 px-3 text-lg font-semibold transition-colors hover:bg-white/10 ${
-                      active ? 'text-pink-400' : 'text-white/90 hover:text-white'
-                    }`}
-                    onClick={closeMobileMenu}
-                  >
-                    {category.name}
-                  </Link>
-                )
-              })}
-              <Link
-                href="/hakkimizda"
-                className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
-                onClick={closeMobileMenu}
-              >
-                Hakkımızda
-              </Link>
-              <Link
-                href="/iletisim"
-                className="rounded-lg py-3 px-3 text-base text-white/90 hover:bg-white/10 hover:text-white transition-colors"
-                onClick={closeMobileMenu}
-              >
-                İletişim
-              </Link>
-            </nav>
-
-            <div className="mt-6 border-t border-white/10 pt-6 space-y-3">
-              <Link
-                href="/favorilerim"
-                className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
-                onClick={closeMobileMenu}
-              >
-                <Heart className="h-5 w-5" />
-                <span>Favoriler{favoritesCount > 0 ? ` (${favoritesCount})` : ''}</span>
-              </Link>
-              <Link
-                href="/sepet"
-                className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
-                onClick={closeMobileMenu}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span>Sepet{cartCount > 0 ? ` (${cartCount})` : ''}</span>
-              </Link>
-              {user ? (
-                <Link
-                  href="/hesabim"
-                  className="flex items-center gap-3 rounded-lg py-3 px-3 text-white/90 hover:bg-white/10 transition-colors"
-                  onClick={closeMobileMenu}
-                >
-                  <User className="h-5 w-5" />
-                  <span>Hesabım</span>
-                </Link>
-              ) : (
-                <Link
-                  href="/giris"
-                  className="flex h-12 items-center justify-center rounded-full bg-white text-base font-medium text-black hover:bg-white/90 transition-colors"
-                  onClick={closeMobileMenu}
-                >
-                  Giriş Yap
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body
       )}
-    </header>
+    </>
   )
 }

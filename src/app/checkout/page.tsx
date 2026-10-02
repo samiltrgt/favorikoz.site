@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ProductImage from '@/components/product-image'
@@ -21,6 +21,10 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { getCart } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
+import { toDisplayPrice } from '@/lib/price'
+import { adItemsFromCart, adValueFromCart } from '@/lib/analytics/value'
+import { trackAddPaymentInfo, trackInitiateCheckout } from '@/lib/analytics/datalayer'
+import { getCheckoutTrackingPayload } from '@/lib/analytics/tracking'
 
 type Step = 'info' | 'shipping' | 'payment'
 
@@ -73,6 +77,26 @@ export default function CheckoutPage() {
     termsAccepted: false,
     kvkkAccepted: false,
   })
+
+  const initiateCheckoutSent = useRef(false)
+
+  // InitiateCheckout — sepet doluyken mount'ta bir kez
+  useEffect(() => {
+    if (isLoading || initiateCheckoutSent.current) return
+    if (cartItems.length === 0) return
+    initiateCheckoutSent.current = true
+    const contents = adItemsFromCart(cartItems)
+    const value = adValueFromCart(cartItems)
+    trackInitiateCheckout({
+      value,
+      contents,
+      items: contents.map((c) => ({
+        item_id: c.id,
+        quantity: c.quantity,
+        price: c.item_price,
+      })),
+    })
+  }, [isLoading, cartItems])
 
   // Load cart and user profile
   useEffect(() => {
@@ -224,6 +248,21 @@ export default function CheckoutPage() {
     let handedOffToThreeDS = false
 
     try {
+      // AddPaymentInfo — document.write 3DS devrinden ÖNCE (sonra JS bağlamı yok)
+      const contents = adItemsFromCart(cartItems)
+      const value = adValueFromCart(cartItems)
+      trackAddPaymentInfo({
+        value,
+        contents,
+        items: contents.map((c) => ({
+          item_id: c.id,
+          quantity: c.quantity,
+          price: c.item_price,
+        })),
+      })
+
+      const tracking = getCheckoutTrackingPayload()
+
       const response = await fetch('/api/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,6 +274,7 @@ export default function CheckoutPage() {
             quantity: item.qty
           })),
           couponCode,
+          tracking,
           customerInfo: {
             name: formData.name,
             surname: formData.surname,
@@ -813,7 +853,7 @@ export default function CheckoutPage() {
                       disabled={isProcessing || !formData.termsAccepted || !formData.kvkkAccepted}
                       className="flex-1 bg-green-600 text-white py-4 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {isProcessing ? 'İşleniyor...' : `₺${(total / 10).toFixed(2)} Öde`}
+                      {isProcessing ? 'İşleniyor...' : `₺${toDisplayPrice(total).toFixed(2)} Öde`}
                     </button>
                   </div>
                 </div>
@@ -843,7 +883,7 @@ export default function CheckoutPage() {
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-gray-500">Adet: {item.qty}</span>
                         <span className="text-sm font-medium text-black">
-                          ₺{((item.price * item.qty) / 10).toFixed(2)}
+                          ₺{toDisplayPrice(item.price * item.qty).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -875,13 +915,13 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Ara Toplam</span>
-                  <span className="font-medium text-black">₺{(subtotal / 10).toFixed(2)}</span>
+                  <span className="font-medium text-black">₺{toDisplayPrice(subtotal).toFixed(2)}</span>
             </div>
 
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Kupon İndirimi</span>
-                    <span className="font-medium text-green-600">-₺{(couponDiscount / 10).toFixed(2)}</span>
+                    <span className="font-medium text-green-600">-₺{toDisplayPrice(couponDiscount).toFixed(2)}</span>
                   </div>
                 )}
 
@@ -890,7 +930,7 @@ export default function CheckoutPage() {
                     Kargo (Bugün Kargoda)
                   </span>
                   <span className={`font-medium ${shipping === 0 ? 'text-green-600' : 'text-black'}`}>
-                    {shipping === 0 ? 'Ücretsiz' : `₺${(shipping / 10).toFixed(2)}`}
+                    {shipping === 0 ? 'Ücretsiz' : `₺${toDisplayPrice(shipping).toFixed(2)}`}
               </span>
             </div>
             
@@ -898,7 +938,7 @@ export default function CheckoutPage() {
                 {subtotalAfterCoupon < FREE_SHIPPING_THRESHOLD && formData.shippingMethod === 'standard' && (
                   <div className="pt-2">
                     <div className="text-xs text-orange-600 mb-2">
-                  Ücretsiz kargo için ₺{((FREE_SHIPPING_THRESHOLD - subtotalAfterCoupon) / 10).toFixed(2)} daha ekleyin
+                  Ücretsiz kargo için ₺{toDisplayPrice(FREE_SHIPPING_THRESHOLD - subtotalAfterCoupon).toFixed(2)} daha ekleyin
                 </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div 
@@ -911,7 +951,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-base font-bold text-black pt-3 border-t border-gray-200">
               <span>Toplam</span>
-                  <span>₺{(total / 10).toFixed(2)}</span>
+                  <span>₺{toDisplayPrice(total).toFixed(2)}</span>
             </div>
           </div>
 

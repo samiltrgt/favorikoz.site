@@ -1,0 +1,299 @@
+/* Brand type — Onest via --font-brand */
+.ep-collections {
+  --ep-paper: var(--color-paper, #fbf6f8);
+  --ep-sage: var(--color-mist, #f5e8ef);
+  --ep-ink: var(--color-ink, #1c161a);
+  --ep-font: var(--font-brand, 'Onest', 'Inter', 'DM Sans', system-ui, sans-serif);
+  --ep-col: 25%;
+  --ep-gap: var(--space-card, 20px);
+  padding: 32px 40px;
+  background: var(--ep-paper);
+  color: var(--ep-ink);
+  font-family: var(--ep-font);
+}
+.ep-collections *,
+.ep-collections *::before {
+  box-sizing: border-box;
+}
+.ep-collections a {
+  color: inherit;
+  text-decoration: none;
+}
+.ep-collections a:focus-visible,
+.ep-collections button:focus-visible {
+  outline: 2px solid var(--ep-ink);
+  outline-offset: -3px;
+}
+
+.ep-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ep-gap);
+  margin-bottom: 56px;
+  touch-action: pan-y pinch-zoom;
+}
+.ep-row.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+.ep-row:last-child {
+  margin-bottom: 0;
+}
+
+.ep-pane {
+  min-width: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+.ep-row.is-dragging .ep-pane {
+  cursor: grabbing;
+}
+.ep-rail {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.ep-track {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ep-gap);
+  width: max-content;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.ep-slide {
+  flex: 0 0 var(--ep-col);
+  width: var(--ep-col);
+  min-width: var(--ep-col);
+}
+.ep-slide img,
+.ep-mcard img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.ep-control {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  align-self: start;
+  background: var(--ep-paper);
+}
+.ep-control h2 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  font-size: clamp(var(--text-32, 32px), 3.5vw, var(--text-48, 48px));
+  font-weight: var(--weight-thin, 300);
+  letter-spacing: var(--tracking-48, -0.037em);
+  line-height: var(--lh-display-md, 1.04);
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.ep-arrows {
+  position: absolute;
+  right: 0;
+  bottom: 20%;
+  z-index: 2;
+  display: flex;
+  border: 1px solid #75756f;
+  border-radius: var(--radius-card, 10px);
+  overflow: hidden;
+  background: var(--ep-paper);
+  transition: top 80ms linear;
+}
+.ep-arrows button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ep-ink);
+  cursor: pointer;
+}
+.ep-arrows button:hover {
+  background: var(--ep-sage);
+}
+.ep-arrows button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.ep-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 1199px) {
+  .ep-collections {
+    padding: 24px;
+    --ep-gap: 16px;
+  }
+  .ep-control h2 {
+    letter-spacing: var(--tracking-32, -0.028em);
+  }
+}
+
+.ep-pane--mobile {
+  display: none;
+}
+
+/* Mobile editorial card — 2-col reference layout */
+.ep-mcard {
+  min-width: 0;
+  color: inherit;
+}
+.ep-mcard__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-image, 15px);
+  background: var(--color-paper, #fbf6f8);
+  color: inherit;
+  text-decoration: none;
+}
+.ep-mcard__media img {
+  object-fit: cover;
+  object-position: center;
+}
+.ep-mcard__oos {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.ep-mcard__body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+}
+.ep-mcard__copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ep-mcard__name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  color: inherit;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.ep-mcard__sub {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: inherit;
+  opacity: 0.72;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ep-mcard__price {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.ep-mcard__swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Mobile: title + sliding 2-column product rail */
+@media (max-width: 639px) {
+  .ep-collections {
+    padding: 20px 16px 28px;
+  }
+  .ep-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-bottom: 48px;
+  }
+  .ep-pane--desktop {
+    display: none;
+  }
+  .ep-pane--mobile {
+    display: block;
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .ep-control {
+    grid-column: 1 / -1 !important;
+    grid-row: 1;
+    aspect-ratio: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .ep-control h2 {
+    position: static;
+    order: -1;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    pointer-events: auto;
+  }
+  .ep-arrows {
+    position: static;
+    flex-shrink: 0;
+    transform: none !important;
+    top: auto !important;
+    bottom: auto !important;
+    transition: none;
+    border-color: #8a8a84;
+    border-radius: 8px;
+  }
+  .ep-arrows button {
+    width: 40px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ep-track {
+    transition: none !important;
+  }
+  .ep-arrows {
+    transition: none;
+  }
+}

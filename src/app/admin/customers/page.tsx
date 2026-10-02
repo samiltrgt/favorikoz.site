@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Mail, Phone, Calendar, ShoppingBag, TrendingUp, Eye } from 'lucide-react'
+import { formatTRY } from '@/lib/price'
 
 interface Customer {
   id: string
@@ -172,10 +173,7 @@ export default function CustomersPage() {
                       <div className="flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-green-500" />
                         <span className="text-sm font-semibold text-gray-900">
-                          ₺{customer.stats.totalSpent.toLocaleString('tr-TR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
+                          ₺{formatTRY(customer.stats.totalSpent)}
                         </span>
                       </div>
                     </td>

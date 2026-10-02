@@ -19,6 +19,8 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 }
 
+const MOBILE_MAX = FRAME_CONFIG.breakpoints.mobile - 1
+
 export interface UseSpriteScrollParams {
   sectionRef: RefObject<HTMLElement>
   pinRef: RefObject<HTMLElement>
@@ -47,17 +49,23 @@ export function useSpriteScroll({
     const poster = posterRef.current
     if (!section || !pin || !canvas) return
 
-    const playhead = { frame: 0 }
+    // Input (scroll) and render are decoupled: ScrollTrigger only writes `target`,
+    // a single gsap.ticker loop eases `current` toward it and draws.
+    const play = { current: 0, target: 0 }
     let renderer: ISequenceRenderer | null = null
-    let ctx: gsap.Context | null = null
+    let mm: gsap.MatchMedia | null = null
     let observer: IntersectionObserver | null = null
 
-    let drawRafId = 0
     let resizeRafId = 0
     let lastDrawnFrame = -1
     let started = false
     let paused = typeof document !== 'undefined' ? document.hidden : false
-    let autoPlayCleanup: (() => void) | null = null
+    let lastWidth = window.innerWidth
+
+    const frameCount = getFrameCount(window.innerWidth)
+    const lastFrame = frameCount - 1
+    const fadeStart = SCROLL_CONFIG.overlayFadeStart
+    const fadeRange = SCROLL_CONFIG.overlayFadeEnd - SCROLL_CONFIG.overlayFadeStart
 
     const computeMetrics = (): CanvasMetrics => ({
       cssWidth: window.innerWidth,
@@ -70,19 +78,6 @@ export function useSpriteScroll({
       renderer.resize(computeMetrics())
     }
 
-    const scheduleDraw = (): void => {
-      if (drawRafId) return
-      drawRafId = requestAnimationFrame(() => {
-        drawRafId = 0
-        if (!renderer || paused) return
-        const index = Math.round(playhead.frame)
-        if (index === lastDrawnFrame) return
-        lastDrawnFrame = index
-        renderer.drawFrame(index)
-      })
-    }
-
-    const frameCount = getFrameCount(window.innerWidth)
     const urls = getFrameIndices(frameCount).map(getFrameUrl)
     renderer = new FrameSequenceRenderer(canvas, {
       frameUrls: urls,
@@ -92,21 +87,39 @@ export function useSpriteScroll({
     })
     resizeCanvas()
 
+    // ── Single clock: ease current→target, draw only on integer-frame change ──
+    const perFrame = 1000 / 60
+    const tick = (_time: number, deltaTime: number): void => {
+      if (!renderer || paused) return
+      const alpha = 1 - Math.pow(1 - SCROLL_CONFIG.frameLerp, deltaTime / perFrame)
+      play.current += (play.target - play.current) * alpha
+      if (Math.abs(play.target - play.current) < 0.01) play.current = play.target
+      const index = Math.round(play.current)
+      if (index === lastDrawnFrame) return
+      lastDrawnFrame = index
+      renderer.drawFrame(index)
+    }
+    gsap.ticker.add(tick)
+
     const onVisibilityChange = (): void => {
       paused = document.hidden
-      if (!paused) {
-        lastDrawnFrame = -1
-        scheduleDraw()
-      }
+      if (!paused) lastDrawnFrame = -1
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
 
+    // dvh guard: mobile address-bar show/hide changes innerHeight but not innerWidth.
+    // Resize the canvas so the frame stays crisp, but only refresh ScrollTrigger
+    // (which re-pins and re-measures — the expensive, jank-causing part) on real
+    // width changes.
     const onResize = (): void => {
+      const width = window.innerWidth
+      const widthChanged = width !== lastWidth
+      lastWidth = width
       if (resizeRafId) cancelAnimationFrame(resizeRafId)
       resizeRafId = requestAnimationFrame(() => {
         resizeRafId = 0
         resizeCanvas()
-        ScrollTrigger.refresh()
+        if (widthChanged) ScrollTrigger.refresh()
       })
     }
     window.addEventListener('resize', onResize)
@@ -119,8 +132,9 @@ export function useSpriteScroll({
         .load(() => {
           if (!renderer) return
           lastDrawnFrame = -1
-          renderer.drawFrame(Math.round(playhead.frame))
-          lastDrawnFrame = Math.round(playhead.frame)
+          const index = Math.round(play.current)
+          renderer.drawFrame(index)
+          lastDrawnFrame = index
           if (poster) poster.style.opacity = '0'
         })
         .catch(() => {
@@ -143,52 +157,63 @@ export function useSpriteScroll({
     )
     observer.observe(section)
 
-    let autoPlayTween: gsap.core.Tween | null = null
+    // ── Device-branched ScrollTrigger (matchMedia) ──
+    mm = gsap.matchMedia()
+    mm.add(
+      {
+        isMobile: `(max-width: ${MOBILE_MAX}px)`,
+        isDesktop: `(min-width: ${FRAME_CONFIG.breakpoints.mobile}px)`,
+      },
+      (context) => {
+        const isMobile = !!context.conditions?.isMobile
+        const cfg = isMobile ? SCROLL_CONFIG.mobile : SCROLL_CONFIG.desktop
 
-    const killAutoPlay = (): void => {
-      if (autoPlayTween) {
-        autoPlayTween.kill()
-        autoPlayTween = null
-      }
-    }
-
-    ctx = gsap.context(() => {
-      const lastFrame = frameCount - 1
-      const fadeDuration = SCROLL_CONFIG.overlayFadeEnd - SCROLL_CONFIG.overlayFadeStart
-      const autoPlay = SCROLL_CONFIG.autoPlay
-
-      const timeline = gsap.timeline({
-        scrollTrigger: {
+        const st = ScrollTrigger.create({
           trigger: section,
           start: 'top top',
-          end: () => `+=${window.innerHeight * (SCROLL_CONFIG.scrollDistanceVh / 100)}`,
+          end: () => `+=${window.innerHeight * (cfg.scrollDistanceVh / 100)}`,
           pin,
           pinSpacing: true,
-          scrub: SCROLL_CONFIG.scrub,
           invalidateOnRefresh: true,
           onToggle: (self) => {
-            canvas.style.willChange = self.isActive ? 'transform' : 'auto'
+            // will-change belongs on the pinned wrapper (what GSAP transforms),
+            // not on the canvas.
+            pin.style.willChange = self.isActive ? 'transform' : 'auto'
           },
-        },
-      })
+          onUpdate: (self) => {
+            play.target = self.progress * lastFrame
+            if (overlay) {
+              const f = Math.min(1, Math.max(0, (self.progress - fadeStart) / fadeRange))
+              overlay.style.opacity = String(1 - f)
+              overlay.style.transform = `translate3d(0, ${-40 * f}px, 0)`
+            }
+          },
+        })
 
-      const st = timeline.scrollTrigger
+        if (!cfg.autoPlay.enabled) return
 
-      if (autoPlay.enabled && st) {
+        // ── Desktop scroll-hijack auto-play ──
+        const autoPlay = cfg.autoPlay
+        let autoPlayTween: gsap.core.Tween | null = null
         let autoPlayDir: 0 | 1 | -1 = 0
 
+        const killAutoPlay = (): void => {
+          if (autoPlayTween) {
+            autoPlayTween.kill()
+            autoPlayTween = null
+          }
+        }
+
         // useAutoKill: wheel (desktop) lets the user interrupt by scrolling again.
-        // Touch (mobile) fires once on finger-lift with autoKill off so the native
-        // momentum scroll can't cancel the tween mid-flight; a new touch cancels it.
+        // Touch fires once on finger-lift with autoKill off so native momentum
+        // can't cancel the tween mid-flight; a new touch cancels it.
         const triggerAutoPlay = (deltaY: number, useAutoKill: boolean): void => {
           if (!st.isActive || deltaY === 0) return
 
           const goingDown = deltaY > 0
           const dir: 1 | -1 = goingDown ? 1 : -1
 
-          // Already auto-playing the same direction: let it run.
           if (autoPlayTween && autoPlayDir === dir) return
-          // Reversed mid-flight: kill the current tween and re-aim the other way.
           if (autoPlayTween && autoPlayDir !== dir) killAutoPlay()
 
           const start = st.start
@@ -199,18 +224,13 @@ export function useSpriteScroll({
           const current = window.scrollY || window.pageYOffset
           const progress = (current - start) / range
 
-          // Require a small scroll into the hero before auto-play engages.
           if (goingDown && progress < autoPlay.startThreshold) return
           if (!goingDown && progress <= autoPlay.startThreshold) return
 
           let target: number
           if (goingDown) {
-            // Continue past the hero end straight into the next section (products carousel),
-            // so finishing the animation flows seamlessly down to it in one motion.
             const nextEl = section.nextElementSibling as HTMLElement | null
-            target = nextEl
-              ? nextEl.getBoundingClientRect().top + current
-              : end
+            target = nextEl ? nextEl.getBoundingClientRect().top + current : end
           } else {
             target = start
           }
@@ -231,14 +251,12 @@ export function useSpriteScroll({
 
         const wheelHandler = (e: WheelEvent): void => triggerAutoPlay(e.deltaY, true)
 
-        // Mobile: track the gesture, then fire a single tween on touchend.
         const TOUCH_MIN_DELTA = 6
         let touchStartY = 0
         let touchPrevY = 0
         let touchDir: 0 | 1 | -1 = 0
 
         const touchStartHandler = (e: TouchEvent): void => {
-          // A fresh touch means the user wants control — cancel any running auto-play.
           killAutoPlay()
           const y = e.touches[0]?.clientY ?? 0
           touchStartY = y
@@ -254,7 +272,6 @@ export function useSpriteScroll({
         const touchEndHandler = (): void => {
           const totalDelta = touchStartY - touchPrevY
           if (touchDir === 0 || Math.abs(totalDelta) < TOUCH_MIN_DELTA) return
-          // Swipe up (content moves up) => positive delta => play forward, like wheel down.
           triggerAutoPlay(touchDir, false)
         }
 
@@ -263,53 +280,28 @@ export function useSpriteScroll({
         window.addEventListener('touchmove', touchMoveHandler, { passive: true })
         window.addEventListener('touchend', touchEndHandler, { passive: true })
 
-        autoPlayCleanup = () => {
+        return () => {
+          killAutoPlay()
           window.removeEventListener('wheel', wheelHandler)
           window.removeEventListener('touchstart', touchStartHandler)
           window.removeEventListener('touchmove', touchMoveHandler)
           window.removeEventListener('touchend', touchEndHandler)
         }
-      }
-
-      timeline.to(
-        playhead,
-        {
-          frame: lastFrame,
-          ease: 'none',
-          duration: 1,
-          onUpdate: scheduleDraw,
-        },
-        0,
-      )
-
-      if (overlay) {
-        timeline.to(
-          overlay,
-          {
-            opacity: 0,
-            y: -40,
-            ease: 'none',
-            duration: fadeDuration,
-          },
-          SCROLL_CONFIG.overlayFadeStart,
-        )
-      }
-    }, section)
+      },
+      section,
+    )
 
     return () => {
-      if (drawRafId) cancelAnimationFrame(drawRafId)
       if (resizeRafId) cancelAnimationFrame(resizeRafId)
       window.removeEventListener('resize', onResize)
       window.removeEventListener('orientationchange', onResize)
       document.removeEventListener('visibilitychange', onVisibilityChange)
-      autoPlayCleanup?.()
-      autoPlayCleanup = null
-      killAutoPlay()
+      gsap.ticker.remove(tick)
       observer?.disconnect()
       observer = null
-      ctx?.revert()
-      ctx = null
-      canvas.style.willChange = 'auto'
+      mm?.revert()
+      mm = null
+      pin.style.willChange = 'auto'
       renderer?.dispose()
       renderer = null
     }

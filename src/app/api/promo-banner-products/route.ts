@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { dbToDisplay } from '@/lib/price'
+import { revalidateProductCatalog } from '@/lib/product-cache'
 
 async function checkAdminAccess(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,6 +35,7 @@ export async function GET(request: NextRequest) {
         products (*)
       `)
       .order('display_order', { ascending: true })
+      .order('id', { ascending: true })
 
     if (!isAdminScope) query = query.eq('is_active', true)
     if (bannerId) query = query.eq('banner_id', bannerId)
@@ -47,8 +50,8 @@ export async function GET(request: NextRequest) {
         products: p
           ? {
               ...p,
-              price: (p.price / 100) / 10,
-              original_price: p.original_price ? (p.original_price / 100) / 10 : null,
+              price: dbToDisplay(p.price),
+              original_price: p.original_price ? dbToDisplay(p.original_price) : null,
             }
           : null,
       }
@@ -94,6 +97,7 @@ export async function POST(request: NextRequest) {
       if (error.code === '23505') return NextResponse.json({ success: false, error: 'Bu urun zaten bu bannerda var' }, { status: 409 })
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
+    revalidateProductCatalog()
     return NextResponse.json({ success: true, data })
   } catch (err) {
     console.error('promo-banner-products POST error:', err)

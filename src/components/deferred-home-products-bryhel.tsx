@@ -10,6 +10,7 @@ const HomeProductsBryhel = dynamic(() => import('@/components/home-products-bryh
 interface DeferredHomeProductsBryhelProps {
   products: any[]
   title?: string
+  subtitle?: string
   viewAllLink?: string
   viewAllText?: string
 }
@@ -17,6 +18,7 @@ interface DeferredHomeProductsBryhelProps {
 export default function DeferredHomeProductsBryhel({
   products,
   title,
+  subtitle,
   viewAllLink,
   viewAllText,
 }: DeferredHomeProductsBryhelProps) {
@@ -46,6 +48,7 @@ export default function DeferredHomeProductsBryhel({
         <HomeProductsBryhel
           products={products}
           title={title}
+          subtitle={subtitle}
           viewAllLink={viewAllLink}
           viewAllText={viewAllText}
         />

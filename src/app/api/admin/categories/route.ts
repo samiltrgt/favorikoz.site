@@ -54,6 +54,7 @@ export async function GET() {
       .select('*')
       .order('parent_slug', { ascending: true, nullsFirst: true })
       .order('name', { ascending: true })
+      .order('id', { ascending: true })
     
     if (error) {
       console.error('Supabase error:', error)

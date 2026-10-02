@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { dbToDisplay } from '@/lib/price'
 
 async function checkAdminAccess(supabase: Awaited<ReturnType<typeof createSupabaseServer>>) {
   const {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
         products (*)
       `)
       .order('display_order', { ascending: true })
+      .order('id', { ascending: true })
 
     if (!isAdminScope) {
       query = query.eq('is_active', true)
@@ -54,8 +56,8 @@ export async function GET(request: NextRequest) {
         products: product
           ? {
               ...product,
-              price: (product.price / 100) / 10,
-              original_price: product.original_price ? (product.original_price / 100) / 10 : null,
+              price: dbToDisplay(product.price),
+              original_price: product.original_price ? dbToDisplay(product.original_price) : null,
             }
           : null,
       }

@@ -1,89 +1,40 @@
-"use client"
-
-import ProductImage from '@/components/product-image'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { Minus, Plus, Heart, Truck, ShieldCheck, RefreshCcw, Check, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
-import { addToCart } from '@/lib/cart'
-import { toggleFavorite, isFavorite } from '@/lib/favorites'
+import { Truck, ShieldCheck, RefreshCcw, ChevronDown } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ProductReviews from '@/components/product-reviews'
+import ProductGallery from '@/components/product-gallery'
+import ProductPurchase, { FavButton } from '@/components/product-purchase'
+import ProductViewTracker from '@/components/product-view-tracker'
+import { getPopularProductSlugs, getProductBySlug } from '@/lib/get-product-by-slug'
+import { formatTRY } from '@/lib/price'
 
-type Params = { slug: string }
+export const revalidate = 60
 
-export default function ProductDetailPage({ params }: { params: Params }) {
-  const [product, setProduct] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [qty, setQty] = useState(1)
-  const [added, setAdded] = useState(false)
-  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false)
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+type Props = { params: Promise<{ slug: string }> }
 
-  useEffect(() => {
-    const loadProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/by-slug/${encodeURIComponent(params.slug)}`)
-        const result = await response.json()
-        if (result.success && result.data) {
-          setProduct(result.data)
-        }
-      } catch (error) {
-        console.error('Error loading product:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadProduct()
-  }, [params.slug])
-
-  // Combine main image with additional images
-  const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean) : []
-  
-  // Navigation functions
-  const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % allImages.length)
+export async function generateStaticParams() {
+  try {
+    return await getPopularProductSlugs(40)
+  } catch {
+    return []
   }
-  
-  const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length)
-  }
-  
-  // Keyboard navigation
-  useEffect(() => {
-    if (!product || allImages.length <= 1) return
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault()
-        prevImage()
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        nextImage()
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [product, allImages.length])
+}
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ürün yükleniyor...</p>
-        </div>
-      </div>
-    )
-  }
+export default async function ProductDetailPage({ params }: Props) {
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
+  if (!product) notFound()
 
-  if (!product) return notFound()
+  const allImages = [product.image, ...(product.images || [])].filter(Boolean) as string[]
+  const rating = product.rating
+  const reviewsCount = product.reviews_count ?? 0
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
+      <ProductViewTracker productId={product.id} name={product.name} price={product.price} />
 
       <nav className="bg-gray-50 py-3">
         <div className="container">
@@ -99,79 +50,16 @@ export default function ProductDetailPage({ params }: { params: Params }) {
 
       <div className="container py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Images */}
-          <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative w-full aspect-square bg-gray-50 overflow-hidden rounded-xl group">
-              <ProductImage
-                src={allImages[selectedImageIndex]}
-                alt={product.name}
-                fill
-                containClassName="object-contain p-3"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-              
-              {/* Navigation Buttons */}
-              {allImages.length > 1 && (
-                <>
-                  {/* Previous Button */}
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95"
-                    aria-label="Önceki görsel"
-                  >
-                    <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                  </button>
-                  
-                  {/* Next Button */}
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95"
-                    aria-label="Sonraki görsel"
-                  >
-                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
-                  </button>
-                  
-                  {/* Image Counter */}
-                  <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-black bg-opacity-50 text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    {selectedImageIndex + 1} / {allImages.length}
-                  </div>
-                </>
-              )}
-            </div>
-            
-            {/* Thumbnail Images */}
-            {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {allImages.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                      selectedImageIndex === index 
-                        ? 'border-black ring-2 ring-black ring-opacity-20' 
-                        : 'border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    <ProductImage
-                      src={image}
-                      alt={`${product.name} - Görsel ${index + 1}`}
-                      width={80}
-                      height={80}
-                      className="w-full h-full bg-gray-50"
-                      containClassName="object-contain p-0.5"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductGallery images={allImages} productName={product.name} />
 
-          {/* Info */}
           <div className="space-y-8 lg:sticky lg:top-24 h-fit">
             <div className="space-y-4">
-              <p className="text-sm uppercase tracking-wider text-gray-500 font-medium">{product.brand}</p>
-              <h1 className="text-3xl md:text-4xl font-bold text-black leading-tight tracking-tight">{product.name}</h1>
+              {product.brand && (
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium">{product.brand}</p>
+              )}
+              <h1 className="text-3xl md:text-4xl font-bold text-black leading-tight tracking-tight">
+                {product.name}
+              </h1>
               {product.barcode && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="font-semibold">Ürün Kodu:</span>
@@ -184,10 +72,12 @@ export default function ProductDetailPage({ params }: { params: Params }) {
 
             <div className="rounded-xl border border-gray-200 p-6 bg-gray-50">
               <div className="flex items-end gap-4 mb-4">
-                <span className="text-4xl font-bold text-black">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                {product.original_price && product.original_price > product.price && (
+                <span className="text-4xl font-bold text-black">₺{formatTRY(product.price)}</span>
+                {product.original_price != null && product.original_price > product.price && (
                   <>
-                    <span className="text-xl text-gray-400 line-through">₺{product.original_price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-xl text-gray-400 line-through">
+                      ₺{formatTRY(product.original_price)}
+                    </span>
                     <span className="text-sm bg-red-100 text-red-600 font-bold px-2 py-1 rounded-full">
                       -%{Math.round(((product.original_price - product.price) / product.original_price) * 100)}
                     </span>
@@ -198,10 +88,12 @@ export default function ProductDetailPage({ params }: { params: Params }) {
                 <div className="flex items-center gap-3 text-gray-600">
                   <div className="flex items-center gap-1">
                     <span className="text-yellow-500">⭐</span>
-                    <span className="font-semibold">{product.rating?.toFixed?.(1) || product.rating}</span>
+                    <span className="font-semibold">
+                      {typeof rating === 'number' ? rating.toFixed(1) : rating}
+                    </span>
                   </div>
                   <span>·</span>
-                  <span className="font-medium">{product.reviews} değerlendirme</span>
+                  <span className="font-medium">{reviewsCount} değerlendirme</span>
                   {product.in_stock === false && (
                     <>
                       <span>·</span>
@@ -213,63 +105,31 @@ export default function ProductDetailPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            {/* Quantity + Actions */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <QuantitySelector onChange={(q:number)=>setQty(q)} />
-                <button
-                  disabled={!product.in_stock}
-                  onClick={() => {
-                    if (!product.in_stock) return
-                    addToCart({ id: product.id, slug: product.slug, name: product.name, image: product.image, price: product.price * 10, qty }) // API'den /10 formatında geliyor, sepete 10x formatında kaydediyoruz
-                    setAdded(true)
-                    setTimeout(()=>setAdded(false), 1500)
-                  }}
-                  className={`flex-1 h-14 rounded-xl transition-all duration-300 text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed ${added ? 'bg-green-600 text-white scale-105' : product.in_stock ? 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95' : 'bg-gray-400 text-white'}`}
-                >
-                  {added ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Check className="w-5 h-5" /> 
-                      Eklendi!
-                    </span>
-                  ) : product.in_stock ? (
-                    'Sepete Ekle'
-                  ) : (
-                    'Stokta Yok'
-                  )}
-                </button>
-              </div>
-              <div className="flex items-center">
-                <Link href="/tum-urunler" className="flex-1 h-12 inline-flex items-center justify-center rounded-xl border-2 border-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300">
-                  Alışverişe Devam Et
-                </Link>
-              </div>
-            </div>
+            <ProductPurchase
+              product={{
+                id: product.id,
+                slug: product.slug,
+                name: product.name,
+                image: product.image,
+                price: product.price,
+                in_stock: product.in_stock,
+              }}
+            />
 
             {product.description && (
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <button
-                  onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}
-                  className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
-                >
+              <details className="rounded-xl border border-gray-200 overflow-hidden group">
+                <summary className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <h2 className="text-lg font-bold text-black">Ürün Açıklaması</h2>
-                  {isDescriptionOpen ? (
-                    <ChevronUp className="w-5 h-5 text-gray-600" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-600" />
-                  )}
-                </button>
-                <div className={`transition-all duration-300 overflow-hidden ${isDescriptionOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="p-6 pt-0">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-line font-medium text-base">
-                      {product.description}
-                    </p>
-                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-600 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="p-6 pt-0">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line font-medium text-base">
+                    {product.description}
+                  </p>
                 </div>
-              </div>
+              </details>
             )}
 
-            {/* Trust badges */}
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 p-4 bg-white hover:bg-gray-50 transition-colors duration-200">
                 <ShieldCheck className="w-6 h-6 text-green-600" />
@@ -287,7 +147,6 @@ export default function ProductDetailPage({ params }: { params: Params }) {
           </div>
         </div>
 
-        {/* Product Reviews */}
         <div className="container max-w-6xl mx-auto px-4">
           <ProductReviews productId={product.id} productName={product.name} />
         </div>
@@ -297,96 +156,3 @@ export default function ProductDetailPage({ params }: { params: Params }) {
     </div>
   )
 }
-
-function QuantitySelector({ onChange }: { onChange?: (qty: number)=>void }) {
-  const [qty, setQty] = useState(1)
-  const set = (val: number) => {
-    setQty(val)
-    onChange?.(val)
-  }
-  return (
-    <div className="inline-flex items-center border-2 border-gray-300 rounded-xl overflow-hidden h-14 bg-white">
-      <button
-        type="button"
-        className="w-12 h-full grid place-items-center hover:bg-gray-100 transition-colors duration-200"
-        onClick={() => set(Math.max(1, qty - 1))}
-        aria-label="Azalt"
-      >
-        <Minus className="w-5 h-5" />
-      </button>
-      <div className="w-12 text-center text-lg font-bold select-none text-gray-900">{qty}</div>
-      <button
-        type="button"
-        className="w-12 h-full grid place-items-center hover:bg-gray-100 transition-colors duration-200"
-        onClick={() => set(Math.min(99, qty + 1))}
-        aria-label="Artır"
-      >
-        <Plus className="w-5 h-5" />
-      </button>
-    </div>
-  )
-}
-
-function FavButton({ id }: { id: string }) {
-  const [fav, setFav] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Load initial favorite status
-    const loadFavoriteStatus = async () => {
-      try {
-        const isFav = await isFavorite(id)
-        setFav(isFav)
-      } catch (err) {
-        console.error('Error loading favorite status:', err)
-      }
-    }
-    loadFavoriteStatus()
-  }, [id])
-
-  const handleToggle = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const result = await toggleFavorite(id)
-      if (result.success) {
-        setFav(result.isFavorite)
-      } else {
-        setError(result.error || 'Bir hata oluştu')
-        // If error is about authentication, show message
-        if (result.error?.includes('giriş')) {
-          if (confirm('Favorilere eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?')) {
-            window.location.href = '/giris'
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error toggling favorite:', err)
-      setError('Bir hata oluştu')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <button
-      onClick={handleToggle}
-      disabled={isLoading}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
-        fav 
-          ? 'text-red-600 bg-red-50 hover:bg-red-100' 
-          : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
-      }`}
-      title={error || undefined}
-    >
-      <Heart className={`w-5 h-5 ${fav ? 'fill-current' : ''} ${isLoading ? 'animate-pulse' : ''}`} /> 
-      <span className="text-sm">
-        {isLoading ? 'Yükleniyor...' : fav ? 'Favorilerde' : 'Favorilere ekle'}
-      </span>
-    </button>
-  )
-}
-
-

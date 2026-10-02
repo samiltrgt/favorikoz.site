@@ -66,6 +66,7 @@ export async function GET() {
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
       .limit(10)
     
     // Get top selling products (mock for now, will be calculated from orders)
@@ -74,6 +75,8 @@ export async function GET() {
       .select('id, name, is_best_seller')
       .eq('is_best_seller', true)
       .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
       .limit(4)
     
     // Format top products (mock sales data for now)

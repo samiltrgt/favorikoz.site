@@ -1,3 +1,5 @@
+import { toCartPrice } from '@/lib/price'
+
 type CouponRow = {
   id: string
   code: string
@@ -40,8 +42,8 @@ export function calculateCouponDiscount10x(
   if (discountType === 'percent') {
     discount = Math.round((subtotal10x * discountValue) / 100)
   } else {
-    // fixed value is stored in TL, subtotal is in 10x (100 TL = 1000), so multiply by 10
-    discount = Math.round(discountValue * 10)
+    // fixed value is stored in TL (display), subtotal is in 10x
+    discount = Math.round(toCartPrice(discountValue))
   }
   return Math.max(0, Math.min(discount, subtotal10x))
 }

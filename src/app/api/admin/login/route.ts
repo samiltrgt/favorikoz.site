@@ -2,16 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-function adminAuthCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7,
-  }
-}
-
 function createSupabaseForLoginResponse(response: NextResponse) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -76,8 +66,6 @@ export async function POST(req: Request) {
         { status: 403 }
       )
     }
-
-    response.cookies.set('adminAuthV2', authData.user.id, adminAuthCookieOptions())
 
     return NextResponse.json(
       {

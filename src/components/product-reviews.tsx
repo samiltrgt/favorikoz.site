@@ -93,10 +93,15 @@ export default function ProductReviews({ productId, productName }: ProductReview
         <div>
           <h2 className="text-2xl font-bold text-black">Müşteri Değerlendirmeleri</h2>
           <div className="flex items-center gap-3 mt-2">
-            <div className="flex items-center">
+            <div
+              className="flex items-center"
+              role="img"
+              aria-label={`5 üzerinden ${avgRating.toFixed(1)}`}
+            >
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
+                  aria-hidden
                   className={`w-5 h-5 ${
                     star <= Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                   }`}
@@ -145,9 +150,12 @@ export default function ProductReviews({ productId, productName }: ProductReview
                   key={star}
                   type="button"
                   onClick={() => setFormData({ ...formData, rating: star })}
+                  aria-label={`5 üzerinden ${star}`}
+                  aria-pressed={formData.rating === star}
                   className="p-1 hover:scale-110 transition-transform"
                 >
                   <Star
+                    aria-hidden
                     className={`w-8 h-8 ${
                       star <= formData.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                     }`}
@@ -217,10 +225,15 @@ export default function ProductReviews({ productId, productName }: ProductReview
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex">
+                    <div
+                      className="flex"
+                      role="img"
+                      aria-label={`5 üzerinden ${review.rating}`}
+                    >
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
+                          aria-hidden
                           className={`w-4 h-4 ${
                             star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                           }`}

@@ -1,21 +1,20 @@
 /* Bryhel "Our Products" section - site renklerine uyumlu */
 
 .home-products {
-  --bryhel-font-primary: 'Georgia', 'Times New Roman', serif;
-  /* Site paleti: ana sayfa bg-gray-50, kartlar beyaz */
-  --bryhel-bg: #f9fafb;       /* gray-50 - section arka plan */
-  --bryhel-card: #ffffff;     /* beyaz kart */
-  --bryhel-black: #1c1917;    /* foreground / başlık */
-  --bryhel-medium: #e7e5e4;   /* buton hover vb - stone-200 */
-  --bryhel-border: #e5e7eb;   /* gray-200 - kart çerçeve */
-  --bryhel-radius: 0.5vw;
+  --bryhel-font-primary: var(--font-brand, 'Onest', 'Inter', 'DM Sans', system-ui, sans-serif);
+  --bryhel-bg: var(--color-paper, #fbf6f8);
+  --bryhel-card: var(--color-surface, #ffffff);
+  --bryhel-black: var(--color-ink, #1c161a);
+  --bryhel-medium: var(--color-mist, #f5e8ef);
+  --bryhel-border: var(--color-border-hex, #eadce4);
+  --bryhel-radius: var(--radius-card, 10px);
   --bryhel-expoOut: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .home-products .bryhel-container {
   position: relative;
   width: 80vw;
-  max-width: 1400px;
+  max-width: var(--max-width, 1280px);
   margin-left: auto;
   margin-right: auto;
 }
@@ -29,18 +28,21 @@
   background-color: var(--bryhel-bg);
 }
 
-/* Headline - birebir */
+/* Headline - brand display voice */
 .home-products .headline {
   font-family: var(--bryhel-font-primary);
-  font-weight: 300;
-  font-size: 6vw;
-  line-height: 1.1;
+  font-weight: var(--weight-whisper, 200);
+  font-size: clamp(var(--text-48, 48px), 6vw, var(--text-86, 86px));
+  line-height: var(--lh-display-md, 1.04);
+  letter-spacing: var(--tracking-86, -0.057em);
   color: var(--bryhel-black);
   margin-bottom: 0;
 }
 
 .home-products .headline.--large {
-  font-size: 9.027vw;
+  font-size: clamp(var(--text-48, 48px), 9vw, var(--text-152, 152px));
+  letter-spacing: var(--tracking-152, -0.091em);
+  line-height: var(--lh-display, 1);
 }
 
 .home-products .headline .line {
@@ -68,9 +70,10 @@
   margin: 2vw auto 2.5vw;
   max-width: 40em;
   font-family: var(--bryhel-font-primary);
-  font-size: 1.25vw;
-  font-weight: 300;
-  line-height: 1.4;
+  font-size: clamp(var(--text-14, 14px), 1.25vw, var(--text-20, 20px));
+  font-weight: var(--weight-body, 400);
+  line-height: var(--lh-body, 1.2);
+  letter-spacing: var(--tracking-16, -0.020em);
   color: var(--bryhel-black);
   opacity: 0.9;
   text-align: center;
@@ -90,12 +93,22 @@
   user-select: none;
 }
 
-/* Marquee: hareket JS ile (dur + sürükle mümkün) */
+/* Marquee: hareket JS ile (dur + sürükle mümkün). will-change yalnızca .is-moving iken. */
+.home-products .carousel--marquee {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
 .home-products .carousel--marquee .carousel__inner {
   display: flex;
   align-items: center;
   height: 100%;
   width: max-content;
+  backface-visibility: hidden;
+}
+
+.home-products .carousel--marquee .carousel__inner.is-moving {
+  will-change: transform;
 }
 
 .home-products .carousel--marquee.is-dragging {

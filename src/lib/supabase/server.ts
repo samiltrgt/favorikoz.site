@@ -1,9 +1,8 @@
 import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 
-export async function createSupabaseServer() {
-  const cookieStore = await cookies()
-
+function getSupabaseAnonEnv() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -16,6 +15,13 @@ export async function createSupabaseServer() {
       'Detaylar için ENV_SETUP.md dosyasına bak.'
     )
   }
+
+  return { supabaseUrl, supabaseAnonKey }
+}
+
+export async function createSupabaseServer() {
+  const cookieStore = await cookies()
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseAnonEnv()
 
   return createServerClient(
     supabaseUrl,
@@ -46,6 +52,22 @@ export async function createSupabaseServer() {
       },
     }
   )
+}
+
+/**
+ * Public catalog reads. Does not call cookies(), so the route can be cached.
+ * Same anon key and RLS as a signed-out visitor.
+ */
+export function createSupabaseAnon() {
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseAnonEnv()
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
 }
 
 // Service role client for admin operations (use with caution!)

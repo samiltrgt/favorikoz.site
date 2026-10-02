@@ -1,10 +1,12 @@
+import { render } from '@react-email/render'
+import { createElement } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-type OrderItem = {
-  name?: string
-  quantity?: number
-  price?: number
-}
+import { Resend } from 'resend'
+import {
+  OrderConfirmationEmail,
+  type OrderConfirmationItem,
+} from '@/emails/order-confirmation'
+import { formatTRY, kurusToTl } from '@/lib/price'
 
 type OrderRow = {
   id: string
@@ -21,64 +23,7 @@ type OrderRow = {
 }
 
 function formatTry(amount: number): string {
-  return (amount / 100).toLocaleString('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
-
-function buildOrderEmailHtml(order: OrderRow): string {
-  const items = (Array.isArray(order.items) ? order.items : []) as OrderItem[]
-  const address = (order.shipping_address || {}) as {
-    address?: string
-    city?: string
-    zipcode?: string
-  }
-
-  const rows = items
-    .map((item) => {
-      const qty = item.quantity || 1
-      const line = (item.price || 0) * qty
-      return `<tr>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;">${item.name || 'Ürün'}</td>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center;">${qty}</td>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">₺${formatTry(line)}</td>
-      </tr>`
-    })
-    .join('')
-
-  const shippingLabel =
-    order.shipping_cost <= 0 ? 'Ücretsiz' : `₺${formatTry(order.shipping_cost)}`
-
-  return `<!DOCTYPE html>
-<html lang="tr">
-<body style="font-family:Arial,sans-serif;color:#111;line-height:1.5;margin:0;padding:24px;background:#f9fafb;">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">
-    <h1 style="margin:0 0 8px;font-size:22px;">Siparişiniz alındı</h1>
-    <p style="margin:0 0 20px;color:#555;">Merhaba ${order.customer_name || 'müşterimiz'}, siparişiniz için teşekkür ederiz.</p>
-    <p style="margin:0 0 20px;"><strong>Sipariş no:</strong> ${order.order_number}</p>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-      <thead>
-        <tr>
-          <th style="text-align:left;padding-bottom:8px;border-bottom:2px solid #111;">Ürün</th>
-          <th style="text-align:center;padding-bottom:8px;border-bottom:2px solid #111;">Adet</th>
-          <th style="text-align:right;padding-bottom:8px;border-bottom:2px solid #111;">Tutar</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p style="margin:8px 0;"><strong>Ara toplam:</strong> ₺${formatTry(order.subtotal)}</p>
-    <p style="margin:8px 0;"><strong>Kargo:</strong> ${shippingLabel}</p>
-    <p style="margin:8px 0 20px;font-size:18px;"><strong>Toplam:</strong> ₺${formatTry(order.total)}</p>
-    <p style="margin:0 0 8px;"><strong>Teslimat adresi</strong></p>
-    <p style="margin:0 0 20px;color:#555;">
-      ${address.address || '-'}<br />
-      ${address.city || ''} ${address.zipcode || ''}
-    </p>
-    <p style="margin:0;color:#777;font-size:13px;">Favori Kozmetik</p>
-  </div>
-</body>
-</html>`
+  return formatTRY(kurusToTl(amount))
 }
 
 async function sendViaResend(to: string, subject: string, html: string): Promise<void> {
@@ -91,18 +36,11 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   const from =
     process.env.ORDER_FROM_EMAIL?.trim() || 'Favori Kozmetik <onboarding@resend.dev>'
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from, to, subject, html }),
-  })
+  const resend = new Resend(apiKey)
+  const { error } = await resend.emails.send({ from, to, subject, html })
 
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Resend hatası (${res.status}): ${body}`)
+  if (error) {
+    throw new Error(`Resend hatası: ${error.message}`)
   }
 }
 
@@ -173,8 +111,29 @@ export async function trySendOrderConfirmationEmail(
       )
     }
 
+    const items = (Array.isArray(order.items) ? order.items : []) as OrderConfirmationItem[]
+    const address = (order.shipping_address || {}) as {
+      address?: string
+      city?: string
+      zipcode?: string
+    }
+    const shippingLabel =
+      order.shipping_cost <= 0 ? 'Ücretsiz' : `₺${formatTry(order.shipping_cost)}`
+
     const subject = `Siparişiniz alındı — ${order.order_number}`
-    const html = buildOrderEmailHtml(order)
+    const html = await render(
+      createElement(OrderConfirmationEmail, {
+        customerName: order.customer_name,
+        orderNumber: order.order_number,
+        items,
+        subtotalLabel: formatTry(order.subtotal),
+        shippingLabel,
+        totalLabel: formatTry(order.total),
+        addressLine: address.address || '-',
+        cityZip: `${address.city || ''} ${address.zipcode || ''}`.trim(),
+      })
+    )
+
     await sendViaResend(to, subject, html)
     console.log('[order-email] Müşteri maili gönderildi:', order.order_number, to)
   } catch (error: any) {

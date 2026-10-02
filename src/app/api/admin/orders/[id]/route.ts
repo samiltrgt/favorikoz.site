@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { tryRetractGoogleConversion } from '@/lib/analytics/google-retract'
+import { noteMetaCancelUnverified } from '@/lib/analytics/meta-cancel'
 
 // GET /api/admin/orders/[id] - Get single order (Admin only)
 export async function GET(
@@ -93,6 +95,12 @@ export async function PUT(
     const { id } = params
     const body = await request.json()
 
+    const { data: before } = await supabase
+      .from('orders')
+      .select('status, order_number, payment_status')
+      .eq('id', id)
+      .maybeSingle()
+
     const updatePayload: Record<string, unknown> = {
       updated_at: new Date().toISOString()
     }
@@ -114,6 +122,18 @@ export async function PUT(
         { success: false, error: 'Failed to update order' },
         { status: 500 }
       )
+    }
+
+    // İptal: Google RETRACT; Meta negatif Purchase yok (doğrulanamadı)
+    const becameCancelled =
+      body.status === 'cancelled' && before?.status !== 'cancelled'
+    if (becameCancelled && order?.order_number) {
+      const hadPaid =
+        before?.payment_status === 'completed' || order.payment_status === 'completed'
+      if (hadPaid) {
+        tryRetractGoogleConversion(order.order_number)
+        noteMetaCancelUnverified(order.order_number)
+      }
     }
 
     return NextResponse.json({
