@@ -64,3 +64,27 @@ export function applyConsentChoice(state: 'granted' | 'denied') {
   writeConsentCookie(state)
   pushConsentUpdate(state)
 }
+
+/** Inline Consent Mode v2 defaults — safe for Server Components / root layout. */
+export function consentDefaultSnippet(): string {
+  const denied = signalsFromState('denied')
+  return `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent','default',${JSON.stringify({
+    ...denied,
+    wait_for_update: 500,
+  })});
+(function(){
+  try {
+    var m = document.cookie.match(/(?:^|; )${CONSENT_COOKIE}=([^;]*)/);
+    var v = m && m[1];
+    if (v === 'granted' || v === 'denied') {
+      gtag('consent','update',{
+        ad_storage:v, analytics_storage:v, ad_user_data:v, ad_personalization:v
+      });
+    }
+  } catch(e){}
+})();
+`.trim()
+}

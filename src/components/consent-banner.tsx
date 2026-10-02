@@ -6,7 +6,6 @@ import {
   applyConsentChoice,
   pushConsentUpdate,
   readConsentCookie,
-  signalsFromState,
 } from '@/lib/analytics/consent'
 
 /**
@@ -86,28 +85,4 @@ export default function ConsentBanner() {
       </div>
     </div>
   )
-}
-
-/** Sunucu/SSR için kullanılmaz — tip yardımcı */
-export function consentDefaultSnippet(): string {
-  const denied = signalsFromState('denied')
-  return `
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent','default',${JSON.stringify({
-    ...denied,
-    wait_for_update: 500,
-  })});
-(function(){
-  try {
-    var m = document.cookie.match(/(?:^|; )fk_consent=([^;]*)/);
-    var v = m && m[1];
-    if (v === 'granted' || v === 'denied') {
-      gtag('consent','update',{
-        ad_storage:v, analytics_storage:v, ad_user_data:v, ad_personalization:v
-      });
-    }
-  } catch(e){}
-})();
-`.trim()
 }
