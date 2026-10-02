@@ -209,7 +209,7 @@ async function loadHomeSections(): Promise<HomeSections> {
   const seenPromoIds = new Set<string>()
   const managedPromoProducts: HomeProduct[] = []
   for (const row of promoBannerProductsRes.data || []) {
-    const product = (row as { products?: HomeProduct | null }).products
+    const product = (row as unknown as { products?: HomeProduct | null }).products
     if (!product?.id || seenPromoIds.has(product.id)) continue
     seenPromoIds.add(product.id)
     managedPromoProducts.push(normalizeProductPrice(product))

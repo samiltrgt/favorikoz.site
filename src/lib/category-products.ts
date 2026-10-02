@@ -40,8 +40,19 @@ function mapProduct(row: Record<string, unknown>): CategoryListProduct {
 const PRODUCT_SELECT =
   'id, slug, name, brand, price, original_price, image, images, rating, reviews_count, in_stock, is_new, is_best_seller, stock_quantity, created_at, category_slug, subcategory_slug'
 
+function baseInStockProductsQuery(supabase: ReturnType<typeof createSupabaseAnon>) {
+  return supabase
+    .from('products')
+    .select(PRODUCT_SELECT)
+    .is('deleted_at', null)
+    .eq('in_stock', true)
+    .gt('stock_quantity', 0)
+}
+
+type InStockProductsQuery = ReturnType<typeof baseInStockProductsQuery>
+
 async function fetchMappedProducts(
-  applyFilters: (query: ReturnType<ReturnType<typeof createSupabaseAnon>['from']>) => any
+  applyFilters: (query: InStockProductsQuery) => InStockProductsQuery
 ): Promise<CategoryListProduct[]> {
   const supabase = createSupabaseAnon()
   const pageSize = 1000
@@ -49,14 +60,7 @@ async function fetchMappedProducts(
   const all: CategoryListProduct[] = []
 
   while (true) {
-    let query = supabase
-      .from('products')
-      .select(PRODUCT_SELECT)
-      .is('deleted_at', null)
-      .eq('in_stock', true)
-      .gt('stock_quantity', 0)
-
-    query = applyFilters(query)
+    let query = applyFilters(baseInStockProductsQuery(supabase))
     query = query
       .order('created_at', { ascending: false })
       .order('id', { ascending: true })
