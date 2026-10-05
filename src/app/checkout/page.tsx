@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ProductImage from '@/components/product-image'
@@ -25,6 +25,7 @@ import { toDisplayPrice } from '@/lib/price'
 import { adItemsFromCart, adValueFromCart } from '@/lib/analytics/value'
 import { trackAddPaymentInfo, trackInitiateCheckout } from '@/lib/analytics/datalayer'
 import { getCheckoutTrackingPayload } from '@/lib/analytics/tracking'
+import { useConsentedTracking } from '@/lib/analytics/use-consented-tracking'
 
 type Step = 'info' | 'shipping' | 'payment'
 
@@ -78,25 +79,22 @@ export default function CheckoutPage() {
     kvkkAccepted: false,
   })
 
-  const initiateCheckoutSent = useRef(false)
-
-  // InitiateCheckout — sepet doluyken mount'ta bir kez
-  useEffect(() => {
-    if (isLoading || initiateCheckoutSent.current) return
-    if (cartItems.length === 0) return
-    initiateCheckoutSent.current = true
+  // Each newly permitted channel receives the current checkout once.
+  useConsentedTracking('checkout', (channels) => {
+    if (isLoading || cartItems.length === 0) return false
     const contents = adItemsFromCart(cartItems)
     const value = adValueFromCart(cartItems)
-    trackInitiateCheckout({
-      value,
-      contents,
-      items: contents.map((c) => ({
-        item_id: c.id,
-        quantity: c.quantity,
-        price: c.item_price,
-      })),
+    return trackInitiateCheckout({
+        value,
+        contents,
+        items: contents.map((c) => ({
+          item_id: c.id,
+          quantity: c.quantity,
+          price: c.item_price,
+        })),
+      ...channels,
     })
-  }, [isLoading, cartItems])
+  })
 
   // Load cart and user profile
   useEffect(() => {

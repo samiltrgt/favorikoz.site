@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { loadCategorySortConfig, MENU_SORT_SLUG } from '@/lib/category-sort-config'

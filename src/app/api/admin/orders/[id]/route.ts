@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
-import { tryRetractGoogleConversion } from '@/lib/analytics/google-retract'
+import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
+import { retractGoogleConversion } from '@/lib/analytics/google-retract'
 import { noteMetaCancelUnverified } from '@/lib/analytics/meta-cancel'
 
 // GET /api/admin/orders/[id] - Get single order (Admin only)
@@ -92,10 +94,19 @@ export async function PUT(
       )
     }
 
+    // Customer roles cannot mutate orders after the measurement migration.
+    // Use service_role only after the authenticated admin role has been checked.
+    const ordersDb = createSupabaseAdmin()
     const { id } = params
     const body = await request.json()
+    const allowedStatuses = ['pending', 'paid', 'shipped', 'completed', 'cancelled']
+    const allowedPaymentStatuses = ['pending', 'completed', 'failed', 'refunded']
+    if ((body.status !== undefined && !allowedStatuses.includes(body.status)) ||
+      (body.payment_status !== undefined && !allowedPaymentStatuses.includes(body.payment_status))) {
+      return NextResponse.json({ success: false, error: 'Geçersiz sipariş veya ödeme durumu' }, { status: 400 })
+    }
 
-    const { data: before } = await supabase
+    const { data: before } = await ordersDb
       .from('orders')
       .select('status, order_number, payment_status')
       .eq('id', id)
@@ -109,7 +120,7 @@ export async function PUT(
     if (body.tracking_number !== undefined) updatePayload.tracking_number = body.tracking_number || null
     if (body.carrier !== undefined) updatePayload.carrier = body.carrier || null
 
-    const { data: order, error } = await supabase
+    const { data: order, error } = await ordersDb
       .from('orders')
       .update(updatePayload)
       .eq('id', id)
@@ -125,13 +136,13 @@ export async function PUT(
     }
 
     // İptal: Google RETRACT; Meta negatif Purchase yok (doğrulanamadı)
-    const becameCancelled =
-      body.status === 'cancelled' && before?.status !== 'cancelled'
-    if (becameCancelled && order?.order_number) {
+    const becameCancelled = body.status === 'cancelled' && before?.status !== 'cancelled'
+    const becameRefunded = body.payment_status === 'refunded' && before?.payment_status !== 'refunded'
+    if ((becameCancelled || becameRefunded) && order?.order_number) {
       const hadPaid =
         before?.payment_status === 'completed' || order.payment_status === 'completed'
       if (hadPaid) {
-        tryRetractGoogleConversion(order.order_number)
+        await retractGoogleConversion(order.order_number)
         noteMetaCancelUnverified(order.order_number)
       }
     }

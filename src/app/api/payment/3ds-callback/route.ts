@@ -1,9 +1,12 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed, matchesIyzicoOrderPayment } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 import { trySendOrderConfirmationEmail } from '@/lib/order-email'
-import { trySendPurchaseOnce } from '@/lib/analytics/meta-capi'
+import { sendPurchaseOnce } from '@/lib/analytics/meta-capi'
+import { confirmOrderPayment } from '@/lib/tracking/payment'
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
@@ -101,11 +104,18 @@ export async function POST(request: NextRequest) {
 
     const { data: order } = await supabase
       .from('orders')
-      .select('order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount')
+      .select('order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount, status, payment_status')
       .eq('payment_token', conversationId)
       .maybeSingle()
 
     const orderNumber = order?.order_number || ''
+    if (!order || order.status === 'cancelled' || order.payment_status === 'refunded') {
+      return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=order_not_payable`, { status: 302 })
+    }
+    if (order.payment_status === 'completed') {
+      const qs = new URLSearchParams({ token: conversationId, orderNumber })
+      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs}`, { status: 302 })
+    }
 
     let result: any = null
 
@@ -147,14 +157,10 @@ export async function POST(request: NextRequest) {
     const paidOk = result?.status === 'success' && result?.paymentStatus === 'SUCCESS'
 
     if (paidOk) {
-      await supabase
-        .from('orders')
-        .update({
-          status: 'paid',
-          payment_status: 'completed',
-          payment_token: conversationId,
-        })
-        .eq('payment_token', conversationId)
+      if (!matchesIyzicoOrderPayment(order, result)) {
+        return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=payment_order_mismatch`, { status: 302 })
+      }
+      await confirmOrderPayment(supabase, { paymentToken: conversationId, orderNumber })
 
       const { data: paidOrder } = await supabase
         .from('orders')
@@ -184,18 +190,7 @@ export async function POST(request: NextRequest) {
         paymentToken: conversationId,
       })
 
-      // Purchase: sunucu tek kaynak; kilit ile çift gönderim engellenir
-      let purchaseOrderNumber = orderNumber || null
-      if (!purchaseOrderNumber && conversationId) {
-        const { data: paid } = await supabase
-          .from('orders')
-          .select('order_number')
-          .eq('payment_token', conversationId)
-          .eq('payment_status', 'completed')
-          .maybeSingle()
-        purchaseOrderNumber = paid?.order_number || null
-      }
-      trySendPurchaseOnce(purchaseOrderNumber)
+      await sendPurchaseOnce(orderNumber)
 
       const qs = new URLSearchParams({
         status: 'success',

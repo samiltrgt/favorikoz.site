@@ -9,6 +9,7 @@ import { SmoothScroll } from '@/components/smooth-scroll'
 import ConsentBanner from '@/components/consent-banner'
 import { consentDefaultSnippet } from '@/lib/analytics/consent'
 import AnalyticsRouteListener from '@/components/analytics-route-listener'
+import type { BrowserTagConfig } from '@/lib/analytics/browser-tags'
 import './globals.css'
 
 const onest = Onest({
@@ -20,7 +21,14 @@ const onest = Onest({
 })
 
 const siteUrl = getSiteUrl()
-const GTM_ID = 'GTM-57BVM8H7'
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || 'GTM-57BVM8H7'
+const browserTagConfig: BrowserTagConfig = {
+  mode: process.env.NEXT_PUBLIC_TRACKING_MODE === 'gtm' ? 'gtm' : 'direct',
+  metaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || process.env.META_PIXEL_ID?.trim(),
+  ga4MeasurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID?.trim(),
+  googleAdsId: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim(),
+  googleAdsConversionLabel: process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL?.trim(),
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -118,6 +126,7 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{ __html: consentDefaultSnippet() }}
         />
+        <script dangerouslySetInnerHTML={{ __html: `window.fkTagConfig=${JSON.stringify(browserTagConfig).replace(/</g, '\\u003c')};` }} />
       </head>
       <body className={onest.className}>
         <script
@@ -132,7 +141,7 @@ export default async function RootLayout({
         </Suspense>
         <ConsentBanner />
       </body>
-      <GoogleTagManager gtmId={GTM_ID} />
+      {browserTagConfig.mode === 'gtm' && <GoogleTagManager gtmId={GTM_ID} />}
     </html>
   )
 }

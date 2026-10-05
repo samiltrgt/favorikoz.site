@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPaymentV2, retrievePayment, retrievePaymentByPaymentId } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed, matchesIyzicoOrderPayment } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { createEArchiveInvoice, isNesConfigured } from '@/lib/nes'
 import { trySendOrderConfirmationEmail } from '@/lib/order-email'
-import { trySendPurchaseOnce } from '@/lib/analytics/meta-capi'
+import { sendPurchaseOnce } from '@/lib/analytics/meta-capi'
+import { confirmOrderPayment } from '@/lib/tracking/payment'
 import { adItemsFromOrder, adValueFromOrder, AD_CURRENCY } from '@/lib/analytics/value'
 import { kurusToTl } from '@/lib/price'
+
+export const dynamic = 'force-dynamic'
 
 function getOrdersSupabase() {
   try {
@@ -26,13 +29,21 @@ async function buildPurchaseAnalytics(
     let q = supabase
       .from('orders')
       .select(
-        'order_number, items, shipping_cost, total, discount_amount, customer_email, customer_phone'
+        'order_number, items, shipping_cost, total, discount_amount, customer_email, customer_phone, payment_status, status, tracking'
       )
+    if (!paymentToken) return null
+    q = q.eq('payment_token', paymentToken)
     if (orderNumber) q = q.eq('order_number', orderNumber)
-    else if (paymentToken) q = q.eq('payment_token', paymentToken)
-    else return null
     const { data } = await q.maybeSingle()
-    if (!data?.order_number) return null
+    if (!data?.order_number || data.payment_status !== 'completed' || data.status === 'cancelled') return null
+    const storedConsent = data.tracking?.consent
+    const consent = {
+      ad_storage: storedConsent?.marketing === true ? 'granted' : 'denied',
+      analytics_storage: storedConsent?.analytics === true ? 'granted' : 'denied',
+      ad_user_data: storedConsent?.marketing === true ? 'granted' : 'denied',
+      ad_personalization: storedConsent?.marketing === true ? 'granted' : 'denied',
+    }
+    const advertisingGranted = consent.ad_storage === 'granted' && consent.ad_user_data === 'granted'
     const value = adValueFromOrder({
       items: data.items,
       shipping_cost: Number(data.shipping_cost) || 0,
@@ -42,12 +53,14 @@ async function buildPurchaseAnalytics(
     const contents = adItemsFromOrder({ items: data.items })
     return {
       order_number: data.order_number as string,
+      event_id: data.order_number as string,
+      consent,
       value,
       currency: AD_CURRENCY,
       contents,
       shipping: kurusToTl(Number(data.shipping_cost) || 0),
-      email: data.customer_email || undefined,
-      phone: data.customer_phone || undefined,
+      email: advertisingGranted ? data.customer_email || undefined : undefined,
+      phone: advertisingGranted ? data.customer_phone || undefined : undefined,
     }
   } catch {
     return null
@@ -74,69 +87,44 @@ export async function GET(request: NextRequest) {
       orderNumber: orderNumber || '-',
     })
 
-    if (!token && !paymentId) {
-      return NextResponse.json({ success: false, status: 'failed', error: 'Missing token/paymentId' }, { status: 400 })
+    if (!token || token.startsWith('test-token-')) {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Geçersiz ödeme tokeni' }, { status: 400 })
+    }
+
+    const ordersDb = getOrdersSupabase()
+    if (!ordersDb) {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Sipariş altyapısı yapılandırılmamış' }, { status: 503 })
+    }
+    let orderQuery = ordersDb.from('orders').select('*').eq('payment_token', token)
+    if (orderNumber) orderQuery = orderQuery.eq('order_number', orderNumber)
+    const { data: canonicalOrder, error: lookupError } = await orderQuery.maybeSingle()
+    if (lookupError) throw new Error('Sipariş sorgulanamadı')
+    if (!canonicalOrder) {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Sipariş bulunamadı' }, { status: 404 })
+    }
+    if (canonicalOrder.status === 'cancelled' || canonicalOrder.payment_status === 'refunded') {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Sipariş iptal edilmiş veya iade edilmiş' }, { status: 409 })
     }
 
     // Önce DB'de zaten completed ise direkt başarılı dön
-    if (token) {
-      const ordersDb = getOrdersSupabase()
-      if (ordersDb) {
-        try {
-          const { data: existing } = await ordersDb
-            .from('orders')
-            .select('payment_status')
-            .eq('payment_token', token)
-            .maybeSingle()
-          if (existing?.payment_status === 'completed') {
-            await trySendOrderConfirmationEmail(ordersDb, {
-              orderNumber: orderNumber || null,
-              paymentToken: token || null,
-            })
-            const analytics = await buildPurchaseAnalytics(ordersDb, orderNumber, token)
-            if (analytics?.order_number) trySendPurchaseOnce(analytics.order_number)
-            return NextResponse.json({
-              success: true,
-              status: 'success',
-              message: 'Payment already completed',
-              analytics,
-            })
-          }
-        } catch {}
-      }
-    }
-
-    if (token?.startsWith('test-token-')) {
-      const ordersDb = getOrdersSupabase()
-      if (orderNumber && ordersDb) {
-        try {
-          await ordersDb
-            .from('orders')
-            .update({ status: 'paid', payment_status: 'completed', payment_token: token })
-            .eq('order_number', orderNumber)
-          await recordCouponUsage(ordersDb, orderNumber, token)
-          await tryCreateNesInvoice(ordersDb, orderNumber, token)
-          await trySendOrderConfirmationEmail(ordersDb, {
-            orderNumber,
-            paymentToken: token,
-          })
-          trySendPurchaseOnce(orderNumber)
-        } catch {}
-      }
-      const analytics = ordersDb
-        ? await buildPurchaseAnalytics(ordersDb, orderNumber || null, token || null)
-        : null
+    if (canonicalOrder.payment_status === 'completed') {
+      await trySendOrderConfirmationEmail(ordersDb, {
+        orderNumber: canonicalOrder.order_number,
+        paymentToken: token,
+      })
+      const analytics = await buildPurchaseAnalytics(ordersDb, canonicalOrder.order_number, token)
+      await sendPurchaseOnce(canonicalOrder.order_number)
       return NextResponse.json({
         success: true,
         status: 'success',
-        message: 'Test payment',
+        message: 'Payment already completed',
         analytics,
       })
     }
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const result = token ? await retrievePayment(token) : await retrievePaymentByPaymentId(paymentId as string)
+    const result = await retrievePayment(token)
     let finalResult =
       paymentId && result.status === 'success' && result.paymentStatus === 'CALLBACK_THREEDS'
         ? await retrievePaymentByPaymentId(paymentId)
@@ -167,11 +155,7 @@ export async function GET(request: NextRequest) {
               basketId: orderRow.iyzico_basket_id,
             })
             if (authResult?.status === 'success' && authResult?.paymentStatus === 'SUCCESS') {
-              finalResult = {
-                status: 'success',
-                paymentStatus: 'SUCCESS',
-                errorMessage: undefined,
-              }
+              finalResult = authResult
             }
           } catch (e: any) {
             console.error('[payment/status] 3DS v2 auth hata:', e?.message || e)
@@ -199,11 +183,11 @@ export async function GET(request: NextRequest) {
     // Yalnizca gerçek ödeme tamamlandıysa siparişi "paid" yap.
     // 3DS dönüş durumları (örn: CALLBACK_THREEDS / INIT_THREEDS) henüz final değildir.
     if (finalResult.status !== 'success' || finalResult.paymentStatus !== 'SUCCESS') {
-      if (finalResult.status === 'success' && finalResult.paymentStatus === 'CALLBACK_THREEDS') {
+      if (finalResult.paymentStatus !== 'FAILURE') {
         return NextResponse.json({
           success: false,
           status: 'pending',
-          error: '3D doğrulama tamamlandı, banka provizyon onayı bekleniyor',
+          error: 'Banka ödeme onayı bekleniyor. Ödeme sonucu yeniden sorgulanabilir.',
         })
       }
       const ordersDb = getOrdersSupabase()
@@ -216,56 +200,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: false,
         status: 'failed',
-        error:
-          finalResult.paymentStatus && finalResult.paymentStatus !== 'SUCCESS'
-            ? `Ödeme henüz tamamlanmadı (${finalResult.paymentStatus})`
-            : (finalResult.errorMessage || 'Ödeme başarısız veya bulunamadı'),
+        error: finalResult.errorMessage || `Ödeme başarısız (${finalResult.paymentStatus})`,
       })
     }
 
-    const supabase = getOrdersSupabase() || (await createSupabaseServer())
-    let query = supabase
-      .from('orders')
-      .update({
-        status: 'paid',
-        payment_status: 'completed',
-        payment_token: token,
-      })
-      .eq('payment_status', 'pending')
-
-    if (orderNumber) {
-      query = query.eq('order_number', orderNumber)
-    } else {
-      query = query.eq('payment_token', token as string)
+    if (!matchesIyzicoOrderPayment(canonicalOrder, finalResult)) {
+      return NextResponse.json({ success: false, status: 'failed', error: 'Ödeme tutarı veya sepet kimliği doğrulanamadı' }, { status: 409 })
     }
-    const { error } = await query
-    if (error) console.error('[payment/status] Order update error:', error)
-    else console.log('[payment/status] Sipariş güncellendi (ödendi)', orderNumber || '(token ile bulundu)')
 
-    await recordCouponUsage(supabase, orderNumber || null, token || '')
-    await tryCreateNesInvoice(supabase, orderNumber || null, token || '')
-    await trySendOrderConfirmationEmail(supabase, {
-      orderNumber: orderNumber || null,
-      paymentToken: token || null,
+    // The database transaction marks paid and creates the durable outbox record together.
+    const paidOrder = await confirmOrderPayment(ordersDb, { paymentToken: token, orderNumber: canonicalOrder.order_number })
+    await recordCouponUsage(ordersDb, paidOrder.order_number, token)
+    await tryCreateNesInvoice(ordersDb, paidOrder.order_number, token)
+    await trySendOrderConfirmationEmail(ordersDb, {
+      orderNumber: paidOrder.order_number,
+      paymentToken: token,
     })
-
-    // Purchase: order_number yoksa token ile çöz
-    let purchaseOrderNumber = orderNumber || null
-    if (!purchaseOrderNumber && token) {
-      const { data: paid } = await supabase
-        .from('orders')
-        .select('order_number')
-        .eq('payment_token', token)
-        .eq('payment_status', 'completed')
-        .maybeSingle()
-      purchaseOrderNumber = paid?.order_number || null
-    }
-    trySendPurchaseOnce(purchaseOrderNumber)
+    await sendPurchaseOnce(paidOrder.order_number)
 
     const analytics = await buildPurchaseAnalytics(
-      supabase,
-      purchaseOrderNumber,
-      token || null
+      ordersDb,
+      paidOrder.order_number,
+      token
     )
 
     return NextResponse.json({ success: true, status: 'success', analytics })

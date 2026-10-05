@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
-import { markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { allocateIyzicoDiscount, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { dbToDisplay, toCartPrice, toDisplayPrice } from '@/lib/price'
+import { captureOrderTracking } from '@/lib/tracking/identity'
 
 type BasketItem = {
   id: string
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const items: BasketItem[] = body.items || []
     const customer = body.customerInfo || {}
+    const customerEmail = typeof customer.email === 'string' ? customer.email.trim().toLowerCase() : ''
     const couponCode = (body.couponCode || '').toString()
     const tracking = (body.tracking && typeof body.tracking === 'object' ? body.tracking : {}) as Record<
       string,
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
     const clientIp = forwarded.split(',')[0]?.trim() || request.headers.get('x-real-ip') || null
     const clientUa = request.headers.get('user-agent') || null
 
-    const trackingFields = {
+    let trackingFields = {
       fbp: typeof tracking.fbp === 'string' ? tracking.fbp.slice(0, 256) : null,
       fbc: typeof tracking.fbc === 'string' ? tracking.fbc.slice(0, 256) : null,
       fbclid: typeof tracking.fbclid === 'string' ? tracking.fbclid.slice(0, 256) : null,
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
     try {
       ordersClient = createSupabaseAdmin()
     } catch {
-      ordersClient = await createSupabaseServer()
+      return NextResponse.json({ success: false, error: 'Sipariş altyapısı yapılandırılmamış' }, { status: 503 })
     }
     const requestedProductIds = items.map((item) => item.id).filter(Boolean)
     const { data: products, error: productsError } = await ordersClient
@@ -90,7 +92,10 @@ export async function POST(request: NextRequest) {
     const productsById = new Map(productRows.map((p) => [p.id, p]))
     const canonicalItems = items.map((item) => {
       const product = productsById.get(item.id)
-      const quantity = Math.max(1, Number(item.quantity || 1))
+      const quantity = Number(item.quantity ?? 1)
+      if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000) {
+        throw new Error('Sepette geçersiz ürün adedi bulundu')
+      }
       if (!product) {
         throw new Error('Sepette geçersiz ürün bulundu')
       }
@@ -118,7 +123,7 @@ export async function POST(request: NextRequest) {
       discount_value: number
     } | null = null
 
-    const customerIdentityKey = getCustomerIdentityKey(customer.email || '')
+    const customerIdentityKey = getCustomerIdentityKey(customerEmail)
     if (couponCode) {
       const couponResult = await validateCouponForSubtotal({
         supabase: ordersClient,
@@ -146,28 +151,25 @@ export async function POST(request: NextRequest) {
     // Total price in 10x format
     const totalPrice10x = subtotalAfterCoupon10x + shipping10x
 
-    // Iyzico: Gönderilen tutar = tüm kırılımların toplamı olmalı. Basket kalemleri satır toplamı + kargo.
-    const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = canonicalItems.map((item) => {
-      const lineTotalTL = toDisplayPrice(item.unitPrice10x * item.quantity)
+    // Iyzico rejects non-positive basket lines. Spread coupons across actual products.
+    let discountedLineKurus: number[]
+    try {
+      discountedLineKurus = allocateIyzicoDiscount(
+        canonicalItems.map((item) => Math.round(toCartPrice(item.unitPrice10x * item.quantity))),
+        Math.round(toCartPrice(discountAmount10x))
+      )
+    } catch (error) {
+      return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Kupon indirimi geçersiz' }, { status: 400 })
+    }
+    const basketItemsForIyzico: { id: string; name: string; category1: string; itemType: string; price: string }[] = canonicalItems.map((item, index) => {
       return {
         id: item.id,
         name: item.name,
         category1: item.category,
         itemType: 'PHYSICAL',
-        price: toPriceString(lineTotalTL),
+        price: toPriceString(discountedLineKurus[index] / 100),
       }
     })
-
-    // Apply coupon discount as a separate virtual line item so iyzico item sum equals total.
-    if (discountAmount10x > 0) {
-      basketItemsForIyzico.push({
-        id: 'coupon-discount',
-        name: `Kupon İndirimi${appliedCoupon ? ` (${appliedCoupon.code})` : ''}`,
-        category1: 'İndirim',
-        itemType: 'VIRTUAL',
-        price: toPriceString(-toDisplayPrice(discountAmount10x)),
-      })
-    }
 
     if (shipping10x > 0) {
       basketItemsForIyzico.push({
@@ -178,8 +180,11 @@ export async function POST(request: NextRequest) {
         price: toPriceString(toDisplayPrice(shipping10x)),
       })
     }
-    const sumBasketTL = basketItemsForIyzico.reduce((sum, b) => sum + parseFloat(b.price), 0)
-    const priceStr = toPriceString(sumBasketTL)
+    const basketTotalKurus = discountedLineKurus.reduce((sum, price) => sum + price, 0) + Math.round(toCartPrice(shipping10x))
+    if (basketTotalKurus !== Math.round(toCartPrice(totalPrice10x))) {
+      return NextResponse.json({ success: false, error: 'Kupon indirimi ile ödeme tutarı uyuşmuyor' }, { status: 400 })
+    }
+    const priceStr = toPriceString(basketTotalKurus / 100)
 
     // 3DS callback URL:
     // 1) IYZICO_CALLBACK_URL (explicit)
@@ -246,7 +251,7 @@ export async function POST(request: NextRequest) {
         name: customer.name || '',
         surname: customer.surname || '',
         gsmNumber: customer.phone || '',
-        email: customer.email || '',
+        email: customerEmail,
         identityNumber: tc,
         lastLoginDate: toIyzicoDate(new Date()),
         registrationDate: toIyzicoDate(new Date()),
@@ -279,7 +284,9 @@ export async function POST(request: NextRequest) {
 
     // Check if Iyzico SDK available
     const credentials = getIyzicoCredentials()
-    const hasIyzicoKeys = !!credentials
+    if (!credentials) {
+      return NextResponse.json({ success: false, error: 'Ödeme altyapısı yapılandırılmamış' }, { status: 503 })
+    }
 
     // Create order in Supabase
     let supabase = null
@@ -293,6 +300,15 @@ export async function POST(request: NextRequest) {
       console.error('Supabase auth error:', error)
     }
 
+    const orderTracking = captureOrderTracking(request, tracking, userId !== 'guest' ? userId : undefined)
+    // Keep existing attribution columns for reporting, with the same consent gate as JSON.
+    trackingFields = Object.fromEntries(
+      Object.keys(trackingFields).map((key) => [key,
+        key === 'client_ip' ? orderTracking.ip ?? null :
+        key === 'client_user_agent' ? orderTracking.user_agent ?? null :
+        orderTracking[key] ?? null])
+    ) as typeof trackingFields
+
     // Insert order into Supabase
     try {
       if (ordersClient) {
@@ -302,7 +318,7 @@ export async function POST(request: NextRequest) {
             order_number: orderNumber,
             user_id: userId !== 'guest' ? userId : null,
             customer_name: customer.name || '',
-            customer_email: customer.email || '',
+            customer_email: customerEmail,
             customer_phone: customer.phone || '',
             customer_tc: tc || null,
             shipping_address: {
@@ -332,27 +348,19 @@ export async function POST(request: NextRequest) {
             payment_token: conversationId,
             iyzico_basket_id: basketId,
             ...trackingFields,
+            tracking: orderTracking,
           })
 
         if (orderError) {
           console.error('Supabase order creation error:', orderError)
+          return NextResponse.json({ success: false, error: 'Sipariş kaydedilemedi. Lütfen tekrar deneyin.' }, { status: 503 })
         } else {
           console.log('✅ Order created in Supabase:', orderNumber)
         }
       }
     } catch (error) {
       console.error('Order creation error:', error)
-    }
-
-    // If no Iyzico credentials, use mock payment for testing
-    if (!hasIyzicoKeys) {
-      console.log('⚠️ Using mock payment - Iyzico credentials not configured')
-      return NextResponse.json({
-        success: true,
-        token: `test-token-${Date.now()}`,
-        paymentPageUrl: `${callbackUrl}?token=test-token-${Date.now()}&status=success&orderNumber=${orderNumber}`,
-        orderNumber
-      })
+      return NextResponse.json({ success: false, error: 'Sipariş kaydedilemedi. Lütfen tekrar deneyin.' }, { status: 503 })
     }
 
     // Real Iyzico payment integration

@@ -1,6 +1,7 @@
 import { POST } from '@/app/api/auth/signin/route'
 
 // Mock Supabase
+const mockProfileSingle = jest.fn()
 const mockSupabase = {
   auth: {
     signInWithPassword: jest.fn(),
@@ -8,7 +9,7 @@ const mockSupabase = {
   from: jest.fn(() => ({
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
-    single: jest.fn(),
+    single: mockProfileSingle,
   })),
 }
 
@@ -26,7 +27,7 @@ const mockNextResponse = {
 
 jest.mock('next/server', () => ({
   NextRequest: jest.fn(),
-  NextResponse: mockNextResponse,
+  NextResponse: { json: (data: unknown, init?: { status?: number }) => mockNextResponse.json(data, init) },
 }))
 
 describe('/api/auth/signin', () => {
@@ -70,6 +71,8 @@ describe('/api/auth/signin', () => {
     expect(data.success).toBe(true)
     expect(data.message).toContain('Giriş başarılı!')
     expect(data.user).toBeDefined()
+    expect(data.user.name).toBe('Test User')
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'test@example.com', password: '123456' })
   })
 
   it('should reject request with missing email', async () => {
@@ -106,6 +109,13 @@ describe('/api/auth/signin', () => {
 
     expect(response.status).toBe(401)
     expect(data.success).toBe(false)
-    expect(data.error).toContain('Geçersiz email veya şifre')
+    expect(data.error).toContain('Email veya şifre hatalı')
+  })
+
+  it('asks an unconfirmed user to verify their email', async () => {
+    mockSupabase.auth.signInWithPassword.mockResolvedValueOnce({ data: null, error: { message: 'Email not confirmed' } })
+    const response = await POST({ json: async () => ({ email: 'test@example.com', password: '123456' }) } as any)
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toContain('doğrulamadınız')
   })
 })

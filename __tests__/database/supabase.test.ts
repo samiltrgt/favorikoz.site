@@ -3,20 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 // Test database configuration - gerçek Supabase bağlantısı
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn('Supabase environment variables not set. Skipping database tests.')
-}
-
 // Only create client if environment variables are available
-const supabase = supabaseUrl && supabaseServiceKey 
+const liveTestsEnabled = process.env.RUN_SUPABASE_INTEGRATION_TESTS === 'true'
+const supabase = liveTestsEnabled && supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null
 
-describe('Database Tests - Supabase', () => {
+const describeLive = supabase ? describe : describe.skip
+
+describeLive('Database Tests - Supabase', () => {
   // Test verilerini temizle
   beforeEach(async () => {
-    if (!supabaseUrl || !supabaseServiceKey) return
+    if (!supabase) return
     
     // Test verilerini temizle
     await supabase.from('orders').delete().like('order_number', 'TEST-%')
@@ -25,7 +23,7 @@ describe('Database Tests - Supabase', () => {
 
   describe('Products Table', () => {
     it('should fetch products from database', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -41,7 +39,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should filter products by category', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -58,7 +56,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should search products by name', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -77,7 +75,7 @@ describe('Database Tests - Supabase', () => {
 
   describe('Profiles Table', () => {
     it('should create and fetch user profile', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -113,7 +111,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should update user profile', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -145,7 +143,7 @@ describe('Database Tests - Supabase', () => {
 
   describe('Orders Table', () => {
     it('should create and fetch order', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -187,7 +185,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should update order status', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -224,7 +222,7 @@ describe('Database Tests - Supabase', () => {
 
   describe('Database Constraints and Relationships', () => {
     it('should enforce foreign key constraints', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -245,7 +243,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should enforce unique constraints', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -279,7 +277,7 @@ describe('Database Tests - Supabase', () => {
 
   describe('Database Performance', () => {
     it('should handle large queries efficiently', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }
@@ -300,7 +298,7 @@ describe('Database Tests - Supabase', () => {
     })
 
     it('should handle complex queries with joins', async () => {
-      if (!supabaseUrl || !supabaseServiceKey) {
+      if (!supabase) {
         console.log('Skipping test - Supabase not configured')
         return
       }

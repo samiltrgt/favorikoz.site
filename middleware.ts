@@ -46,6 +46,27 @@ async function getAdminSession(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/')) {
+    // Prefetch/RSC requests are not page views and must not replace the document ID.
+    const isDocument = !request.headers.has('rsc') && !request.headers.has('next-router-prefetch') && request.headers.get('purpose') !== 'prefetch'
+    if (!isDocument || request.cookies.get('fk_consent')?.value !== 'granted') return NextResponse.next()
+    const eventId = `evt_${crypto.randomUUID()}`
+    const sourceUrl = `${request.nextUrl.origin}${pathname}`
+    const headers = new Headers(request.headers)
+    headers.set('x-event-id', eventId)
+    headers.set('x-event-source-url', sourceUrl)
+    const response = NextResponse.next({ request: { headers } })
+    const options = { path: '/', sameSite: 'lax' as const, secure: request.nextUrl.protocol === 'https:' }
+    response.cookies.set('fk_page_event_id', eventId, { ...options, maxAge: 120 })
+    response.headers.set('x-event-id', eventId)
+    response.headers.set('x-event-source-url', sourceUrl)
+    const fbclid = request.nextUrl.searchParams.get('fbclid')
+    if (fbclid && fbclid.length <= 500 && !/[\u0000-\u001f]/.test(fbclid)) {
+      response.cookies.set('_fbc', `fb.1.${Date.now()}.${fbclid}`, { ...options, maxAge: 7776000 })
+    }
+    return response
+  }
+
   if (pathname.startsWith('/api/admin')) {
     return NextResponse.next()
   }
@@ -75,5 +96,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/((?!api/|_next/static|_next/image|favicon.ico|.*\\.[^/]+$).*)'],
 }

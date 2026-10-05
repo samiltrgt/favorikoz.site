@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { trackPurchaseBrowser } from '@/lib/analytics/datalayer'
 import type { AdContentItem } from '@/lib/analytics/value'
+import { CONSENT_CHANGED_EVENT, readConsentSignals, type ConsentSignals } from '@/lib/analytics/consent'
 
 type AnalyticsPayload = {
   order_number: string
@@ -12,32 +13,56 @@ type AnalyticsPayload = {
   shipping?: number
   email?: string
   phone?: string
+  event_id?: string
+  consent?: ConsentSignals
 }
 
 function fireBrowserPurchase(analytics: AnalyticsPayload) {
   const key = `purchase_sent_${analytics.order_number}`
+  const currentConsent = readConsentSignals()
+  let analyticsAllowed = analytics.consent?.analytics_storage === 'granted' && currentConsent.analytics_storage === 'granted'
+  let marketingAllowed = analytics.consent?.ad_storage === 'granted' && currentConsent.ad_storage === 'granted'
   try {
     if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return
-    sessionStorage.setItem(key, '1')
+    analyticsAllowed &&= !sessionStorage.getItem(`${key}_analytics`)
+    marketingAllowed &&= !sessionStorage.getItem(`${key}_marketing`)
   } catch {
     // sessionStorage yoksa yine dene; dedup Meta tarafında event_id ile
   }
-  trackPurchaseBrowser({
+  if (!analyticsAllowed && !marketingAllowed) return
+  const sent = trackPurchaseBrowser({
     orderNumber: analytics.order_number,
     value: analytics.value,
     contents: analytics.contents || [],
     shipping: analytics.shipping,
     email: analytics.email,
     phone: analytics.phone,
+    eventId: analytics.event_id,
+    consent: analytics.consent,
+    analytics_allowed: analyticsAllowed,
+    marketing_allowed: marketingAllowed,
   })
+  if (sent) {
+    try {
+      if (analyticsAllowed) sessionStorage.setItem(`${key}_analytics`, '1')
+      if (marketingAllowed) sessionStorage.setItem(`${key}_marketing`, '1')
+    } catch { /* Platform event IDs still deduplicate. */ }
+  }
 }
 
 export default function PaymentCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const ranRef = useRef(false)
+  const purchaseRef = useRef<AnalyticsPayload | null>(null)
   const [status, setStatus] = useState<'loading' | 'pending' | 'pending_timeout' | 'success' | 'failed'>('loading')
   const [orderNumber, setOrderNumber] = useState<string>('')
+
+  useEffect(() => {
+    const send = () => { if (purchaseRef.current) fireBrowserPurchase(purchaseRef.current) }
+    window.addEventListener(CONSENT_CHANGED_EVENT, send)
+    return () => window.removeEventListener(CONSENT_CHANGED_EVENT, send)
+  }, [])
 
   useEffect(() => {
     if (ranRef.current) return
@@ -114,6 +139,7 @@ export default function PaymentCallbackPage() {
           if (json.status === 'success') {
             if (json.analytics?.order_number) {
               setOrderNumber(json.analytics.order_number)
+              purchaseRef.current = json.analytics
               fireBrowserPurchase(json.analytics)
             }
             setStatus('success')

@@ -9,11 +9,12 @@ const MAX_COUPON_CODE_LEN = 64
 const MAX_EMAIL_LEN = 254
 const MAX_ITEMS = 50
 const MAX_QTY = 99
+const MAX_PRODUCT_ID_LEN = 128
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 60_000
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+// products.id is TEXT (prod-..., imp-..., or UUID) — not UUID-only
+const PRODUCT_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Item = {
@@ -63,7 +64,7 @@ function validateBody(body: unknown):
     }
     const item = entry as Record<string, unknown>
     const id = typeof item.id === 'string' ? item.id.trim() : ''
-    if (!id || !UUID_RE.test(id)) {
+    if (!id || id.length > MAX_PRODUCT_ID_LEN || !PRODUCT_ID_RE.test(id)) {
       return { ok: false, error: 'Geçersiz ürün kimliği' }
     }
 

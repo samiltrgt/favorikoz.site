@@ -1,6 +1,7 @@
 import { POST } from '@/app/api/auth/signup/route'
 
 // Mock Supabase
+const mockUpsert = jest.fn()
 const mockSupabase = {
   auth: {
     signUp: jest.fn(),
@@ -9,7 +10,7 @@ const mockSupabase = {
     },
   },
   from: jest.fn(() => ({
-    upsert: jest.fn(),
+    upsert: mockUpsert,
   })),
 }
 
@@ -27,12 +28,13 @@ const mockNextResponse = {
 
 jest.mock('next/server', () => ({
   NextRequest: jest.fn(),
-  NextResponse: mockNextResponse,
+  NextResponse: { json: (data: unknown, init?: { status?: number }) => mockNextResponse.json(data, init) },
 }))
 
 describe('/api/auth/signup', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUpsert.mockResolvedValue({ data: null, error: null })
   })
 
   it('should create user successfully with valid data', async () => {
@@ -68,6 +70,11 @@ describe('/api/auth/signup', () => {
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
     expect(data.message).toContain('Kayıt başarılı')
+    expect(mockSupabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
+      email: 'test@example.com', password: '123456',
+      options: expect.objectContaining({ data: { name: 'Test User', phone: '05551234567' }, emailRedirectTo: expect.stringMatching(/\/auth\/callback$/) }),
+    }))
+    expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'test-user-id', role: 'customer' }))
   })
 
   it('should reject request with missing email', async () => {

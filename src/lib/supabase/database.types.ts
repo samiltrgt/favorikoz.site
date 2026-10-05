@@ -164,7 +164,7 @@ export interface Database {
           subtotal_after_coupon: number | null
           status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method: string
-          payment_status: 'pending' | 'completed' | 'failed'
+          payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
           payment_token: string | null
           iyzico_basket_id: string | null
           invoice_uuid: string | null
@@ -198,7 +198,7 @@ export interface Database {
           subtotal_after_coupon?: number | null
           status?: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method: string
-          payment_status?: 'pending' | 'completed' | 'failed'
+          payment_status?: 'pending' | 'completed' | 'failed' | 'refunded'
           payment_token?: string | null
           iyzico_basket_id?: string | null
           invoice_uuid?: string | null
@@ -232,7 +232,7 @@ export interface Database {
           subtotal_after_coupon?: number | null
           status?: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
           payment_method?: string
-          payment_status?: 'pending' | 'completed' | 'failed'
+          payment_status?: 'pending' | 'completed' | 'failed' | 'refunded'
           payment_token?: string | null
           iyzico_basket_id?: string | null
           invoice_uuid?: string | null
@@ -570,7 +570,7 @@ export interface Database {
     }
     Enums: {
       order_status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
-      payment_status: 'pending' | 'completed' | 'failed'
+      payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
     }
   }
 }

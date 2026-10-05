@@ -39,7 +39,10 @@
     "test:components": "jest --testPathPattern=components",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:tracking:sql": "node scripts/test-tracking-postgres.mjs",
+    "tracking:verify": "node scripts/verify-tracking-setup.mjs",
+    "tracking:setup-cron": "node scripts/setup-tracking-cron.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -61,6 +64,7 @@
     "resend": "^6.32.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

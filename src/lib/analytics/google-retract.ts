@@ -1,5 +1,5 @@
 /**
- * Google Ads conversion adjustment — RETRACT (iptal/iade).
+ * Google Ads conversion adjustment — RETRACTION (iptal/iade).
  * order_id = order_number (Purchase transaction_id ile aynı).
  *
  * Env (yoksa atlanır, ödeme/admin akışı bozulmaz):
@@ -40,6 +40,11 @@ export async function retractGoogleConversion(orderNumber: string): Promise<void
   }
 
   const customerId = customerIdRaw.replace(/-/g, '')
+  const apiVersion = process.env.GOOGLE_ADS_API_VERSION?.trim() || 'v24'
+  if (!/^\d{10}$/.test(customerId) || !/^v\d+$/.test(apiVersion)) {
+    console.error('[google-retract] Invalid customer ID or API version')
+    return
+  }
   const conversionAction = conversionActionRaw.startsWith('customers/')
     ? conversionActionRaw
     : conversionActionRaw.includes('conversionActions/')
@@ -56,9 +61,10 @@ export async function retractGoogleConversion(orderNumber: string): Promise<void
         refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
+      signal: AbortSignal.timeout(8000),
     })
     if (!tokenRes.ok) {
-      console.error('[google-retract] OAuth token hatası', await tokenRes.text())
+      console.error('[google-retract] OAuth token hatası', tokenRes.status)
       return
     }
     const tokenJson = (await tokenRes.json()) as { access_token?: string }
@@ -75,7 +81,7 @@ export async function retractGoogleConversion(orderNumber: string): Promise<void
     const body = {
       conversionAdjustments: [
         {
-          adjustmentType: 'RETRACT',
+          adjustmentType: 'RETRACTION',
           conversionAction,
           adjustmentDateTime,
           orderId: orderNumber,
@@ -84,22 +90,30 @@ export async function retractGoogleConversion(orderNumber: string): Promise<void
       partialFailure: true,
     }
 
-    const url = `https://googleads.googleapis.com/v17/customers/${customerId}:uploadConversionAdjustments`
+    const url = `https://googleads.googleapis.com/${apiVersion}/customers/${customerId}:uploadConversionAdjustments`
+    const loginCustomer = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID?.trim().replace(/-/g, '')
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${tokenJson.access_token}`,
         'developer-token': developerToken,
+        ...(loginCustomer ? { 'login-customer-id': loginCustomer } : {}),
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(8000),
     })
 
     if (!res.ok) {
-      console.error('[google-retract] RETRACT hatası', res.status, await res.text())
+      console.error('[google-retract] RETRACTION hatası', res.status)
       return
     }
-    devLog('[google-retract] RETRACT gönderildi', orderNumber)
+    const result = await res.json() as { partialFailureError?: { code?: number }; results?: unknown[] }
+    if (result.partialFailureError?.code || !result.results?.length) {
+      console.error('[google-retract] Adjustment not accepted', result.partialFailureError?.code || 'no-results')
+      return
+    }
+    devLog('[google-retract] RETRACTION gönderildi', orderNumber)
   } catch (err) {
     console.error('[google-retract] RETRACT exception', orderNumber, err)
   }

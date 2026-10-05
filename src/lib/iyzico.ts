@@ -218,8 +218,18 @@ export async function complete3DSPaymentV2(payload: {
   return result
 }
 
+export type IyzicoPaymentResult = {
+  status: string
+  paymentStatus?: string
+  errorMessage?: string
+  paymentId?: string
+  basketId?: string
+  paidPrice?: string | number
+  currency?: string
+}
+
 /** Ödeme sonucunu conversationId ile sorgula (callback sayfası için) */
-export async function retrievePayment(conversationId: string): Promise<{ status: string; paymentStatus?: string; errorMessage?: string }> {
+export async function retrievePayment(conversationId: string): Promise<IyzicoPaymentResult> {
   const iyzipay = getIyzicoInstance()
   if (!iyzipay) {
     return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
@@ -241,6 +251,10 @@ export async function retrievePayment(conversationId: string): Promise<{ status:
           status: result?.status === 'success' ? 'success' : 'failure',
           paymentStatus: result?.paymentStatus,
           errorMessage: result?.errorMessage,
+          paymentId: result?.paymentId,
+          basketId: result?.basketId,
+          paidPrice: result?.paidPrice,
+          currency: result?.currency,
         })
       }
     )
@@ -250,7 +264,7 @@ export async function retrievePayment(conversationId: string): Promise<{ status:
 /** Ödeme sonucunu paymentId ile sorgula (conversationData gelmediğinde fallback) */
 export async function retrievePaymentByPaymentId(
   paymentId: string
-): Promise<{ status: string; paymentStatus?: string; errorMessage?: string }> {
+): Promise<IyzicoPaymentResult> {
   const iyzipay = getIyzicoInstance()
   if (!iyzipay) {
     return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
@@ -271,6 +285,10 @@ export async function retrievePaymentByPaymentId(
           status: result?.status === 'success' ? 'success' : 'failure',
           paymentStatus: result?.paymentStatus,
           errorMessage: result?.errorMessage,
+          paymentId: result?.paymentId,
+          basketId: result?.basketId,
+          paidPrice: result?.paidPrice,
+          currency: result?.currency,
         })
       }
     )

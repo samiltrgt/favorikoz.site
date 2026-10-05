@@ -4,8 +4,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   applyConsentChoice,
+  applyConsentPreferences,
   pushConsentUpdate,
   readConsentCookie,
+  readConsentSignals,
+  readSavedConsentSignals,
+  initializeTrackingConsent,
 } from '@/lib/analytics/consent'
 
 /**
@@ -14,12 +18,18 @@ import {
  */
 export default function ConsentBanner() {
   const [visible, setVisible] = useState(false)
+  const [analytics, setAnalytics] = useState(false)
+  const [marketing, setMarketing] = useState(false)
 
   useEffect(() => {
     const existing = readConsentCookie()
     if (existing) {
       // Önceki tercihi her sayfada Consent Mode'a uygula
-      pushConsentUpdate(existing)
+      const saved = readSavedConsentSignals()
+      setAnalytics(saved.analytics_storage === 'granted')
+      setMarketing(saved.ad_storage === 'granted')
+      pushConsentUpdate(readConsentSignals(), saved)
+      void initializeTrackingConsent()
       return
     }
 
@@ -44,10 +54,16 @@ export default function ConsentBanner() {
     }
   }, [])
 
-  if (!visible) return null
+  if (!visible) return (
+    <button type="button" onClick={() => setVisible(true)} className="fixed bottom-2 right-2 z-[99] rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-xs text-gray-600 shadow-sm">
+      Çerez tercihleri
+    </button>
+  )
 
   const choose = (state: 'granted' | 'denied') => {
     applyConsentChoice(state)
+    setAnalytics(state === 'granted')
+    setMarketing(state === 'granted')
     setVisible(false)
   }
 
@@ -66,7 +82,24 @@ export default function ConsentBanner() {
           </Link>
           .
         </p>
+        <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-700">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={analytics} onChange={(event) => setAnalytics(event.target.checked)} />
+            Analitik ölçüm
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={marketing} onChange={(event) => setMarketing(event.target.checked)} />
+            Reklam ve kişiselleştirme
+          </label>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <button
+            type="button"
+            onClick={() => { applyConsentPreferences({ analytics, marketing }); setVisible(false) }}
+            className="px-4 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
+          >
+            Tercihleri kaydet
+          </button>
           <button
             type="button"
             onClick={() => choose('denied')}

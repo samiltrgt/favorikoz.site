@@ -18,7 +18,7 @@ interface Order {
   shipping_cost: number
   total: number
   status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
-  payment_status: 'pending' | 'completed' | 'failed'
+  payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
   payment_method: string
   created_at: string
   updated_at: string
@@ -435,7 +435,8 @@ export default function AdminOrdersPage() {
                           selectedOrder.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {selectedOrder.payment_status === 'completed' ? 'Tamamlandı' :
+                          {selectedOrder.payment_status === 'refunded' ? 'İade Edildi' :
+                           selectedOrder.payment_status === 'completed' ? 'Tamamlandı' :
                            selectedOrder.payment_status === 'failed' ? 'Başarısız' : 'Beklemede'}
                         </span>
                       </div>
@@ -476,6 +477,7 @@ export default function AdminOrdersPage() {
                           <option value="pending">Beklemede</option>
                           <option value="completed">Tamamlandı</option>
                           <option value="failed">Başarısız</option>
+                          <option value="refunded">İade Edildi</option>
                         </select>
                       </div>
                       <div>

@@ -1,142 +1,83 @@
-import { getFavorites, setFavorites, toggleFavorite, isFavorite } from '@/lib/favorites'
+import { getFavorites, clearFavoritesCache, toggleFavorite, isFavorite, initializeFavorites, isFavoriteSync } from '@/lib/favorites'
 
-describe('favorites utility', () => {
+describe('favorites API and cache', () => {
+  let mockFetch: jest.Mock
+  const originalFetch = global.fetch
+  function response(body: unknown) { return { json: async () => body } }
+
   beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear()
+    clearFavoritesCache()
+    mockFetch = jest.fn()
+    global.fetch = mockFetch
+  })
+  afterEach(() => { global.fetch = originalFetch; jest.restoreAllMocks() })
+
+  it('shares an in-flight fetch and caches successful favorites', async () => {
+    let complete!: (value: unknown) => void
+    mockFetch.mockReturnValue(new Promise((resolve) => { complete = resolve }))
+    const first = getFavorites()
+    const second = getFavorites()
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    complete(response({ success: true, favorites: ['p1', 'p2'] }))
+    expect(await first).toEqual(['p1', 'p2'])
+    expect(await second).toEqual(['p1', 'p2'])
+    expect(await isFavorite('p1')).toBe(true)
+    expect(await isFavorite('p3')).toBe(false)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 
-  describe('getFavorites', () => {
-    it('should return empty array when no favorites exist', () => {
-      expect(getFavorites()).toEqual([])
-    })
-
-    it('should return saved favorites from localStorage', () => {
-      localStorage.setItem('favorites', JSON.stringify(['1', '2', '3']))
-      expect(getFavorites()).toEqual(['1', '2', '3'])
-    })
-
-    it('should handle corrupted localStorage data', () => {
-      localStorage.setItem('favorites', 'invalid json')
-      expect(getFavorites()).toEqual([])
-    })
-
-    it('should handle null value in localStorage', () => {
-      localStorage.removeItem('favorites')
-      expect(getFavorites()).toEqual([])
-    })
+  it('fetches fresh data after the cache is cleared', async () => {
+    mockFetch.mockResolvedValueOnce(response({ success: true, favorites: ['p1'] }))
+      .mockResolvedValueOnce(response({ success: true, favorites: ['p2'] }))
+    expect(await getFavorites()).toEqual(['p1'])
+    clearFavoritesCache()
+    expect(await getFavorites()).toEqual(['p2'])
+    expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 
-  describe('setFavorites', () => {
-    it('should save favorites to localStorage', () => {
-      setFavorites(['1', '2', '3'])
-      expect(localStorage.getItem('favorites')).toBe(JSON.stringify(['1', '2', '3']))
-    })
-
-    it('should overwrite existing favorites', () => {
-      setFavorites(['1', '2'])
-      setFavorites(['3', '4', '5'])
-      expect(JSON.parse(localStorage.getItem('favorites')!)).toEqual(['3', '4', '5'])
-    })
-
-    it('should handle empty array', () => {
-      setFavorites([])
-      expect(localStorage.getItem('favorites')).toBe(JSON.stringify([]))
-    })
+  it('returns no favorites when unauthenticated or when the request fails', async () => {
+    mockFetch.mockResolvedValueOnce(response({ success: false }))
+    expect(await getFavorites()).toEqual([])
+    clearFavoritesCache()
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockFetch.mockRejectedValueOnce(new Error('Network unavailable'))
+    expect(await getFavorites()).toEqual([])
   })
 
-  describe('toggleFavorite', () => {
-    it('should add product to favorites when not present', () => {
-      const result = toggleFavorite('1')
-      expect(result).toBe(true) // Returns true because item was added
-      expect(getFavorites()).toContain('1')
+  it('adds a favorite, invalidates the cache and notifies the UI', async () => {
+    const changed = jest.fn()
+    window.addEventListener('favoritesUpdated', changed)
+    mockFetch.mockResolvedValueOnce(response({ success: true, favorites: [] }))
+      .mockResolvedValueOnce(response({ success: true }))
+      .mockResolvedValueOnce(response({ success: true, favorites: ['p1'] }))
+    expect(await toggleFavorite('p1')).toEqual({ success: true, isFavorite: true })
+    expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/favorites', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: 'p1' }),
     })
-
-    it('should remove product from favorites when present', () => {
-      setFavorites(['1', '2', '3'])
-      const result = toggleFavorite('2')
-      expect(result).toBe(false) // Returns false because item was removed
-      expect(getFavorites()).toEqual(['1', '3'])
-    })
-
-    it('should handle toggling multiple times', () => {
-      toggleFavorite('1') // Add
-      expect(getFavorites()).toContain('1')
-      
-      toggleFavorite('1') // Remove
-      expect(getFavorites()).not.toContain('1')
-      
-      toggleFavorite('1') // Add again
-      expect(getFavorites()).toContain('1')
-    })
-
-    it('should maintain other favorites when toggling', () => {
-      setFavorites(['1', '2', '3'])
-      toggleFavorite('4') // Add new
-      expect(getFavorites()).toContain('1')
-      expect(getFavorites()).toContain('2')
-      expect(getFavorites()).toContain('3')
-      expect(getFavorites()).toContain('4')
-    })
-
-    it('should handle string IDs correctly', () => {
-      toggleFavorite('product-123')
-      expect(getFavorites()).toContain('product-123')
-    })
+    expect(changed).toHaveBeenCalledTimes(1)
+    expect(await getFavorites()).toEqual(['p1'])
+    window.removeEventListener('favoritesUpdated', changed)
   })
 
-  describe('isFavorite', () => {
-    it('should return true when product is in favorites', () => {
-      setFavorites(['1', '2', '3'])
-      expect(isFavorite('2')).toBe(true)
-    })
-
-    it('should return false when product is not in favorites', () => {
-      setFavorites(['1', '2', '3'])
-      expect(isFavorite('4')).toBe(false)
-    })
-
-    it('should return false when no favorites exist', () => {
-      expect(isFavorite('1')).toBe(false)
-    })
-
-    it('should handle string IDs correctly', () => {
-      setFavorites(['product-123', 'product-456'])
-      expect(isFavorite('product-123')).toBe(true)
-      expect(isFavorite('product-789')).toBe(false)
-    })
+  it('removes an existing favorite through DELETE', async () => {
+    mockFetch.mockResolvedValueOnce(response({ success: true, favorites: ['p1'] }))
+      .mockResolvedValueOnce(response({ success: true }))
+    expect(await toggleFavorite('p1')).toEqual({ success: true, isFavorite: false })
+    expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/favorites?product_id=p1', { method: 'DELETE' })
   })
 
-  describe('integration tests', () => {
-    it('should work correctly in a typical user flow', () => {
-      // User adds first favorite
-      toggleFavorite('1')
-      expect(isFavorite('1')).toBe(true)
-      
-      // User adds more favorites
-      toggleFavorite('2')
-      toggleFavorite('3')
-      expect(getFavorites()).toHaveLength(3)
-      
-      // User removes a favorite
-      toggleFavorite('2')
-      expect(isFavorite('2')).toBe(false)
-      expect(getFavorites()).toHaveLength(2)
-      
-      // User checks favorites
-      expect(isFavorite('1')).toBe(true)
-      expect(isFavorite('3')).toBe(true)
-    })
+  it('retains an existing favorite and cache after a rejected removal', async () => {
+    mockFetch.mockResolvedValueOnce(response({ success: true, favorites: ['p1'] }))
+      .mockResolvedValueOnce(response({ success: false, error: 'Rejected' }))
+    expect(await toggleFavorite('p1')).toEqual({ success: false, isFavorite: true, error: 'Rejected' })
+    expect(await isFavorite('p1')).toBe(true)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
 
-    it('should persist favorites across multiple operations', () => {
-      toggleFavorite('1')
-      toggleFavorite('2')
-      toggleFavorite('3')
-      
-      const savedFavorites = getFavorites()
-      expect(savedFavorites).toContain('1')
-      expect(savedFavorites).toContain('2')
-      expect(savedFavorites).toContain('3')
-    })
+  it('loads the synchronous initial-render cache explicitly', async () => {
+    mockFetch.mockResolvedValueOnce(response({ success: true, favorites: ['p1'] }))
+    expect(await initializeFavorites()).toEqual(['p1'])
+    expect(isFavoriteSync('p1')).toBe(true)
+    expect(isFavoriteSync('p2')).toBe(false)
   })
 })

@@ -1,13 +1,16 @@
 /**
  * Tek tarayıcı borusu: dataLayer.
- * Layout'a fbq eklenmez — Meta/GA4/Ads etiketleri yalnızca GTM'den çıkar.
+ * GTM ve açıkça seçilen direct modu aynı olay sözleşmesini kullanır.
  */
 
 import { AD_CURRENCY, type AdContentItem } from '@/lib/analytics/value'
+import { readConsentSignals, type ConsentSignals } from '@/lib/analytics/consent'
+import { getCheckoutTrackingPayload, consumePageEventId } from '@/lib/analytics/tracking'
+import { sendDirectBrowserEvent } from '@/lib/analytics/browser-tags'
 
 declare global {
   interface Window {
-    dataLayer?: Record<string, unknown>[]
+    dataLayer?: unknown[]
   }
 }
 
@@ -24,6 +27,46 @@ export function pushDataLayer(payload: Record<string, unknown>) {
   window.dataLayer.push(payload)
 }
 
+function dispatchEvents(metaEvent: string | null, googleEvent: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return false
+  const consent = readConsentSignals()
+  let sent = false
+  const emit = (event: string) => {
+    const enriched = { ...payload, event_id: payload.eventID, event_source_url: `${location.origin}${location.pathname}`, event }
+    if (payload.items) {
+      pushDataLayer({ ecommerce: null })
+      pushDataLayer({ ...enriched, ecommerce: { items: payload.items, value: payload.value, currency: payload.currency, transaction_id: payload.transaction_id, shipping: payload.shipping } })
+    } else pushDataLayer(enriched)
+    sendDirectBrowserEvent(event, enriched)
+    sent = true
+  }
+  if (metaEvent && consent.ad_storage === 'granted' && payload.marketing_allowed !== false) {
+    emit(metaEvent)
+    if (metaEvent === 'PageView' && (consent.analytics_storage !== 'granted' || payload.analytics_allowed === false)) {
+      // Initialize the Ads conversion linker even when GA4 itself is declined.
+      sendDirectBrowserEvent('page_view', { ...payload, analytics_allowed: false })
+    }
+    if (metaEvent !== 'Purchase') {
+      // Server receives the exact browser ID. Payment-confirmed Purchase comes from the outbox.
+      void fetch('/api/e', {
+        method: 'POST', credentials: 'same-origin', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: metaEvent, eventId: payload.eventID,
+          eventSourceUrl: `${location.origin}${location.pathname}`,
+          value: payload.value, currency: payload.currency || AD_CURRENCY, contents: payload.contents,
+          consent: { marketing: true, analytics: consent.analytics_storage === 'granted' },
+          tracking: getCheckoutTrackingPayload(),
+        }),
+      }).catch(() => {})
+    }
+  }
+  // The purchase dataLayer event also owns Google Ads when analytics is declined.
+  if ((consent.analytics_storage === 'granted' && payload.analytics_allowed !== false) ||
+      (googleEvent === 'purchase' && consent.ad_user_data === 'granted' && payload.marketing_allowed !== false)) emit(googleEvent)
+  return sent
+}
+
 type EcommerceBase = {
   value: number
   currency?: string
@@ -38,6 +81,8 @@ type EcommerceBase = {
   }>
 }
 
+export type AllowedBrowserChannels = { marketing_allowed?: boolean; analytics_allowed?: boolean }
+
 function ecommercePayload(base: EcommerceBase) {
   return {
     value: base.value,
@@ -45,21 +90,16 @@ function ecommercePayload(base: EcommerceBase) {
     content_ids: base.content_ids,
     contents: base.contents,
     content_type: base.content_type || 'product',
-    items: base.items,
+    items: base.items || base.contents?.map((item) => ({ item_id: item.id, quantity: item.quantity, price: item.item_price })),
   }
 }
 
 /** Meta PageView + GA4 page_view (SPA route değişimi) */
-export function trackPageView(path: string, eventID = newEventId()) {
-  pushDataLayer({
-    event: 'PageView',
-    eventID,
-    page_path: path,
-  })
-  pushDataLayer({
-    event: 'page_view',
-    eventID,
-    page_path: path,
+export function trackPageView(path: string, eventID = consumePageEventId() || newEventId(), channels: AllowedBrowserChannels = {}) {
+  return dispatchEvents('PageView', 'page_view', {
+    eventID, page_path: path.split('?')[0],
+    page_location: typeof location !== 'undefined' ? `${location.origin}${path.split('?')[0]}` : path.split('?')[0],
+    ...channels,
   })
 }
 
@@ -69,7 +109,7 @@ export function trackViewContent(opts: {
   name?: string
   value: number
   eventID?: string
-}) {
+} & AllowedBrowserChannels) {
   const eventID = opts.eventID || newEventId()
   const contents: AdContentItem[] = [
     { id: opts.productId, quantity: 1, item_price: opts.value },
@@ -87,8 +127,7 @@ export function trackViewContent(opts: {
       },
     ],
   })
-  pushDataLayer({ event: 'ViewContent', eventID, ...ecom })
-  pushDataLayer({ event: 'view_item', eventID, ...ecom })
+  return dispatchEvents('ViewContent', 'view_item', { eventID, ...ecom, marketing_allowed: opts.marketing_allowed, analytics_allowed: opts.analytics_allowed })
 }
 
 /** GA4 view_item_list — boş listeyle basma */
@@ -100,8 +139,7 @@ export function trackViewItemList(opts: {
 }) {
   if (!opts.items.length) return
   const eventID = opts.eventID || newEventId()
-  pushDataLayer({
-    event: 'view_item_list',
+  return dispatchEvents(null, 'view_item_list', {
     eventID,
     item_list_id: opts.itemListId,
     item_list_name: opts.itemListName,
@@ -128,8 +166,7 @@ export function trackAddToCart(opts: {
     contents: opts.contents,
     items: opts.items,
   })
-  pushDataLayer({ event: 'AddToCart', eventID, ...ecom })
-  pushDataLayer({ event: 'add_to_cart', eventID, ...ecom })
+  return dispatchEvents('AddToCart', 'add_to_cart', { eventID, ...ecom })
 }
 
 /** Meta InitiateCheckout + GA4 begin_checkout */
@@ -138,7 +175,7 @@ export function trackInitiateCheckout(opts: {
   contents: AdContentItem[]
   items?: EcommerceBase['items']
   eventID?: string
-}) {
+} & AllowedBrowserChannels) {
   const eventID = opts.eventID || newEventId()
   const ecom = ecommercePayload({
     value: opts.value,
@@ -146,8 +183,7 @@ export function trackInitiateCheckout(opts: {
     contents: opts.contents,
     items: opts.items,
   })
-  pushDataLayer({ event: 'InitiateCheckout', eventID, ...ecom })
-  pushDataLayer({ event: 'begin_checkout', eventID, ...ecom })
+  return dispatchEvents('InitiateCheckout', 'begin_checkout', { eventID, ...ecom, marketing_allowed: opts.marketing_allowed, analytics_allowed: opts.analytics_allowed })
 }
 
 /** Meta AddPaymentInfo + GA4 add_payment_info — document.write ÖNCESİ */
@@ -164,8 +200,7 @@ export function trackAddPaymentInfo(opts: {
     contents: opts.contents,
     items: opts.items,
   })
-  pushDataLayer({ event: 'AddPaymentInfo', eventID, ...ecom })
-  pushDataLayer({ event: 'add_payment_info', eventID, ...ecom })
+  return dispatchEvents('AddPaymentInfo', 'add_payment_info', { eventID, ...ecom })
 }
 
 /**
@@ -180,8 +215,10 @@ export function trackPurchaseBrowser(opts: {
   shipping?: number
   email?: string
   phone?: string
-}) {
-  const eventID = opts.orderNumber
+  eventId?: string
+  consent?: ConsentSignals
+} & AllowedBrowserChannels) {
+  const eventID = opts.eventId || opts.orderNumber
   const ecom = ecommercePayload({
     value: opts.value,
     content_ids: opts.contents.map((c) => c.id),
@@ -198,18 +235,23 @@ export function trackPurchaseBrowser(opts: {
     order_id: opts.orderNumber,
     transaction_id: opts.orderNumber,
     shipping: opts.shipping,
+    marketing_allowed: opts.consent?.ad_storage === 'granted' && opts.marketing_allowed !== false,
+    analytics_allowed: opts.consent?.analytics_storage === 'granted' && opts.analytics_allowed !== false,
+    high_value: opts.value > 1000,
     ...ecom,
   }
-  pushDataLayer({ event: 'Purchase', ...shared })
-  pushDataLayer({ event: 'purchase', ...shared })
-
-  // Enhanced conversions — ham e-posta/telefon; hashlemeyi Google yapar
-  if (opts.email || opts.phone) {
-    pushDataLayer({
-      event: 'enhanced_conversion_data',
-      eventID,
-      email: opts.email || undefined,
-      phone_number: opts.phone || undefined,
-    })
+  const consent = readConsentSignals()
+  if (shared.marketing_allowed && opts.consent?.ad_user_data === 'granted' && consent.ad_user_data === 'granted' && (opts.email || opts.phone)) {
+    const digits = opts.phone?.replace(/\D/g, '').replace(/^0/, '')
+    const userData = {
+      email: opts.email?.trim().toLowerCase(),
+      phone_number: digits ? `+${digits.startsWith('90') ? digits : `90${digits}`}` : undefined,
+    }
+    // Available before the conversion tag fires; never forwarded as GA4 parameters.
+    pushDataLayer({ event: 'enhanced_conversion_data', eventID, user_data: userData })
+    const sent = dispatchEvents('Purchase', 'purchase', { ...shared, user_data: userData })
+    pushDataLayer({ user_data: null })
+    return sent
   }
+  return dispatchEvents('Purchase', 'purchase', shared)
 }
