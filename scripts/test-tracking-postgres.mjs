@@ -20,9 +20,9 @@ try {
       payment_status public.payment_status not null default 'pending', payment_token text,
       created_at timestamptz not null default now(), updated_at timestamptz not null default now()
     );
-    GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO anon, authenticated, service_role;
+    GRANT ALL ON public.orders TO anon, authenticated, service_role;
   `)
-  const migrations = ['orders-analytics-tracking-migration.sql', 'tracking-measurement-v4.sql', 'supabase-ad-spend.sql']
+  const migrations = ['orders-analytics-tracking-migration.sql', 'tracking-measurement-v4.sql', 'supabase-ad-spend.sql', 'supabase/migrations/20261006191153_tracking_orders_least_privilege.sql']
   for (let pass = 1; pass <= 2; pass++) {
     for (const file of migrations) {
       const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8')

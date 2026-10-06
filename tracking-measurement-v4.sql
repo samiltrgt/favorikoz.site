@@ -50,7 +50,7 @@ GRANT ALL ON public.tracking_outbox TO service_role;
 
 -- Tracking contains approved ad IDs and IP/UA. Restrict order writes to service role
 -- so customers cannot self-confirm payments or forge marketing permission via orders.
-REVOKE INSERT, UPDATE, DELETE ON public.orders FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.orders FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.sanitize_tracking_consent(p_tracking jsonb, p_analytics boolean, p_marketing boolean)
 RETURNS jsonb LANGUAGE plpgsql IMMUTABLE SET search_path = public AS $$

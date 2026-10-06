@@ -27,6 +27,13 @@ BEGIN
   IF has_table_privilege('authenticated', 'public.orders', 'UPDATE') THEN
     RAISE EXCEPTION 'Customers must not self-confirm orders';
   END IF;
+  IF EXISTS (
+    SELECT 1 FROM (VALUES ('anon'), ('authenticated')) AS customer(role_name)
+    CROSS JOIN (VALUES ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) AS access(privilege)
+    WHERE has_table_privilege(customer.role_name, 'public.orders', access.privilege)
+  ) THEN
+    RAISE EXCEPTION 'Customer roles must not have order write or structural privileges';
+  END IF;
   INSERT INTO public.orders(id, order_number, customer_name, customer_email, shipping_address, items, subtotal, shipping_cost, total, status, payment_method, payment_status, payment_token, tracking)
   VALUES(fixture_id, fixture_number, 'Tracking Test', 'tracking@example.invalid', '{}'::jsonb,
     '[{"product_id":"tracking-test-item","price":10000,"quantity":1}]'::jsonb,
