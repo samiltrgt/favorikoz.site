@@ -41,7 +41,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:tracking:sql": "node scripts/test-tracking-postgres.mjs",
+    "test:tracking:e2e": "node scripts/test-tracking-e2e.mjs",
     "tracking:verify": "node scripts/verify-tracking-setup.mjs",
+    "tracking:verify-providers": "node --conditions=react-server --import tsx scripts/verify-tracking-providers.ts",
     "tracking:setup-cron": "node scripts/setup-tracking-cron.mjs"
   },
   "dependencies": {
@@ -61,7 +63,8 @@
     "next-cloudinary": "^6.16.0",
     "react": "^18",
     "react-dom": "^18",
-    "resend": "^6.32.0"
+    "resend": "^6.32.0",
+    "server-only": "0.0.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

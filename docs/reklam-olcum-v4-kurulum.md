@@ -2,6 +2,16 @@
 
 Bu uygulama Next.js 14, Supabase Postgres ve Iyzico 3DS akışını kullanır. Kodun hazır olması ile canlı kurulumun tamamlanması farklı adımlardır. **Önce SQL dosyalarını uygulayın, sonra bu sürümü Vercel'e dağıtın.** Aksi halde sipariş kayıtları ve atomik ödeme onayı yeni kolon/fonksiyonları bulamaz; ödeme akışı hata verir.
 
+## Tekrarlanabilir doğrulama (06.10.2026)
+
+Esas mimari belgesi `reklam-olcum-v4-supabase.md` ile karşılaştırıldı. Uygulama `src/app` kullandığından middleware de `src/middleware.ts` içinde olmalıdır; depo kökündeki dosya Next.js tarafından yüklenmiyordu. Konumu düzeltildi ve gerçek Chrome isteğinde `x-event-id` üretildiği doğrulandı. Event ID her olay için yenidir, aynı olayın Pixel/CAPI kopyaları aynı ID'yi kullanır. Purchase ID sipariş numarasıdır.
+
+- `npm run test:tracking:e2e`: gerçek Next.js rotalarını ve Chrome UI'ını, bellek içi PostgreSQL migrasyonları ve yerel sağlayıcı taklitleriyle çalıştırır. Sepete ekleme, checkout, Iyzico 3DS callback, atomik Purchase kuyruğu, Pixel/CAPI kimlik eşleşmesi, callback tekrarı, izin geri çekme, prefetch, admin yönlendirmesi ve iki XML feed sınanır. Test siparişi 100 TRY, yeni müşteri LTV tahmini 250 TRY'dir. Chrome kurulu olmalıdır; `TRACKING_TEST_BROWSER=msedge` alternatiftir. Kanıtlar `test-results/tracking/` altında tutulur ve Git'e eklenmez.
+- `npm run tracking:verify-providers`: `.env.local` ile gerçek Meta **Test Events** API'sine sentetik Purchase gönderir; `META_TEST_EVENT_CODE` gerektirir. GA4 payload'u resmi `/debug/mp/collect` üzerinden `ENFORCE_RECOMMENDATIONS` ile doğrulanır; GA4 raporlarına test Purchase yazılmaz. Anahtarlar çıktıya yazılmaz. Açık Meta panelindeki test kodu değişirse komutu o güncel kodla çalıştırın.
+- `npm run test:tracking:sql`: ödeme, lease ve consent regresyonunun yanı sıra müşteri rollerinin sipariş INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER yetkisi olmadığını sınar. Canlı yetki düzeltmesi `supabase/migrations/20261006191153_tracking_orders_least_privilege.sql` ile uygulandı.
+
+İzole testte banka ve platform SDK'ları taklittir; gerçek kart yetkilendirmesi, Meta'nın paneldeki tekilleştirme oranı/EMQ ve GA4 rapor teslimatı ayrıca doğrulanmalıdır. HTTP kabulü veya eşleşen kimlikler %100 EMQ/tekilleştirme garantisi değildir. Canlı Meta/Google feed'leri HTTP 200 ve geçerli RSS XML ile 1.181'er ürün döndürdü. Supabase dakikalık cron aktiftir; cron SQL görevinin başarısı HTTP worker yanıtının da ayrıca kontrol edilmesi gereğini kaldırmaz.
+
 ## 1. Veritabanı
 
 05.10.2026 canlı kurulum: aşağıdaki üç migration mevcut Supabase projesinde SQL Editor üzerinden başarıyla uygulandı. `orders`, `tracking_outbox`, `tracking_consent`, `ad_spend` ve `products` şema kontrolleri HTTP 200 döndü. Salt okunur SQL ile outbox/consent/harcama tablolarının müşteri rollerine kapalı olduğu, doğrudan sipariş UPDATE'in engellendiği ve ödeme RPC'sinin yalnız servis rolüne açık olduğu doğrulandı. Mevcut müşteri/sipariş kayıtlarında test ödemesi veya elle durum değişikliği yapılmadı. Bu çalışma sırasında Vercel'e yeni dağıtım yapılmadı; yerel üretim derlemesi başarılıdır.

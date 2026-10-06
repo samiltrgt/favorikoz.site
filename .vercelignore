@@ -1,0 +1,10 @@
+.env*.local
+*.xlsx
+test-results/
+playwright-report/
+tests/
+__tests__/
+scripts/test-tracking-e2e.mjs
+scripts/tracking-e2e-fixture.mjs
+scripts/tracking-e2e-preload.cjs
+scripts/verify-tracking-providers.ts
