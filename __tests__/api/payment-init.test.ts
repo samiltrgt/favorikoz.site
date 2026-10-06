@@ -50,6 +50,16 @@ describe('payment initialization persists trustworthy tracking before provider p
     expect(initialize3DSPayment).not.toHaveBeenCalled()
   })
 
+  it('keeps initialization transport errors and missing bank HTML pending', async () => {
+    jest.mocked(initialize3DSPayment).mockRejectedValueOnce(new Error('timeout'))
+    let response = await POST(request())
+    expect(await response.json()).toEqual(expect.objectContaining({ status: 'pending', conversationId: expect.any(String), orderNumber: expect.any(String) }))
+    jest.mocked(initialize3DSPayment).mockResolvedValueOnce({ status: 'success' })
+    response = await POST(request())
+    expect((await response.json()).status).toBe('pending')
+    expect(mockInsert.mock.calls.every(([saved]) => saved.payment_status === 'pending' && saved.status === 'pending')).toBe(true)
+  })
+
   it('never charges the card if the order cannot be persisted', async () => {
     mockInsert.mockResolvedValueOnce({ error: { message: 'Missing migration column' } })
     expect((await POST(request(grantedConsent))).status).toBe(503)

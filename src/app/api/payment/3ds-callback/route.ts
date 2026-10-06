@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed, matchesIyzicoOrderPayment } from '@/lib/iyzico-payment-amount'
+import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
-import { trySendOrderConfirmationEmail } from '@/lib/order-email'
-import { sendPurchaseOnce } from '@/lib/analytics/meta-capi'
 import { confirmOrderPayment } from '@/lib/tracking/payment'
+import { processVerifiedPaymentOrder } from '@/lib/payment-postprocessing'
+import { resolveVerifiedOrderPayment } from '@/lib/payment-verification'
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL?.trim()
@@ -49,10 +49,12 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     console.error('[3ds-callback] SUPABASE_SERVICE_ROLE_KEY gerekli (Iyzico POST’ta RLS misafir siparişi okuyamaz)', e)
     return NextResponse.redirect(
-      `${baseUrl}/payment/callback?status=failed&error=supabase_service_role_missing`,
+      `${baseUrl}/payment/callback?status=pending&error=supabase_service_role_missing`,
       { status: 302 }
     )
   }
+  let callbackToken = ''
+  let callbackPaymentId = ''
   try {
     const form = await request.formData()
     const params = new URL(request.url).searchParams
@@ -93,18 +95,12 @@ export async function POST(request: NextRequest) {
       queryKeys: Array.from(params.keys()),
     })
 
-    // mdStatus 1/2/3/4 başarılı kabul edilir
-    if (mdStatus && !['1', '2', '3', '4'].includes(mdStatus)) {
-      await markOrderPaymentFailed(supabase, { paymentToken: conversationId })
-      return NextResponse.redirect(
-        `${baseUrl}/payment/callback?status=failed&token=${encodeURIComponent(conversationId)}&error=mdstatus_${mdStatus || 'unknown'}`,
-        { status: 302 }
-      )
-    }
+    callbackToken = conversationId
+    callbackPaymentId = paymentId
 
     const { data: order } = await supabase
       .from('orders')
-      .select('order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount, status, payment_status')
+      .select('payment_token, order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount, status, payment_status')
       .eq('payment_token', conversationId)
       .maybeSingle()
 
@@ -118,111 +114,45 @@ export async function POST(request: NextRequest) {
     }
 
     let result: any = null
-
-    if (paymentId && conversationData) {
-      result = await complete3DSPayment({
-        conversationId,
-        paymentId,
-        conversationData,
-      })
-    } else if (paymentId && conversationId && order?.iyzico_basket_id) {
-      // conversationData boş: iyzico 3DS v2 tamamlama (dokümantasyon)
-      const paidPrice = buildIyzicoPaidPriceFromOrder({
-        items: order.items,
-        shipping_cost: order.shipping_cost ?? 0,
-        total: order.total,
-        discount_amount: order.discount_amount,
-      })
-      console.log('[3ds-callback] conversationData boş → 3DS v2 auth', {
-        paymentId,
-        paidPrice,
-        hasBasketId: true,
-      })
-      result = await complete3DSPaymentV2({
-        conversationId,
-        paymentId,
-        paidPrice,
-        basketId: order.iyzico_basket_id,
-      })
-    } else if (conversationId) {
-      const qs = new URLSearchParams({ token: conversationId })
-      if (paymentId) qs.set('paymentId', paymentId)
-      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
-    } else {
-      return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=missing_3ds_payload`, {
-        status: 302,
-      })
-    }
-
-    const paidOk = result?.status === 'success' && result?.paymentStatus === 'SUCCESS'
-
-    if (paidOk) {
-      if (!matchesIyzicoOrderPayment(order, result)) {
-        return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=payment_order_mismatch`, { status: 302 })
-      }
-      await confirmOrderPayment(supabase, { paymentToken: conversationId, orderNumber })
-
-      const { data: paidOrder } = await supabase
-        .from('orders')
-        .select('id, coupon_code, customer_email')
-        .eq('payment_token', conversationId)
-        .maybeSingle()
-      if (paidOrder?.coupon_code) {
-        const { data: coupon } = await supabase
-          .from('coupons')
-          .select('id')
-          .eq('code', paidOrder.coupon_code)
-          .maybeSingle()
-        if (coupon?.id) {
-          await supabase.from('coupon_usages').upsert(
-            {
-              coupon_id: coupon.id,
-              order_id: paidOrder.id,
-              customer_identity_key: (paidOrder.customer_email || '').trim().toLowerCase(),
-            },
-            { onConflict: 'order_id' }
-          )
+    // A browser POST cannot establish failure. Skip auth on negative mdStatus, then retrieve.
+    try {
+      if (!mdStatus || ['1', '2', '3', '4'].includes(mdStatus)) {
+        if (paymentId && conversationData) {
+          result = await complete3DSPayment({ conversationId, paymentId, conversationData })
+        } else if (paymentId && conversationId && order.iyzico_basket_id) {
+          result = await complete3DSPaymentV2({
+            conversationId,
+            paymentId,
+            paidPrice: buildIyzicoPaidPriceFromOrder(order),
+            basketId: order.iyzico_basket_id,
+          })
         }
       }
-
-      await trySendOrderConfirmationEmail(supabase, {
-        orderNumber: orderNumber || null,
-        paymentToken: conversationId,
-      })
-
-      await sendPurchaseOnce(orderNumber)
-
-      const qs = new URLSearchParams({
-        status: 'success',
-        token: conversationId,
-      })
-      if (orderNumber) qs.set('orderNumber', orderNumber)
-
-      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
+    } catch (error) {
+      console.error('[3ds-callback] Completion unavailable; retrieving authoritative payment result', error)
     }
 
-    if (result?.status === 'success' && result?.paymentStatus && result.paymentStatus !== 'SUCCESS') {
-      const qs = new URLSearchParams({ token: conversationId })
-      if (paymentId) qs.set('paymentId', paymentId)
-      if (orderNumber) qs.set('orderNumber', orderNumber)
-      return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
+    const verification = await resolveVerifiedOrderPayment(order, {
+      conversationId,
+      paymentId: result?.paymentId || paymentId,
+    })
+    const qs = new URLSearchParams({ token: conversationId, orderNumber })
+    if (paymentId) qs.set('paymentId', paymentId)
+    if (verification.status === 'verified') {
+      await confirmOrderPayment(supabase, { paymentToken: conversationId, orderNumber })
+      await processVerifiedPaymentOrder(supabase, { paymentToken: conversationId, orderNumber })
+      qs.set('status', 'success')
+    } else if (verification.status === 'failed') {
+      await markOrderPaymentFailed(supabase, { paymentToken: conversationId, orderNumber })
+      qs.set('status', 'failed')
+    } else {
+      qs.set('status', 'pending')
     }
-
-    await markOrderPaymentFailed(supabase, {
-      paymentToken: conversationId,
-      orderNumber: orderNumber || null,
-    })
-
-    const failed = new URLSearchParams({
-      status: 'failed',
-      token: conversationId,
-      error: result?.errorMessage || result?.errorCode || '3ds_complete_failed',
-    })
-    if (orderNumber) failed.set('orderNumber', orderNumber)
-    return NextResponse.redirect(`${baseUrl}/payment/callback?${failed.toString()}`, { status: 302 })
+    // Browser receives the verified result; background jobs also run postprocessing.
+    return NextResponse.redirect(`${baseUrl}/payment/callback?${qs}`, { status: 302 })
   } catch (e: any) {
     return NextResponse.redirect(
-      `${baseUrl}/payment/callback?status=failed&error=${encodeURIComponent(e?.message || '3ds_callback_error')}`,
+      `${baseUrl}/payment/callback?${new URLSearchParams({ status: 'pending', token: callbackToken, ...(callbackPaymentId ? { paymentId: callbackPaymentId } : {}) })}`,
       { status: 302 }
     )
   }
@@ -257,6 +187,8 @@ export async function GET(request: NextRequest) {
     const qs = new URLSearchParams({ token })
     const orderNumber = params.get('orderNumber')
     if (orderNumber) qs.set('orderNumber', orderNumber)
+    const paymentId = params.get('paymentId')
+    if (paymentId) qs.set('paymentId', paymentId)
 
     return NextResponse.redirect(`${baseUrl}/payment/callback?${qs.toString()}`, { status: 302 })
   } catch (e: any) {

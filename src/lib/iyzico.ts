@@ -73,7 +73,9 @@ export async function createPayment(paymentRequest: any): Promise<any> {
   console.log('📤 Sending payment via Iyzico SDK')
   
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Iyzico payment timed out')), 10000)
     iyzipay.payment.create(paymentRequest, (err: any, result: any) => {
+      clearTimeout(timeout)
       if (err) {
         console.error('❌ SDK Error:', err)
         reject(err)
@@ -102,7 +104,9 @@ export async function initialize3DSPayment(paymentRequest: any): Promise<any> {
   console.log('📤 Sending 3DS initialize via Iyzico SDK')
 
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Iyzico initialization timed out')), 10000)
     ;(iyzipay as any).threedsInitialize.create(paymentRequest, (err: any, result: any) => {
+      clearTimeout(timeout)
       if (err) {
         console.error('❌ 3DS Initialize SDK Error:', err)
         reject(err)
@@ -131,6 +135,7 @@ export async function complete3DSPayment(payload: {
   }
 
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Iyzico completion timed out')), 10000)
     ;(iyzipay as any).threedsPayment.create(
       {
         locale: 'tr',
@@ -139,6 +144,7 @@ export async function complete3DSPayment(payload: {
         conversationData: payload.conversationData,
       },
       (err: any, result: any) => {
+        clearTimeout(timeout)
         if (err) {
           console.error('❌ 3DS Complete SDK Error:', err)
           reject(err)
@@ -205,6 +211,7 @@ export async function complete3DSPaymentV2(payload: {
       Authorization: authorization,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
   })
 
   const result = await res.json().catch(() => ({}))
@@ -235,6 +242,7 @@ export async function retrievePayment(conversationId: string): Promise<IyzicoPay
     return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
   }
   return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve({ status: 'failure', errorMessage: 'Provider query timed out' }), 10000)
     ;(iyzipay as any).payment.retrieve(
       {
         locale: 'tr',
@@ -242,6 +250,7 @@ export async function retrievePayment(conversationId: string): Promise<IyzicoPay
         paymentConversationId: conversationId,
       },
       (err: any, result: any) => {
+        clearTimeout(timeout)
         if (err) {
           console.error('❌ Iyzico retrieve error:', err)
           resolve({ status: 'failure', errorMessage: err?.message || 'Sorgu hatası' })
@@ -270,12 +279,14 @@ export async function retrievePaymentByPaymentId(
     return { status: 'failure', errorMessage: 'Iyzico SDK not initialized' }
   }
   return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve({ status: 'failure', errorMessage: 'Provider query timed out' }), 10000)
     ;(iyzipay as any).payment.retrieve(
       {
         locale: 'tr',
         paymentId,
       },
       (err: any, result: any) => {
+        clearTimeout(timeout)
         if (err) {
           console.error('❌ Iyzico retrieve-by-paymentId error:', err)
           resolve({ status: 'failure', errorMessage: err?.message || 'Sorgu hatası' })

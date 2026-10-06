@@ -101,6 +101,7 @@ export async function markOrderPaymentFailed(
       .from('orders')
       .update({ payment_status: 'failed', status: 'cancelled' })
       .eq('payment_status', 'pending')
+      .eq('status', 'pending')
 
     if (token) chain = chain.eq('payment_token', token)
     if (orderNumber) chain = chain.eq('order_number', orderNumber)

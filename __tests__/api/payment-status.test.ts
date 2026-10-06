@@ -8,6 +8,7 @@ jest.mock('next/server', () => ({
 }))
 const mockDb = { from: jest.fn() }
 jest.mock('@/lib/supabase/server', () => ({ createSupabaseAdmin: () => mockDb, createSupabaseServer: jest.fn() }))
+jest.mock('@/lib/payment-reporting', () => ({ isUnrefundedVerifiedPayment: jest.fn(async () => true) }))
 jest.mock('@/lib/iyzico', () => ({ retrievePayment: jest.fn(), retrievePaymentByPaymentId: jest.fn(), complete3DSPaymentV2: jest.fn() }))
 jest.mock('@/lib/tracking/payment', () => ({ confirmOrderPayment: jest.fn() }))
 jest.mock('@/lib/analytics/meta-capi', () => ({ sendPurchaseOnce: jest.fn() }))
@@ -43,7 +44,7 @@ describe('verified payment completion and purchase identity', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {})
     jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockDb.from.mockImplementation(() => query(order()))
-    jest.mocked(retrievePayment).mockResolvedValue({ status: 'success', paymentStatus: 'SUCCESS', basketId: 'basket-1', paidPrice: '600.00', currency: 'TRY' })
+    jest.mocked(retrievePayment).mockResolvedValue({ status: 'success', paymentStatus: 'SUCCESS', basketId: 'basket-1', paidPrice: '600.00', currency: 'TRY', paymentId: 'payment-1' })
     jest.mocked(confirmOrderPayment).mockResolvedValue(order({ payment_status: 'completed', status: 'paid' }) as any)
   })
   afterEach(() => jest.restoreAllMocks())
@@ -84,7 +85,7 @@ describe('verified payment completion and purchase identity', () => {
   it('does not accept a successful payment for a different basket or amount', async () => {
     for (const mismatch of [{ basketId: 'another-basket', paidPrice: '600' }, { basketId: 'basket-1', paidPrice: '1' }]) {
       jest.mocked(retrievePayment).mockResolvedValue({ status: 'success', paymentStatus: 'SUCCESS', currency: 'TRY', ...mismatch })
-      expect((await GET(request())).status).toBe(409)
+      expect((await (await GET(request())).json()).status).toBe('pending')
     }
     expect(confirmOrderPayment).not.toHaveBeenCalled()
     expect(sendPurchaseOnce).not.toHaveBeenCalled()
@@ -99,6 +100,33 @@ describe('verified payment completion and purchase identity', () => {
       expect((await response.json()).status).toBe('pending')
     }
     expect(chain.update).not.toHaveBeenCalled()
+    expect(confirmOrderPayment).not.toHaveBeenCalled()
+  })
+
+  it('does not cancel on a thrown provider connection error', async () => {
+    const chain = query(order())
+    mockDb.from.mockReturnValue(chain)
+    jest.mocked(retrievePayment).mockRejectedValueOnce(new Error('network reset'))
+    expect((await (await GET(request())).json()).status).toBe('pending')
+    expect(chain.update).not.toHaveBeenCalled()
+  })
+
+  it('does not cancel a FAILURE belonging to a different basket', async () => {
+    const chain = query(order())
+    mockDb.from.mockReturnValue(chain)
+    jest.mocked(retrievePayment).mockResolvedValueOnce({ status: 'success', paymentStatus: 'FAILURE', basketId: 'foreign-basket', paidPrice: '600', currency: 'TRY' })
+    expect((await (await GET(request())).json()).status).toBe('pending')
+    expect(chain.update).not.toHaveBeenCalled()
+  })
+
+  it('reports a concurrent verified completion instead of stale provider FAILURE', async () => {
+    const initial = query(order())
+    const completed = query(order({ payment_status: 'completed', status: 'paid' }))
+    mockDb.from.mockReturnValueOnce(initial).mockReturnValue(completed)
+    jest.mocked(retrievePayment).mockResolvedValueOnce({ status: 'success', paymentStatus: 'FAILURE', basketId: 'basket-1', paidPrice: '600', currency: 'TRY', paymentId: 'payment-1' })
+    expect((await (await GET(request())).json()).status).toBe('success')
+    expect(completed.update).toHaveBeenCalledWith({ payment_status: 'failed', status: 'cancelled' })
+    expect(completed.eq).toHaveBeenCalledWith('payment_status', 'pending')
     expect(confirmOrderPayment).not.toHaveBeenCalled()
   })
 

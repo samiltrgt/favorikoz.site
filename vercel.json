@@ -11,6 +11,7 @@
     }
   },
   "crons": [
-    { "path": "/api/cron/tracking", "schedule": "0 2 * * *" }
+    { "path": "/api/cron/tracking", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/payments", "schedule": "15 2 * * *" }
   ]
 }

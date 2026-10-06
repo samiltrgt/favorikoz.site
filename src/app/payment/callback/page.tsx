@@ -105,7 +105,7 @@ export default function PaymentCallbackPage() {
       try {
         if (!token) {
           console.warn('[Ödeme callback] Token yok – Iyzico bu sayfaya token/conversationId eklemeden yönlendirmiş olabilir. Mevcut URL:', typeof window !== 'undefined' ? window.location.href : '')
-          setStatus('failed')
+          setStatus('pending_timeout')
           return
         }
         const params = new URLSearchParams({ token })
@@ -152,14 +152,18 @@ export default function PaymentCallbackPage() {
             continue
           }
 
-          setStatus('failed')
-          return
+          if (json.status === 'failed') {
+            setStatus('failed')
+            return
+          }
+          setStatus('pending')
+          await sleep(2500)
         }
 
         setStatus('pending_timeout')
       } catch (err) {
         console.error('[Ödeme callback] API hatası:', err)
-        setStatus('failed')
+        setStatus('pending_timeout')
       }
     }
     run()
@@ -179,7 +183,7 @@ export default function PaymentCallbackPage() {
           <div className="mb-6">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
             <h1 className="text-2xl font-bold text-amber-600 mb-2">Ödeme İşleniyor</h1>
-            <p className="text-gray-600 mb-6">3D doğrulama alındı, banka provizyonu tamamlanıyor. Lütfen bekleyin...</p>
+            <p className="text-gray-600 mb-6">Ödeme sonucu bankadan kontrol ediliyor. Lütfen yeniden ödeme yapmadan bekleyin...</p>
           </div>
         </div>
       )}
@@ -194,7 +198,7 @@ export default function PaymentCallbackPage() {
             </div>
             <h1 className="text-2xl font-bold text-amber-600 mb-2">Banka Onayı Gecikiyor</h1>
             <p className="text-gray-600 mb-6">
-              3D doğrulama alındı ancak banka provizyon sonucu henüz dönmedi. Lütfen 1-2 dakika sonra tekrar kontrol edin.
+              Ödeme sonucu henüz doğrulanamadı. Lütfen yeniden ödeme yapmayın; 1-2 dakika sonra durumu tekrar kontrol edin.
             </p>
             <button
               onClick={() => window.location.reload()}

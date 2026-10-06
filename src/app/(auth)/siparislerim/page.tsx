@@ -21,7 +21,7 @@ interface Order {
   shipping_cost: number
   total: number
   status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled'
-  payment_status: 'pending' | 'completed' | 'failed'
+  payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
   payment_method: string
   created_at: string
   updated_at: string
@@ -441,14 +441,18 @@ export default function OrdersPage() {
                       Ödeme Durumu:{' '}
                       <span
                         className={`font-medium ${
-                          selectedOrder.payment_status === 'completed'
+                          selectedOrder.payment_status === 'refunded'
+                            ? 'text-blue-600'
+                            : selectedOrder.payment_status === 'completed'
                             ? 'text-green-600'
                             : selectedOrder.payment_status === 'failed'
                             ? 'text-red-600'
                             : 'text-yellow-600'
                         }`}
                       >
-                        {selectedOrder.payment_status === 'completed'
+                        {selectedOrder.payment_status === 'refunded'
+                          ? 'İade Edildi'
+                          : selectedOrder.payment_status === 'completed'
                           ? 'Tamamlandı'
                           : selectedOrder.payment_status === 'failed'
                           ? 'Başarısız'

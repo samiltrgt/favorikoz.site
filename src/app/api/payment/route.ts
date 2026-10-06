@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
-import { allocateIyzicoDiscount, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { allocateIyzicoDiscount } from '@/lib/iyzico-payment-amount'
 import { dbToDisplay, toCartPrice, toDisplayPrice } from '@/lib/price'
 import { captureOrderTracking } from '@/lib/tracking/identity'
 
@@ -383,32 +383,26 @@ export async function POST(request: NextRequest) {
             orderNumber
           })
         }
-        if (ordersClient) {
-          await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
-        }
         return NextResponse.json({
           success: false,
-          error: '3DS başlatılamadı',
+          status: 'pending', conversationId, orderNumber,
+          error: 'Ödeme sonucu doğrulanamadı. Lütfen yeniden ödeme yapmadan sipariş durumunu kontrol edin.',
         }, { status: 400 })
       } else {
-        if (ordersClient) {
-          await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
-        }
         return NextResponse.json({
           success: false,
-          error: result.errorMessage || 'Ödeme işlemi başarısız',
+          status: 'pending', conversationId, orderNumber,
+          error: 'Ödeme başlatılamadı; ödeme sonucu kontrol edilmeli.',
           errorCode: result.errorCode
         }, { status: 400 })
       }
 
     } catch (error: any) {
       console.error('❌ Iyzico error:', error)
-      if (ordersClient) {
-        await markOrderPaymentFailed(ordersClient, { orderNumber, paymentToken: conversationId })
-      }
       return NextResponse.json({
         success: false,
-        error: error.message || 'Ödeme başlatılamadı'
+        status: 'pending', conversationId, orderNumber,
+        error: 'Ödeme sonucu doğrulanamadı. Lütfen yeniden ödeme yapmadan sipariş durumunu kontrol edin.'
       }, { status: 500 })
     }
 

@@ -44,6 +44,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [paymentUncertain, setPaymentUncertain] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [couponCode, setCouponCode] = useState('')
   const [couponDiscount, setCouponDiscount] = useState(0)
@@ -236,6 +237,7 @@ export default function CheckoutPage() {
   }
 
   const handlePayment = async () => {
+    if (paymentUncertain || isProcessing) return
     if (!formData.termsAccepted || !formData.kvkkAccepted) {
       setError('Lütfen sözleşmeleri kabul edin')
       return
@@ -293,6 +295,13 @@ export default function CheckoutPage() {
 
       const result = await response.json()
       
+      if (result.status === 'pending' && result.conversationId) {
+        setPaymentUncertain(true)
+        const params = new URLSearchParams({ token: result.conversationId, status: 'pending' })
+        if (result.orderNumber) params.set('orderNumber', result.orderNumber)
+        window.location.href = `/payment/callback?${params}`
+        return
+      }
       if (result.success) {
         if (result.requires3DS && result.threeDSHtmlContent) {
           const raw = String(result.threeDSHtmlContent || '')
@@ -320,7 +329,8 @@ export default function CheckoutPage() {
         setError(result.error || 'Ödeme işlemi başlatılamadı')
       }
     } catch (err: any) {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.')
+      setPaymentUncertain(true)
+      setError('Ödeme sonucu doğrulanamadı. Lütfen yeniden ödeme yapmayın; sipariş durumunu kontrol edin veya bizimle iletişime geçin.')
       console.error('Payment error:', err)
     } finally {
       if (!handedOffToThreeDS) {
@@ -848,7 +858,7 @@ export default function CheckoutPage() {
                     </button>
                     <button
                       onClick={handlePayment}
-                      disabled={isProcessing || !formData.termsAccepted || !formData.kvkkAccepted}
+                      disabled={paymentUncertain || isProcessing || !formData.termsAccepted || !formData.kvkkAccepted}
                       className="flex-1 bg-green-600 text-white py-4 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       {isProcessing ? 'İşleniyor...' : `₺${toDisplayPrice(total).toFixed(2)} Öde`}
