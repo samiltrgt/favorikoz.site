@@ -12,6 +12,15 @@ Esas mimari belgesi `reklam-olcum-v4-supabase.md` ile karşılaştırıldı. Uyg
 
 İzole testte banka ve platform SDK'ları taklittir; gerçek kart yetkilendirmesi, Meta'nın paneldeki tekilleştirme oranı/EMQ ve GA4 rapor teslimatı ayrıca doğrulanmalıdır. HTTP kabulü veya eşleşen kimlikler %100 EMQ/tekilleştirme garantisi değildir. Canlı Meta/Google feed'leri HTTP 200 ve geçerli RSS XML ile 1.181'er ürün döndürdü. Supabase dakikalık cron aktiftir; cron SQL görevinin başarısı HTTP worker yanıtının da ayrıca kontrol edilmesi gereğini kaldırmaz.
 
+06.10.2026 canlı doğrulama sonucu:
+
+- `206b6ee` sürümü Vercel'de derlendi; korumalı dağıtım kontrollerinden sonra `dpl_6NgFxNTwqwnuXeeTeT24tyhyMFAH` üretime alındı. `https://favorikozmetik.com/` HTTP 200 ve `x-event-id` döndürdü. Anonim `/admin` isteği giriş ekranına 307 yönlendi; yetkisiz worker isteği 401 aldı.
+- Vault'taki `tracking_cron_secret`, Vercel'de çalışan CRON_SECRET ile uyuşmadığından dakikalık HTTP çağrıları 401 dönüyordu. Anahtar çıktıya veya Git'e yazılmadan eşitlendi. Ardından hem `pg_net` ile tetiklenen çağrı hem dakikalık cron HTTP 200 ve `claimed=0, sent=0, failed=0` döndürdü. Kuyrukta 51 sent kayıt vardı; pending/failed kayıt yoktu.
+- Gerçek Meta Test Events panelinde sentetik Purchase işlendi; `value=100`, `currency=TRY`, `predicted_ltv=250` görüldü. GA4 resmi doğrulama endpoint'i `validationMessages=[]` döndürdü. Test olayları gerçek ödeme veya Meta eşleşme kalitesi ölçümü değildir.
+- GA4 web stream `G-30F1W6FBTD` içinde **Page changes based on browser history events** kapatılıp kaydedildi. Manuel SPA PageView sahibi uygulamadır. Google Ads'te tek birincil website satın alma dönüşümü ve bu işlemde açık geliştirilmiş dönüşümler doğrulandı; Ads ekranında henüz gerçek dönüşüm verisi yoktu.
+- Meta `Catalog_Products` kataloğunun planlı feed'i `https://favorikozmetik.com/api/feeds/meta` adresine bağlı; 06.10 son yüklemesinde yaklaşık 1.200 ürün ve sıfır yükleme hatası/sorun gösteriyordu. Kullanılmadığı için duraklatılmış olay/ürün eşleştirmesi yeniden açıldı; panel sonuçların 48 saate kadar sürebileceğini bildirdi. Geçmiş 28 günlük eşleşme oranı hâlâ %0'dı; bu değer yeni sürümün sonucu değildir. Seçili geçmiş dönemde Purchase EMQ 4.4/10 olduğundan yüksek EMQ veya %100 tekilleştirme onaylanmış sayılmadı.
+- TypeScript, Jest (154 başarılı test), izole PostgreSQL regresyonu, Chrome uçtan uca akış ve üretim derlemesi başarılı. Ekran görüntüleri ve ağ kanıtları `test-results/tracking/` altında; kişisel/veri içerebilecek kanıtlar Git'e eklenmedi.
+
 ## 1. Veritabanı
 
 05.10.2026 canlı kurulum: aşağıdaki üç migration mevcut Supabase projesinde SQL Editor üzerinden başarıyla uygulandı. `orders`, `tracking_outbox`, `tracking_consent`, `ad_spend` ve `products` şema kontrolleri HTTP 200 döndü. Salt okunur SQL ile outbox/consent/harcama tablolarının müşteri rollerine kapalı olduğu, doğrudan sipariş UPDATE'in engellendiği ve ödeme RPC'sinin yalnız servis rolüne açık olduğu doğrulandı. Mevcut müşteri/sipariş kayıtlarında test ödemesi veya elle durum değişikliği yapılmadı. Bu çalışma sırasında Vercel'e yeni dağıtım yapılmadı; yerel üretim derlemesi başarılıdır.
