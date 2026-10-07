@@ -25,3 +25,8 @@ Kod hazırlığı ve yerel testler canlı veri dönüşümü/import/yayın anlam
 ## Geri dönüş
 
 Importtan önce `scripts/rollback-product-prices.sql` ve eski kod birlikte kullanılabilir. Script yeni/değişmiş ürün veya fiyat görürse güncel veriyi ezmemek için durur. Yedek `_rolled_back` adıyla korunur. Excel importu veya başka fiyat güncellemesi yapıldıysa otomatik geri dönüş yerine güncel yedek üzerinden ayrı bir dönüşüm hazırlanmalıdır. Sipariş kayıtları geri dönüşte de değiştirilmez.
+
+## Production release checkpoint — 2026-10-07
+
+Application backups verified: 19 tables, 2,499 products, 199 orders. Product units converted to integer kurus; latest Excel import updated 1,115 products with zero inserts and zero errors. All 1,141 matched active records agree with the Excel prices; historical orders are unchanged. Temporary production firewall maintenance was explicitly approved by the user and published before resuming builds. This commit triggers a normal Git production build using production environment variables. Remove the temporary maintenance rule only after this build is READY and its source commit is verified.
+
