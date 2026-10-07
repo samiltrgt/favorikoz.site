@@ -15,11 +15,14 @@ interface Review {
 interface ProductReviewsProps {
   productId: string
   productName: string
+  initialReviews?: Review[]
+  initialLoadError?: boolean
 }
 
-export default function ProductReviews({ productId, productName }: ProductReviewsProps) {
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export default function ProductReviews({ productId, productName, initialReviews, initialLoadError = false }: ProductReviewsProps) {
+  const [reviews, setReviews] = useState<Review[]>(initialReviews || [])
+  const [isLoading, setIsLoading] = useState(initialReviews === undefined)
+  const [loadError, setLoadError] = useState(initialLoadError)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   
@@ -31,7 +34,8 @@ export default function ProductReviews({ productId, productName }: ProductReview
 
   // Load reviews
   useEffect(() => {
-    loadReviews()
+    if (initialReviews === undefined) loadReviews()
+    else { setReviews(initialReviews); setIsLoading(false); setLoadError(initialLoadError) }
   }, [productId])
 
   const loadReviews = async () => {
@@ -40,8 +44,10 @@ export default function ProductReviews({ productId, productName }: ProductReview
       const result = await response.json()
       if (result.success) {
         setReviews(result.data || [])
-      }
+        setLoadError(false)
+      } else setLoadError(true)
     } catch (error) {
+      setLoadError(true)
       console.error('Error loading reviews:', error)
     } finally {
       setIsLoading(false)
@@ -93,6 +99,7 @@ export default function ProductReviews({ productId, productName }: ProductReview
         <div>
           <h2 className="text-2xl font-bold text-black">Müşteri Değerlendirmeleri</h2>
           <div className="flex items-center gap-3 mt-2">
+            {reviews.length > 0 ? <>
             <div
               className="flex items-center"
               role="img"
@@ -112,6 +119,7 @@ export default function ProductReviews({ productId, productName }: ProductReview
               {avgRating.toFixed(1)}
             </span>
             <span className="text-gray-500">({reviews.length} değerlendirme)</span>
+            </> : <span className="text-gray-500">{loadError ? 'Değerlendirmeler şu anda yüklenemiyor' : 'Henüz değerlendirme yok'}</span>}
           </div>
         </div>
         <button
@@ -207,8 +215,8 @@ export default function ProductReviews({ productId, productName }: ProductReview
       ) : reviews.length === 0 ? (
         <div className="text-center py-12 border-t border-gray-200">
           <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Henüz değerlendirme yapılmamış.</p>
-          <p className="text-sm text-gray-400 mt-2">İlk değerlendirmeyi siz yapın!</p>
+          <p className="text-gray-500">{loadError ? 'Değerlendirmeler şu anda yüklenemiyor. Lütfen daha sonra tekrar deneyin.' : 'Henüz değerlendirme yapılmamış.'}</p>
+          {!loadError && <p className="text-sm text-gray-400 mt-2">İlk değerlendirmeyi siz yapın!</p>}
         </div>
       ) : (
         <div className="space-y-6 border-t border-gray-200 pt-6">

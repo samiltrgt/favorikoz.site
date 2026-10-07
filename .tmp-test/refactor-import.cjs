@@ -1,0 +1,10 @@
+const fs = require('fs')
+const file = 'scripts/import-excel-to-supabase.ts'
+let source = fs.readFileSync(file,'utf8')
+const start = source.indexOf('function isAutoBarcode(')
+const marker = source.indexOf('// EXCEL OKUMA',start)
+const stop = source.lastIndexOf('// ============================================',marker)
+if(start<0 || stop<start) throw new Error('Matcher boundaries changed')
+source = source.slice(0,start) + 'async function findExistingProduct(product: ParsedProduct) {\n  return findExistingExcelProduct(supabase, product)\n}\n\n' + source.slice(stop)
+source = source.replace("import { displayToDb } from '../src/lib/price'", "import { displayToDb } from '../src/lib/price'\nimport { findExistingExcelProduct, isAutoBarcode } from './lib/excel-product-match'")
+fs.writeFileSync(file,source)

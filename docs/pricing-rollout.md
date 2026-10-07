@@ -13,7 +13,19 @@ Yeni kodda ürün veritabanı, sepet, kupon hesaplaması, kargo ve sipariş tuta
 5. Düzeltilmiş Excel'in dry-run kontrolünü yeniden çalıştır; ardından normal importu çalıştır. Excel son fiyat listesidir; eski site ile 93 fiyat farkı beklenen güncellemedir. Barkodsuz 26 ürünün mükerrer kayıtları ayrıca ele alınmalı; bu geçiş ürün silmez.
 6. Son fiyatları Trendyol sütunuyla karşılaştırıp ödemeyi yeniden aç.
 
-Kod hazırlığı ve yerel testler canlı veri dönüşümü/import/yayın anlamına gelmez. Bu dosyadaki SQL henüz canlıda uygulanmamıştır.
+## 7 Ekim 2026 canlı işlem durumu
+
+- Yayın commit'i: `675587b5e558ac3bb67565135f347e90a6ce277e`; uzak `main` bu commit'e ilerletildi. Fiyat değişiklikleri mevcut SEO çalışmalarından ayrı hazırlandı.
+- 19 uygulama tablosunun yerel JSON yedeği `.pricing-backups/2026-10-07T18-07-29-505Z/` altında; dosya sayıları ve SHA-256 değerleri doğrulandı. Bu, Auth ve şema dahil tam PostgreSQL dump değildir.
+- Sunucu yedeği `pricing_backup.release_20261007`; işlemden hemen önce tüm ürünlerin tam kopyası `pricing_backup.products_pre_cutover_20261007`. Şema istemci rollerine kapalı, tablolar RLS ile korunuyor.
+- 2.499 ürünün fiyat birimi kuruşa dönüştürüldü. 199 geçmiş sipariş değişmedi.
+- Düzeltilmiş Excel importu 1.115 güncelleme, 0 ekleme, 0 hata ile tamamlandı. Mükerrerler dahil 1.141 eşleşen kayıtta fiyat farkı yok; 1.181 aktif ürün korunuyor. Mükerrerleri ayrıca güncellemek gerekmiyor.
+- Önizleme `dpl_J8kQCkeUSvB3XZcfsm5Rq5aUBt9r` READY; ürün API'sinde 175 ve 6500 TL doğrulandı. Üretim ortamının ayrı e-posta/Meta değişkenleri bulunduğu için bu önizleme doğrudan canlı kabul edilmedi.
+- **Canlı geçiş tamamlandı; site yeniden açık.** Kullanıcı geçici bakım kuralını açıkça onayladı. API firewall erişimi 404 verdiği için Vercel panelinden yalnızca production ortamına Deny kuralı eklendi ve yayımlandı. Proje yeniden açılınca HTTP 403 bakım engeli doğrulandı.
+- Duraklatma sırasında BLOCKED olan deployment yeniden derlenemedi. Önizleme kaynaklı yeniden yayın ortam farklılığı nedeniyle otomatik denetimde reddedildi; bunun yerine geçiş kaydı commit'i ile normal Git production derlemesi başlatıldı. Son commit `bdbb0ca266d9d4983d2c5e79ea06cf2217dfba79`, deployment `dpl_G5v7ote5CUKTGyBe3YZ22iYrRrw4`, target `production`, durum READY. Her iki canlı alan adı bu deployment'a bağlandı. Geçici bakım kuralı panelden kaldırılıp değişiklik yayımlandı.
+- Canlı HTTP kontrolü: ana sayfa, sepet, checkout ve ürün API'si 200. Ürün API'si 175 ve 6500 TL; sepet quote API'si bunları 17500 ve 650000 kuruş, toplam 667500 kuruş döndürüyor. Tarayıcıda 175 TL ürün, 100 TL kargo ve 275 TL toplam hem sepette hem checkout'ta doğrulandı. Gerçek tahsilat veya test siparişi oluşturulmadı. Son kontrolde 199 geçmiş siparişin tamamı değişmeden kaldı.
+- İki ürünle tarayıcı checkout kontrolü: 175,00 + 6.500,00 = 6.675,00 TL; kargo ücretsiz, ödeme toplamı 6.675,00 TL. Ekran görüntüsü `.pricing-backups/live-checkout.png`. Yerel ana çalışma alanının Git tabanı yayınlanan commit'e dosyaları koruyan `reset --mixed` ile eşitlendi; mevcut SEO çalışmalarına dokunulmadı.
+- Geri dönüş seçilirse import sonrası kullanılan tek seferlik fiyat rollback script'i yerine tam ürün snapshot'ından importun değiştirdiği alanlar geri yüklenmeli; siparişlere dokunulmamalı. Ardından eski deployment doğrulanıp proje açılmalı.
 
 ## Tamamlanan doğrulama
 
@@ -25,8 +37,3 @@ Kod hazırlığı ve yerel testler canlı veri dönüşümü/import/yayın anlam
 ## Geri dönüş
 
 Importtan önce `scripts/rollback-product-prices.sql` ve eski kod birlikte kullanılabilir. Script yeni/değişmiş ürün veya fiyat görürse güncel veriyi ezmemek için durur. Yedek `_rolled_back` adıyla korunur. Excel importu veya başka fiyat güncellemesi yapıldıysa otomatik geri dönüş yerine güncel yedek üzerinden ayrı bir dönüşüm hazırlanmalıdır. Sipariş kayıtları geri dönüşte de değiştirilmez.
-
-## Production release checkpoint — 2026-10-07
-
-Application backups verified: 19 tables, 2,499 products, 199 orders. Product units converted to integer kurus; latest Excel import updated 1,115 products with zero inserts and zero errors. All 1,141 matched active records agree with the Excel prices; historical orders are unchanged. Temporary production firewall maintenance was explicitly approved by the user and published before resuming builds. This commit triggers a normal Git production build using production environment variables. Remove the temporary maintenance rule only after this build is READY and its source commit is verified.
-

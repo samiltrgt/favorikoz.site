@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { Onest } from 'next/font/google'
 import { GoogleTagManager } from '@next/third-parties/google'
-import { getSiteUrl } from '@/lib/site-url'
+import { getSiteUrl, isPreviewDeployment } from '@/lib/site-url'
 import { getPublicCategories } from '@/lib/categories-server'
 import { CategoriesProvider } from '@/components/categories-provider'
 import { SmoothScroll } from '@/components/smooth-scroll'
@@ -37,9 +37,8 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
-  description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
-  keywords: 'kozmetik, protez tırnak, kalıcı makyaj, kişisel bakım, makyaj, saç bakımı',
+  title: 'Favori Kozmetik | Tırnak, Saç ve Kişisel Bakım Ürünleri',
+  description: 'Tırnak uygulamaları, saç bakımı, kuaför malzemeleri, ipek kirpik ve kişisel bakım ürünlerini Favori Kozmetik kataloğunda keşfedin.',
   authors: [{ name: 'Favori Kozmetik' }],
   creator: 'Favori Kozmetik',
   publisher: 'Favori Kozmetik',
@@ -49,29 +48,25 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(siteUrl),
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
-    title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
-    description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
-    url: siteUrl,
+    title: 'Favori Kozmetik | Tırnak, Saç ve Kişisel Bakım Ürünleri',
+    description: 'Tırnak, saç bakımı, kuaför malzemeleri ve kişisel bakım ürünlerini keşfedin.',
     siteName: 'Favori Kozmetik',
     locale: 'tr_TR',
     type: 'website',
-    images: [{ url: '/logo.png', width: 1200, height: 630, alt: 'Favori Kozmetik' }],
+    images: [{ url: '/logo.png', alt: 'Favori Kozmetik' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Favori Kozmetik - Premium Kozmetik Ürünleri',
-    description: 'Favori Kozmetik ile güzelliğinizi keşfedin. Protez tırnak, kalıcı makyaj, kişisel bakım ve daha fazlası için güvenilir adresiniz.',
+    title: 'Favori Kozmetik | Tırnak, Saç ve Kişisel Bakım Ürünleri',
+    description: 'Tırnak, saç bakımı, kuaför malzemeleri ve kişisel bakım ürünlerini keşfedin.',
     images: ['/logo.png'],
   },
   robots: {
-    index: true,
+    index: !isPreviewDeployment(),
     follow: true,
     googleBot: {
-      index: true,
+      index: !isPreviewDeployment(),
       follow: true,
       'max-video-preview': -1,
       'max-image-preview': 'large',
@@ -131,7 +126,7 @@ export default async function RootLayout({
       <body className={onest.className}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
         />
         <SmoothScroll>
           <CategoriesProvider categories={menuCategories}>{children}</CategoriesProvider>

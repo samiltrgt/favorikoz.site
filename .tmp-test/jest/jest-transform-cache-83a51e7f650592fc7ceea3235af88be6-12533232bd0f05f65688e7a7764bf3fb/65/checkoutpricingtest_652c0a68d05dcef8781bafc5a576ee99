@@ -1,0 +1,19 @@
+3d77dfdf591af30a540d29e8dd10cd99
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const _checkoutpricing = require("../../src/lib/checkout-pricing");
+describe("checkout totals in kuruş", ()=>{
+    it("charges 100 TL shipping when a 2100 TL basket falls below the threshold after a 210 TL coupon", ()=>{
+        expect((0, _checkoutpricing.calculateCheckoutTotals)(210000, 21000)).toEqual({
+            subtotalKurus: 210000,
+            discountKurus: 21000,
+            subtotalAfterDiscountKurus: 189000,
+            shippingKurus: 10000,
+            totalKurus: 199000
+        });
+    });
+});
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcTGVub3ZvXFxEb2N1bWVudHNcXEdpdEh1YlxcZmF2b3Jpa296LnNpdGVcXF9fdGVzdHNfX1xcdXRpbHNcXGNoZWNrb3V0LXByaWNpbmcudGVzdC50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBjYWxjdWxhdGVDaGVja291dFRvdGFscyB9IGZyb20gJ0AvbGliL2NoZWNrb3V0LXByaWNpbmcnXG5cbmRlc2NyaWJlKCdjaGVja291dCB0b3RhbHMgaW4ga3VydcWfJywgKCkgPT4ge1xuICBpdCgnY2hhcmdlcyAxMDAgVEwgc2hpcHBpbmcgd2hlbiBhIDIxMDAgVEwgYmFza2V0IGZhbGxzIGJlbG93IHRoZSB0aHJlc2hvbGQgYWZ0ZXIgYSAyMTAgVEwgY291cG9uJywgKCkgPT4ge1xuICAgIGV4cGVjdChjYWxjdWxhdGVDaGVja291dFRvdGFscygyMTAwMDAsIDIxMDAwKSkudG9FcXVhbCh7XG4gICAgICBzdWJ0b3RhbEt1cnVzOiAyMTAwMDAsXG4gICAgICBkaXNjb3VudEt1cnVzOiAyMTAwMCxcbiAgICAgIHN1YnRvdGFsQWZ0ZXJEaXNjb3VudEt1cnVzOiAxODkwMDAsXG4gICAgICBzaGlwcGluZ0t1cnVzOiAxMDAwMCxcbiAgICAgIHRvdGFsS3VydXM6IDE5OTAwMCxcbiAgICB9KVxuICB9KVxufSlcbiJdLCJuYW1lcyI6WyJkZXNjcmliZSIsIml0IiwiZXhwZWN0IiwiY2FsY3VsYXRlQ2hlY2tvdXRUb3RhbHMiLCJ0b0VxdWFsIiwic3VidG90YWxLdXJ1cyIsImRpc2NvdW50S3VydXMiLCJzdWJ0b3RhbEFmdGVyRGlzY291bnRLdXJ1cyIsInNoaXBwaW5nS3VydXMiLCJ0b3RhbEt1cnVzIl0sIm1hcHBpbmdzIjoiOzs7O2lDQUF3QztBQUV4Q0EsU0FBUyw0QkFBNEI7SUFDbkNDLEdBQUcsaUdBQWlHO1FBQ2xHQyxPQUFPQyxJQUFBQSx3Q0FBdUIsRUFBQyxRQUFRLFFBQVFDLE9BQU8sQ0FBQztZQUNyREMsZUFBZTtZQUNmQyxlQUFlO1lBQ2ZDLDRCQUE0QjtZQUM1QkMsZUFBZTtZQUNmQyxZQUFZO1FBQ2Q7SUFDRjtBQUNGIn0=

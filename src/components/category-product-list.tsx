@@ -1,6 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { categoryHref } from '@/lib/category-seo'
 import Link from 'next/link'
 import { ArrowLeft, Filter, Grid, List } from 'lucide-react'
 import ProductCard from '@/components/product-card'
@@ -14,31 +16,9 @@ const sortOptions = [
   { value: 'name', label: 'İsim (A → Z)' },
 ]
 
-function sortProducts(products: CategoryListProduct[], sortBy: string): CategoryListProduct[] {
-  const filtered = [...products]
-  switch (sortBy) {
-    case 'newest':
-      return filtered.sort((a, b) => {
-        const byDate =
-          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-        if (byDate !== 0) return byDate
-        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
-      })
-    case 'price-low':
-      return filtered.sort((a, b) => a.price - b.price)
-    case 'price-high':
-      return filtered.sort((a, b) => b.price - a.price)
-    case 'rating':
-      return filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    case 'name':
-      return filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'))
-    default:
-      return filtered
-  }
-}
-
 type CategoryProductListProps = {
   products: CategoryListProduct[]
+  sortBy?: string
   emptyTitle?: string
   emptyHref?: string
   emptyLinkLabel?: string
@@ -46,14 +26,16 @@ type CategoryProductListProps = {
 
 export default function CategoryProductList({
   products,
+  sortBy = 'newest',
   emptyTitle = 'Bu kategoride ürün bulunamadı',
   emptyHref = '/tum-urunler',
   emptyLinkLabel = 'Tüm Ürünleri Görüntüle',
 }: CategoryProductListProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortBy, setSortBy] = useState('newest')
+  const router = useRouter()
+  const pathname = usePathname()
 
-  const filteredProducts = useMemo(() => sortProducts(products, sortBy), [products, sortBy])
+  const filteredProducts = products
 
   return (
     <>
@@ -90,7 +72,8 @@ export default function CategoryProductList({
         <div className="flex items-center gap-4">
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => router.push(categoryHref(pathname, 1, e.target.value))}
+            aria-label="Ürün sıralaması"
             className="px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
           >
             {sortOptions.map((option) => (

@@ -1,0 +1,48 @@
+{
+  "measuredAt": "2026-10-07T17:18:55.072Z",
+  "origin": "https://www.favorikozmetik.com",
+  "conditions": "390x844, DPR1, CPU4x, 150ms latency, 1.6Mbps download, cold context, 6s post-load observation; lab only. Cross-origin resource bytes may be unavailable.",
+  "results": [
+    {
+      "path": "/urun/microbrush-100lu-4sxx1b3fk",
+      "status": 200,
+      "xRobotsTag": "index, follow",
+      "lcp": 7900,
+      "cls": 0.00340710002021518,
+      "lcpElement": "<img alt=\"Microbrush 100'lü\" fetchpriority=\"high\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 1024px) 100vw, 50vw\" srcset=\"https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/abbb44dd-35c2-4946-a437-e6239ba88",
+      "ttfbMs": 4791.299999998882,
+      "domContentLoadedMs": 9424.400000000373,
+      "loadMs": 9434.599999999627,
+      "title": "Microbrush 100'lü | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/urun/microbrush-100lu-4sxx1b3fk",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Microbrush 100'lü",
+          "visible": true
+        }
+      ],
+      "images": [],
+      "largestVisibleImages": [
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/abbb44dd-35c2-4946-a437-e6239ba882c8/1512/microbrush.webp",
+          "naturalWidth": 346,
+          "displayWidth": 358,
+          "loading": "auto"
+        }
+      ],
+      "resourceCount": 36,
+      "transferredBytesVisibleToTiming": 467457,
+      "pageErrors": []
+    }
+  ]
+}

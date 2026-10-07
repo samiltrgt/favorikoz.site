@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ProductCard from '@/components/product-card'
 
 jest.mock('next/image', () => {
-  return function MockImage({ src, alt, ...props }: any) {
+  return function MockImage({ src, alt, fill, priority, fetchPriority, ...props }: any) {
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img src={src} alt={alt} {...props} />
   }
@@ -44,6 +44,7 @@ describe('ProductCard Component', () => {
     image: '/test-image.jpg',
     rating: 4.5,
     reviews_count: 128,
+    ratings_verified: true,
     in_stock: true,
   }
 
@@ -57,6 +58,34 @@ describe('ProductCard Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  it('does not present unreviewed products as rated', () => {
+    render(<ProductCard product={{ ...mockProduct, rating: 0, reviews_count: 0 }} />)
+    expect(screen.getByRole('img', { name: 'Henüz değerlendirme yok' })).toBeInTheDocument()
+    expect(document.querySelectorAll('.pcard__star--on')).toHaveLength(0)
+  })
+
+  it.each(['grid', 'list', 'compact'] as const)('hides imported unverified ratings and unknown review claims in %s cards', (variant) => {
+    const { rerender } = render(<ProductCard product={{ ...mockProduct, ratings_verified: undefined }} variant={variant} />)
+    expect(screen.queryByRole('img', { name: '5 üzerinden 4.5' })).not.toBeInTheDocument()
+    expect(screen.queryByText('(128)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Henüz değerlendirme yok')).not.toBeInTheDocument()
+    rerender(<ProductCard product={{ ...mockProduct, rating: 0, reviews_count: 0, ratings_verified: false }} variant={variant} />)
+    expect(screen.queryByText('Henüz değerlendirme yok')).not.toBeInTheDocument()
+    expect(screen.getByText('Test Product Name')).toBeInTheDocument()
+    expect(screen.getByText('₺99,99')).toBeInTheDocument()
+  })
+
+  it('rejects invalid numeric values even when ratings are marked verified', () => {
+    render(<ProductCard product={{ ...mockProduct, rating: 6 }} />)
+    expect(screen.queryByText('(128)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Henüz değerlendirme yok')).not.toBeInTheDocument()
+  })
+
+  it('fills only the stars supported by the real rating', () => {
+    render(<ProductCard product={mockProduct} />)
+    expect(document.querySelectorAll('.pcard__star--on')).toHaveLength(4)
   })
 
   it('should render product information correctly', () => {

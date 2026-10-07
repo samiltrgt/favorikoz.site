@@ -1,4 +1,5 @@
 import { createSupabaseAnon } from '@/lib/supabase/server'
+import { cache } from 'react'
 import { dbToDisplay } from '@/lib/price'
 import type { ProductCardProduct } from '@/components/product-card'
 
@@ -43,7 +44,7 @@ const PRODUCT_SELECT =
 function baseInStockProductsQuery(supabase: ReturnType<typeof createSupabaseAnon>) {
   return supabase
     .from('products')
-    .select(PRODUCT_SELECT)
+    .select(PRODUCT_SELECT, { count: 'exact' })
     .is('deleted_at', null)
     .eq('in_stock', true)
     .gt('stock_quantity', 0)
@@ -66,27 +67,33 @@ async function fetchMappedProducts(
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1)
 
-    const { data, error } = await query
+    const { data, error, count } = await query
     if (error) throw error
 
     const batch = (data || []).map((row) => mapProduct(row as Record<string, unknown>))
     all.push(...batch)
-    if (batch.length < pageSize) break
-    from += pageSize
+    // PostgREST can cap a response below the requested range. Advance by rows
+    // actually received, never by the requested page size.
+    if (batch.length === 0) {
+      if (count != null && from < count) throw new Error('Catalog pagination ended before the reported total')
+      break
+    }
+    from += batch.length
+    if (count != null && from >= count) break
   }
 
   return all
 }
 
 /** All in-stock products (SSR catalog pages). */
-export async function getAllProducts(): Promise<CategoryListProduct[]> {
+export const getAllProducts = cache(async function getAllProducts(): Promise<CategoryListProduct[]> {
   return fetchMappedProducts((query) => query)
-}
+})
 
 /** Category page: in-stock products under a top-level category_slug. */
-export async function getCategoryProducts(categorySlug: string): Promise<CategoryListProduct[]> {
+export const getCategoryProducts = cache(async function getCategoryProducts(categorySlug: string): Promise<CategoryListProduct[]> {
   return fetchMappedProducts((query) => query.eq('category_slug', categorySlug))
-}
+})
 
 /** Subcategory page: in-stock products whose subcategory_slug is in the allowed set. */
 export async function getSubcategoryProducts(
@@ -102,11 +109,12 @@ export async function getSubcategoryProducts(
 
 export async function getCategoryNameBySlug(slug: string): Promise<string | null> {
   const supabase = createSupabaseAnon()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('categories')
     .select('name')
     .eq('slug', slug)
     .is('deleted_at', null)
     .maybeSingle()
+  if (error) throw error
   return data?.name ?? null
 }

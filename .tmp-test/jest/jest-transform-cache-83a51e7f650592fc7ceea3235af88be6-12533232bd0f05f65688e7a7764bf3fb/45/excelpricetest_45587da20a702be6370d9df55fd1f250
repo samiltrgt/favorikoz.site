@@ -1,0 +1,54 @@
+051fb4a24efabdf13e6a16cf5e420f8c
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const _excelprice = require("../../scripts/lib/excel-price");
+describe("parseExcelPrice", ()=>{
+    it.each([
+        [
+            175,
+            175
+        ],
+        [
+            "175.0",
+            175
+        ],
+        [
+            "319.90",
+            319.9
+        ],
+        [
+            "6.500,00",
+            6500
+        ],
+        [
+            "6,500.00",
+            6500
+        ],
+        [
+            "₺ 319,90",
+            319.9
+        ]
+    ])("parses %s as %s TL", (input, expected)=>{
+        expect((0, _excelprice.parseExcelPrice)(input)).toBe(expected);
+    });
+    it.each([
+        "150.0.",
+        "1,2,3",
+        "abc",
+        "",
+        "Infinity",
+        "1.2.3"
+    ])("rejects malformed value %s", (input)=>{
+        expect((0, _excelprice.parseExcelPrice)(input)).toBeNull();
+    });
+    it("requires a finite, positive sale price", ()=>{
+        expect((0, _excelprice.isValidSalePrice)(0)).toBe(false);
+        expect((0, _excelprice.isValidSalePrice)(-1)).toBe(false);
+        expect((0, _excelprice.isValidSalePrice)(Number.POSITIVE_INFINITY)).toBe(false);
+        expect((0, _excelprice.isValidSalePrice)(0.01)).toBe(true);
+    });
+});
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcTGVub3ZvXFxEb2N1bWVudHNcXEdpdEh1YlxcZmF2b3Jpa296LnNpdGVcXF9fdGVzdHNfX1xcdXRpbHNcXGV4Y2VsLXByaWNlLnRlc3QudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgaXNWYWxpZFNhbGVQcmljZSwgcGFyc2VFeGNlbFByaWNlIH0gZnJvbSAnLi4vLi4vc2NyaXB0cy9saWIvZXhjZWwtcHJpY2UnXG5cbmRlc2NyaWJlKCdwYXJzZUV4Y2VsUHJpY2UnLCAoKSA9PiB7XG4gIGl0LmVhY2goW1xuICAgIFsxNzUsIDE3NV0sXG4gICAgWycxNzUuMCcsIDE3NV0sXG4gICAgWyczMTkuOTAnLCAzMTkuOV0sXG4gICAgWyc2LjUwMCwwMCcsIDY1MDBdLFxuICAgIFsnNiw1MDAuMDAnLCA2NTAwXSxcbiAgICBbJ+KCuiAzMTksOTAnLCAzMTkuOV0sXG4gIF0pKCdwYXJzZXMgJXMgYXMgJXMgVEwnLCAoaW5wdXQsIGV4cGVjdGVkKSA9PiB7XG4gICAgZXhwZWN0KHBhcnNlRXhjZWxQcmljZShpbnB1dCkpLnRvQmUoZXhwZWN0ZWQpXG4gIH0pXG5cbiAgaXQuZWFjaChbJzE1MC4wLicsICcxLDIsMycsICdhYmMnLCAnJywgJ0luZmluaXR5JywgJzEuMi4zJ10pKCdyZWplY3RzIG1hbGZvcm1lZCB2YWx1ZSAlcycsIChpbnB1dCkgPT4ge1xuICAgIGV4cGVjdChwYXJzZUV4Y2VsUHJpY2UoaW5wdXQpKS50b0JlTnVsbCgpXG4gIH0pXG5cbiAgaXQoJ3JlcXVpcmVzIGEgZmluaXRlLCBwb3NpdGl2ZSBzYWxlIHByaWNlJywgKCkgPT4ge1xuICAgIGV4cGVjdChpc1ZhbGlkU2FsZVByaWNlKDApKS50b0JlKGZhbHNlKVxuICAgIGV4cGVjdChpc1ZhbGlkU2FsZVByaWNlKC0xKSkudG9CZShmYWxzZSlcbiAgICBleHBlY3QoaXNWYWxpZFNhbGVQcmljZShOdW1iZXIuUE9TSVRJVkVfSU5GSU5JVFkpKS50b0JlKGZhbHNlKVxuICAgIGV4cGVjdChpc1ZhbGlkU2FsZVByaWNlKDAuMDEpKS50b0JlKHRydWUpXG4gIH0pXG59KVxuIl0sIm5hbWVzIjpbImRlc2NyaWJlIiwiaXQiLCJlYWNoIiwiaW5wdXQiLCJleHBlY3RlZCIsImV4cGVjdCIsInBhcnNlRXhjZWxQcmljZSIsInRvQmUiLCJ0b0JlTnVsbCIsImlzVmFsaWRTYWxlUHJpY2UiLCJOdW1iZXIiLCJQT1NJVElWRV9JTkZJTklUWSJdLCJtYXBwaW5ncyI6Ijs7Ozs0QkFBa0Q7QUFFbERBLFNBQVMsbUJBQW1CO0lBQzFCQyxHQUFHQyxJQUFJLENBQUM7UUFDTjtZQUFDO1lBQUs7U0FBSTtRQUNWO1lBQUM7WUFBUztTQUFJO1FBQ2Q7WUFBQztZQUFVO1NBQU07UUFDakI7WUFBQztZQUFZO1NBQUs7UUFDbEI7WUFBQztZQUFZO1NBQUs7UUFDbEI7WUFBQztZQUFZO1NBQU07S0FDcEIsRUFBRSxzQkFBc0IsQ0FBQ0MsT0FBT0M7UUFDL0JDLE9BQU9DLElBQUFBLDJCQUFlLEVBQUNILFFBQVFJLElBQUksQ0FBQ0g7SUFDdEM7SUFFQUgsR0FBR0MsSUFBSSxDQUFDO1FBQUM7UUFBVTtRQUFTO1FBQU87UUFBSTtRQUFZO0tBQVEsRUFBRSw4QkFBOEIsQ0FBQ0M7UUFDMUZFLE9BQU9DLElBQUFBLDJCQUFlLEVBQUNILFFBQVFLLFFBQVE7SUFDekM7SUFFQVAsR0FBRywwQ0FBMEM7UUFDM0NJLE9BQU9JLElBQUFBLDRCQUFnQixFQUFDLElBQUlGLElBQUksQ0FBQztRQUNqQ0YsT0FBT0ksSUFBQUEsNEJBQWdCLEVBQUMsQ0FBQyxJQUFJRixJQUFJLENBQUM7UUFDbENGLE9BQU9JLElBQUFBLDRCQUFnQixFQUFDQyxPQUFPQyxpQkFBaUIsR0FBR0osSUFBSSxDQUFDO1FBQ3hERixPQUFPSSxJQUFBQSw0QkFBZ0IsRUFBQyxPQUFPRixJQUFJLENBQUM7SUFDdEM7QUFDRiJ9

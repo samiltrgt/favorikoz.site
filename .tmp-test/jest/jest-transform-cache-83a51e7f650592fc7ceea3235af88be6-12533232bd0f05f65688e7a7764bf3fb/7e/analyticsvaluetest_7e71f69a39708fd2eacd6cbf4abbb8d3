@@ -1,0 +1,76 @@
+8498393b9c27c4905b296497292601b8
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const _value = require("../../src/lib/analytics/value");
+describe("analytics/value", ()=>{
+    it("adValueFromCart converts cart kuruş to display TL", ()=>{
+        const cart = [
+            {
+                id: "p1",
+                slug: "a",
+                name: "A",
+                image: "",
+                price: 125000,
+                qty: 1
+            }
+        ];
+        expect((0, _value.adValueFromCart)(cart)).toBe(1250);
+    });
+    it("adItemsFromCart uses unit price in TL", ()=>{
+        const cart = [
+            {
+                id: "p1",
+                slug: "a",
+                name: "A",
+                image: "",
+                price: 10000,
+                qty: 2
+            }
+        ];
+        expect((0, _value.adItemsFromCart)(cart)).toEqual([
+            {
+                id: "p1",
+                quantity: 2,
+                item_price: 100
+            }
+        ]);
+    });
+    it("adValueFromOrder uses paid total (kurus) not raw inflation", ()=>{
+        // total = 125000 kuruş → 1250 TL
+        const value = (0, _value.adValueFromOrder)({
+            items: [
+                {
+                    product_id: "p1",
+                    price: 125000,
+                    quantity: 1
+                }
+            ],
+            shipping_cost: 0,
+            total: 125000,
+            discount_amount: 0
+        });
+        expect(value).toBe(1250);
+    });
+    it("adItemsFromOrder unit price from kuruş-like order lines", ()=>{
+        const items = (0, _value.adItemsFromOrder)({
+            items: [
+                {
+                    product_id: "p1",
+                    price: 125000,
+                    quantity: 1
+                }
+            ]
+        });
+        expect(items).toEqual([
+            {
+                id: "p1",
+                quantity: 1,
+                item_price: 1250
+            }
+        ]);
+    });
+});
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcTGVub3ZvXFxEb2N1bWVudHNcXEdpdEh1YlxcZmF2b3Jpa296LnNpdGVcXF9fdGVzdHNfX1xcdXRpbHNcXGFuYWx5dGljcy12YWx1ZS50ZXN0LnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7XHJcbiAgYWRJdGVtc0Zyb21DYXJ0LFxyXG4gIGFkSXRlbXNGcm9tT3JkZXIsXHJcbiAgYWRWYWx1ZUZyb21DYXJ0LFxyXG4gIGFkVmFsdWVGcm9tT3JkZXIsXHJcbn0gZnJvbSAnQC9saWIvYW5hbHl0aWNzL3ZhbHVlJ1xyXG5pbXBvcnQgdHlwZSB7IENhcnRJdGVtIH0gZnJvbSAnQC9saWIvY2FydCdcclxuXHJcbmRlc2NyaWJlKCdhbmFseXRpY3MvdmFsdWUnLCAoKSA9PiB7XHJcbiAgaXQoJ2FkVmFsdWVGcm9tQ2FydCBjb252ZXJ0cyBjYXJ0IGt1cnXFnyB0byBkaXNwbGF5IFRMJywgKCkgPT4ge1xyXG4gICAgY29uc3QgY2FydDogQ2FydEl0ZW1bXSA9IFtcclxuICAgICAgeyBpZDogJ3AxJywgc2x1ZzogJ2EnLCBuYW1lOiAnQScsIGltYWdlOiAnJywgcHJpY2U6IDEyNTAwMCwgcXR5OiAxIH0sIC8vIDEyNTAgVExcclxuICAgIF1cclxuICAgIGV4cGVjdChhZFZhbHVlRnJvbUNhcnQoY2FydCkpLnRvQmUoMTI1MClcclxuICB9KVxyXG5cclxuICBpdCgnYWRJdGVtc0Zyb21DYXJ0IHVzZXMgdW5pdCBwcmljZSBpbiBUTCcsICgpID0+IHtcclxuICAgIGNvbnN0IGNhcnQ6IENhcnRJdGVtW10gPSBbXHJcbiAgICAgIHsgaWQ6ICdwMScsIHNsdWc6ICdhJywgbmFtZTogJ0EnLCBpbWFnZTogJycsIHByaWNlOiAxMDAwMCwgcXR5OiAyIH0sIC8vIDEwMCBUTCB1bml0XHJcbiAgICBdXHJcbiAgICBleHBlY3QoYWRJdGVtc0Zyb21DYXJ0KGNhcnQpKS50b0VxdWFsKFtcclxuICAgICAgeyBpZDogJ3AxJywgcXVhbnRpdHk6IDIsIGl0ZW1fcHJpY2U6IDEwMCB9LFxyXG4gICAgXSlcclxuICB9KVxyXG5cclxuICBpdCgnYWRWYWx1ZUZyb21PcmRlciB1c2VzIHBhaWQgdG90YWwgKGt1cnVzKSBub3QgcmF3IGluZmxhdGlvbicsICgpID0+IHtcclxuICAgIC8vIHRvdGFsID0gMTI1MDAwIGt1cnXFnyDihpIgMTI1MCBUTFxyXG4gICAgY29uc3QgdmFsdWUgPSBhZFZhbHVlRnJvbU9yZGVyKHtcclxuICAgICAgaXRlbXM6IFt7IHByb2R1Y3RfaWQ6ICdwMScsIHByaWNlOiAxMjUwMDAsIHF1YW50aXR5OiAxIH1dLFxyXG4gICAgICBzaGlwcGluZ19jb3N0OiAwLFxyXG4gICAgICB0b3RhbDogMTI1MDAwLFxyXG4gICAgICBkaXNjb3VudF9hbW91bnQ6IDAsXHJcbiAgICB9KVxyXG4gICAgZXhwZWN0KHZhbHVlKS50b0JlKDEyNTApXHJcbiAgfSlcclxuXHJcbiAgaXQoJ2FkSXRlbXNGcm9tT3JkZXIgdW5pdCBwcmljZSBmcm9tIGt1cnXFny1saWtlIG9yZGVyIGxpbmVzJywgKCkgPT4ge1xyXG4gICAgY29uc3QgaXRlbXMgPSBhZEl0ZW1zRnJvbU9yZGVyKHtcclxuICAgICAgaXRlbXM6IFt7IHByb2R1Y3RfaWQ6ICdwMScsIHByaWNlOiAxMjUwMDAsIHF1YW50aXR5OiAxIH1dLFxyXG4gICAgfSlcclxuICAgIGV4cGVjdChpdGVtcykudG9FcXVhbChbeyBpZDogJ3AxJywgcXVhbnRpdHk6IDEsIGl0ZW1fcHJpY2U6IDEyNTAgfV0pXHJcbiAgfSlcclxufSlcclxuIl0sIm5hbWVzIjpbImRlc2NyaWJlIiwiaXQiLCJjYXJ0IiwiaWQiLCJzbHVnIiwibmFtZSIsImltYWdlIiwicHJpY2UiLCJxdHkiLCJleHBlY3QiLCJhZFZhbHVlRnJvbUNhcnQiLCJ0b0JlIiwiYWRJdGVtc0Zyb21DYXJ0IiwidG9FcXVhbCIsInF1YW50aXR5IiwiaXRlbV9wcmljZSIsInZhbHVlIiwiYWRWYWx1ZUZyb21PcmRlciIsIml0ZW1zIiwicHJvZHVjdF9pZCIsInNoaXBwaW5nX2Nvc3QiLCJ0b3RhbCIsImRpc2NvdW50X2Ftb3VudCIsImFkSXRlbXNGcm9tT3JkZXIiXSwibWFwcGluZ3MiOiI7Ozs7dUJBS087QUFHUEEsU0FBUyxtQkFBbUI7SUFDMUJDLEdBQUcscURBQXFEO1FBQ3RELE1BQU1DLE9BQW1CO1lBQ3ZCO2dCQUFFQyxJQUFJO2dCQUFNQyxNQUFNO2dCQUFLQyxNQUFNO2dCQUFLQyxPQUFPO2dCQUFJQyxPQUFPO2dCQUFRQyxLQUFLO1lBQUU7U0FDcEU7UUFDREMsT0FBT0MsSUFBQUEsc0JBQWUsRUFBQ1IsT0FBT1MsSUFBSSxDQUFDO0lBQ3JDO0lBRUFWLEdBQUcseUNBQXlDO1FBQzFDLE1BQU1DLE9BQW1CO1lBQ3ZCO2dCQUFFQyxJQUFJO2dCQUFNQyxNQUFNO2dCQUFLQyxNQUFNO2dCQUFLQyxPQUFPO2dCQUFJQyxPQUFPO2dCQUFPQyxLQUFLO1lBQUU7U0FDbkU7UUFDREMsT0FBT0csSUFBQUEsc0JBQWUsRUFBQ1YsT0FBT1csT0FBTyxDQUFDO1lBQ3BDO2dCQUFFVixJQUFJO2dCQUFNVyxVQUFVO2dCQUFHQyxZQUFZO1lBQUk7U0FDMUM7SUFDSDtJQUVBZCxHQUFHLDhEQUE4RDtRQUMvRCxpQ0FBaUM7UUFDakMsTUFBTWUsUUFBUUMsSUFBQUEsdUJBQWdCLEVBQUM7WUFDN0JDLE9BQU87Z0JBQUM7b0JBQUVDLFlBQVk7b0JBQU1aLE9BQU87b0JBQVFPLFVBQVU7Z0JBQUU7YUFBRTtZQUN6RE0sZUFBZTtZQUNmQyxPQUFPO1lBQ1BDLGlCQUFpQjtRQUNuQjtRQUNBYixPQUFPTyxPQUFPTCxJQUFJLENBQUM7SUFDckI7SUFFQVYsR0FBRywyREFBMkQ7UUFDNUQsTUFBTWlCLFFBQVFLLElBQUFBLHVCQUFnQixFQUFDO1lBQzdCTCxPQUFPO2dCQUFDO29CQUFFQyxZQUFZO29CQUFNWixPQUFPO29CQUFRTyxVQUFVO2dCQUFFO2FBQUU7UUFDM0Q7UUFDQUwsT0FBT1MsT0FBT0wsT0FBTyxDQUFDO1lBQUM7Z0JBQUVWLElBQUk7Z0JBQU1XLFVBQVU7Z0JBQUdDLFlBQVk7WUFBSztTQUFFO0lBQ3JFO0FBQ0YifQ==

@@ -84,7 +84,7 @@ export async function createTrackingFixture() {
       }
       if (url.pathname === '/rest/v1/products' && req.method === 'GET') {
         const start = Number((req.headers.range || '0-').split('-')[0]) || 0
-        return json(res, 200, start === 0 ? [{ id: productId, slug: 'tracking-e2e-product', name: 'Test Kozmetik', price: 100000, brand: 'Test', image: '/logo.png', images: ['/logo.png'], in_stock: true, stock_quantity: 10, barcode: null, category: null, categories: null, deleted_at: null }] : [])
+        return json(res, 200, start === 0 ? [{ id: productId, slug: 'tracking-e2e-product', name: 'Test Kozmetik', price: 10000, brand: 'Test', image: '/logo.png', images: ['/logo.png'], in_stock: true, stock_quantity: 10, barcode: null, category: null, categories: null, deleted_at: null }] : [])
       }
       if (url.pathname.startsWith('/rest/v1/') && ['categories', 'profiles', 'product_categories', 'reviews', 'product_reviews'].includes(url.pathname.split('/').pop())) return json(res, 200, [])
       const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/([a-z_]+)$/)

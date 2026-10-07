@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { getProductSeoReviews } from '@/lib/product-seo-server'
 
 // GET /api/reviews/:productId - Get all reviews for a product
 export async function GET(
@@ -9,44 +10,15 @@ export async function GET(
   { params }: { params: { productId: string } }
 ) {
   try {
-    const supabase = await createSupabaseServer()
-    
-    const { data, error } = await supabase
-      .from('reviews')
-      .select(`
-        id,
-        rating,
-        comment,
-        verified,
-        created_at,
-        guest_name,
-        user_id,
-        profiles:user_id (
-          name
-        )
-      `)
-      .eq('product_id', params.productId)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: true })
-    
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch reviews' },
-        { status: 500 }
-      )
-    }
-    
-    // Format reviews
-    const reviews = data.map((review: any) => ({
+    const rows = await getProductSeoReviews(params.productId)
+    const reviews = rows.map(review => ({
       id: review.id,
-      rating: review.rating,
-      comment: review.comment,
-      verified: review.verified,
-      author: (review.profiles && review.profiles.length > 0 && review.profiles[0]?.name) || review.guest_name || 'Anonim',
-      date: new Date(review.created_at).toLocaleDateString('tr-TR'),
+      rating: review.ratingValue,
+      comment: review.reviewBody,
+      verified: review.verified === true,
+      author: review.author,
+      date: new Date(review.datePublished).toLocaleDateString('tr-TR'),
     }))
-    
     return NextResponse.json({ success: true, data: reviews })
   } catch (error) {
     console.error('API error:', error)
@@ -159,4 +131,3 @@ export async function POST(
     )
   }
 }
-

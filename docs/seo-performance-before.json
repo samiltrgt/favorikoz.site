@@ -1,0 +1,853 @@
+{
+  "measuredAt": "2026-10-07T15:02:54.534Z",
+  "origin": "https://www.favorikozmetik.com",
+  "conditions": "390x844, DPR1, CPU4x, 150ms latency, 1.6Mbps download, cold context, 6s post-load observation; lab only. Cross-origin resource bytes may be unavailable.",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "xRobotsTag": "index, follow",
+      "lcp": 34892,
+      "cls": 0.004653702747018261,
+      "lcpElement": "<img alt=\"Profesyonel Protez Tırnak Seti - Full Tırnak Seti\" loading=\"lazy\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcset=\"https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v",
+      "ttfbMs": 4512,
+      "domContentLoadedMs": 7014.5,
+      "loadMs": 34855,
+      "title": "Favori Kozmetik - Premium Kozmetik Ürünleri",
+      "canonical": "https://www.favorikozmetik.com/",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Favori Kozmetik",
+          "visible": false
+        }
+      ],
+      "images": [
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner1.jpg",
+          "durationMs": 10490.200000000186,
+          "transferBytes": 287511,
+          "decodedBytes": 287211
+        },
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner2.jpg",
+          "durationMs": 6688.300000000279,
+          "transferBytes": 127124,
+          "decodedBytes": 126824
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736556069_yd1ro6wuqag.png",
+          "durationMs": 28864.399999999907,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736544970_7zk4ropumwx.png",
+          "durationMs": 25114.700000000186,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/ad2950d3-251f-3ee8-94a4-d9fa31f43b6d/1_org_zoom.jpg",
+          "durationMs": 2405.100000000093,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1801/prod/QC_PREP/20251217/15/6343a208-6221-3af5-bc81-bf4ef4dd7767/1_org_zoom.jpg",
+          "durationMs": 2403.6999999997206,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/cd4a842b-4829-34af-abcc-6baebfa33955/1_org_zoom.jpg",
+          "durationMs": 2559.2000000001863,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/4100afa7-c23b-47c9-8057-32958567ef7c/1512/img-0456.webp",
+          "durationMs": 2769.1999999997206,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/a81682f6-3c67-4def-bd50-5c92383333bf/1512/img-0460.webp",
+          "durationMs": 2964.2999999998137,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/5ee73aab-eb8a-4705-bd49-056fb603d92a/1512/710qs-4h1ql.webp",
+          "durationMs": 4689.399999999907,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/dc781bd4-d669-3427-8947-af778aaf81da/1_org_zoom.jpg",
+          "durationMs": 3212.100000000093,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/e43ae5c7-4619-3c03-bdbc-685bc9229d12/1_org_zoom.jpg",
+          "durationMs": 3007.2999999998137,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/b187f393-b34a-3818-9ee7-97d711c297de/1_org_zoom.jpg",
+          "durationMs": 3194.3000000002794,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner4.jpg",
+          "durationMs": 3178.399999999907,
+          "transferBytes": 201325,
+          "decodedBytes": 201025
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner3.jpg",
+          "naturalWidth": 2031,
+          "displayWidth": 390,
+          "loading": "auto"
+        },
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner1.jpg",
+          "naturalWidth": 2016,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner2.jpg",
+          "naturalWidth": 2015,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/home-banners/banner4.jpg",
+          "naturalWidth": 2031,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736556069_yd1ro6wuqag.png",
+          "naturalWidth": 1016,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736544970_7zk4ropumwx.png",
+          "naturalWidth": 955,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 208,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/ad2950d3-251f-3ee8-94a4-d9fa31f43b6d/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1801/prod/QC_PREP/20251217/15/6343a208-6221-3af5-bc81-bf4ef4dd7767/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/cd4a842b-4829-34af-abcc-6baebfa33955/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/ad2950d3-251f-3ee8-94a4-d9fa31f43b6d/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1801/prod/QC_PREP/20251217/15/6343a208-6221-3af5-bc81-bf4ef4dd7767/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/cd4a842b-4829-34af-abcc-6baebfa33955/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/4100afa7-c23b-47c9-8057-32958567ef7c/1512/img-0456.webp",
+          "naturalWidth": 761,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/a81682f6-3c67-4def-bd50-5c92383333bf/1512/img-0460.webp",
+          "naturalWidth": 533,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/5ee73aab-eb8a-4705-bd49-056fb603d92a/1512/710qs-4h1ql.webp",
+          "naturalWidth": 1142,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/dc781bd4-d669-3427-8947-af778aaf81da/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/e43ae5c7-4619-3c03-bdbc-685bc9229d12/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/b187f393-b34a-3818-9ee7-97d711c297de/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 0,
+          "loading": "lazy"
+        }
+      ],
+      "resourceCount": 57,
+      "transferredBytesVisibleToTiming": 1286298,
+      "pageErrors": []
+    },
+    {
+      "path": "/kategori/tirnak",
+      "status": 200,
+      "xRobotsTag": "index, follow",
+      "lcp": 48220,
+      "cls": 0.004496473574268323,
+      "lcpElement": "<img alt=\"Strong 210 Freze Seti UV LED Kurutucu 3 Fanlı Toz Toplayıcı Profesyonel 3'lü Set\" loading=\"lazy\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcset=\"https://bvbhkvngwvu",
+      "ttfbMs": 2125.7999999998137,
+      "domContentLoadedMs": 8407.600000000093,
+      "loadMs": 57308,
+      "title": "Tırnak | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/kategori/tirnak",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Tırnak",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736501889_2kss5nfe2u2.png",
+          "durationMs": 45053.80000000028,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736514389_vi4s7huivj.png",
+          "durationMs": 51280.5,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736528417_l7iwu8f65nk.png",
+          "durationMs": 53094.60000000009,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736544970_7zk4ropumwx.png",
+          "durationMs": 45422.39999999991,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736556069_yd1ro6wuqag.png",
+          "durationMs": 54099.89999999991,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1801/prod/QC_PREP/20251217/20/2110ac81-b574-3d65-a369-e67625afb5f2/1_org_zoom.jpg",
+          "durationMs": 2491.5999999996275,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "durationMs": 2755.5999999996275,
+          "transferBytes": 36314,
+          "decodedBytes": 36014
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/IMG-0946.png?v=1755268923&width=1000",
+          "durationMs": 3387.7999999998137,
+          "transferBytes": 52694,
+          "decodedBytes": 52394
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 2754.5,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "durationMs": 2255.5,
+          "transferBytes": 27712,
+          "decodedBytes": 27412
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736501889_2kss5nfe2u2.png",
+          "naturalWidth": 779,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736514389_vi4s7huivj.png",
+          "naturalWidth": 919,
+          "displayWidth": 171,
+          "loading": "lazy"
+        }
+      ],
+      "resourceCount": 47,
+      "transferredBytesVisibleToTiming": 663094,
+      "pageErrors": []
+    },
+    {
+      "path": "/kategori/tirnak/toz-toplayici",
+      "status": 200,
+      "xRobotsTag": "index, follow",
+      "lcp": 3452,
+      "cls": 0.0036415399474405336,
+      "lcpElement": "<img alt=\"Tek Fanlı Toz Toplama 80 Watt\" loading=\"lazy\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcset=\"https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08",
+      "ttfbMs": 712.2000000001863,
+      "domContentLoadedMs": 2075.7999999998137,
+      "loadMs": 5522.700000000186,
+      "title": "Alt Kategori | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/kategori/tirnak/toz-toplayici",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Toz Toplayıcı",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "durationMs": 1214.5,
+          "transferBytes": 36314,
+          "decodedBytes": 36014
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/IMG-0946.png?v=1755268923&width=1000",
+          "durationMs": 1406.6000000000931,
+          "transferBytes": 52694,
+          "decodedBytes": 52394
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 1228.7999999998137,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1910/prod/QC_PREP/20260525/13/b74c0947-8832-345e-855f-8fea2ab3ba8e/1_org_zoom.jpg",
+          "durationMs": 3545.2999999998137,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "naturalWidth": 761,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/IMG-0946.png?v=1755268923&width=1000",
+          "naturalWidth": 761,
+          "displayWidth": 171,
+          "loading": "lazy"
+        }
+      ],
+      "resourceCount": 44,
+      "transferredBytesVisibleToTiming": 717333,
+      "pageErrors": []
+    },
+    {
+      "path": "/tum-urunler",
+      "status": 200,
+      "xRobotsTag": "index, follow",
+      "lcp": 47540,
+      "cls": 0.0038521507280632186,
+      "lcpElement": "<img alt=\"Strong 210 Freze Seti UV LED Kurutucu 3 Fanlı Toz Toplayıcı Profesyonel 3'lü Set\" loading=\"lazy\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcset=\"https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736501889_2kss5nfe2u2.png 96w,",
+      "ttfbMs": 479.5,
+      "domContentLoadedMs": 4214.199999999721,
+      "loadMs": 56645.299999999814,
+      "title": "Tüm Ürünler | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/tum-urunler",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Tüm Ürünler",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736501889_2kss5nfe2u2.png",
+          "durationMs": 43346.799999999814,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736514389_vi4s7huivj.png",
+          "durationMs": 49625.69999999972,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736528417_l7iwu8f65nk.png",
+          "durationMs": 51471.89999999991,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736544970_7zk4ropumwx.png",
+          "durationMs": 43974.30000000028,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736556069_yd1ro6wuqag.png",
+          "durationMs": 52457.5,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1801/prod/QC_PREP/20251217/20/2110ac81-b574-3d65-a369-e67625afb5f2/1_org_zoom.jpg",
+          "durationMs": 2391.100000000093,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "durationMs": 2496.899999999907,
+          "transferBytes": 36314,
+          "decodedBytes": 36014
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/IMG-0946.png?v=1755268923&width=1000",
+          "durationMs": 2982.2999999998137,
+          "transferBytes": 52694,
+          "decodedBytes": 52394
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 2621.5999999996275,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "durationMs": 2026.1999999997206,
+          "transferBytes": 27712,
+          "decodedBytes": 27412
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_139_50-1-9222841065115.jpg",
+          "durationMs": 2112.899999999907,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_138_50-1-13580959022588.jpg",
+          "durationMs": 2128.1999999997206,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736501889_2kss5nfe2u2.png",
+          "naturalWidth": 779,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736514389_vi4s7huivj.png",
+          "naturalWidth": 919,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736528417_l7iwu8f65nk.png",
+          "naturalWidth": 827,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://bvbhkvngwvuiiuhuovid.supabase.co/storage/v1/object/public/images/products/1787736544970_7zk4ropumwx.png",
+          "naturalWidth": 955,
+          "displayWidth": 171,
+          "loading": "lazy"
+        }
+      ],
+      "resourceCount": 49,
+      "transferredBytesVisibleToTiming": 546630,
+      "pageErrors": []
+    }
+  ]
+}

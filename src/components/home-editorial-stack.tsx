@@ -42,7 +42,6 @@ export default function HomeEditorialStack({
   if (total === 0) {
     return (
       <>
-        <h1 className="fh-sr-only">Favori Kozmetik</h1>
         <BrandMarquee brands={brands} whiteLogos={whiteLogos} />
       </>
     )
@@ -59,7 +58,6 @@ export default function HomeEditorialStack({
         onFocus={() => setPaused(true)}
         onBlur={() => setPaused(false)}
       >
-        <h1 className="fh-sr-only">Favori Kozmetik</h1>
         <div className="fh-campaign-viewport">
           <div
             className="fh-campaign-track"
@@ -80,6 +78,7 @@ export default function HomeEditorialStack({
                   width={banner.width || 2172}
                   height={banner.height || 724}
                   priority={slideIndex === 0}
+                  loading={slideIndex === 0 ? 'eager' : 'lazy'}
                   sizes="100vw"
                   style={{ width: '100%', height: 'auto' }}
                 />

@@ -10,10 +10,13 @@ const securityHeaders = [
 ];
 
 // Public sayfalar için açıkça index, follow (Google "dizine eklenmesine izin verildi mi?" için)
-const indexFollow = { key: 'X-Robots-Tag', value: 'index, follow' };
 const noindexNofollow = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
+const noindexFollow = { key: 'X-Robots-Tag', value: 'noindex, follow' };
+const privateRoutes = ['sepet', 'checkout', 'payment', 'giris', 'kayit', 'sifremi-unuttum', 'sifre-yenile', 'hesabim', 'siparislerim', 'favorilerim'];
 
 module.exports = {
+  // Isolated output lets SEO acceptance builds coexist with the normal dev server.
+  distDir: process.env.SEO_BUILD_DIR || '.next',
   trailingSlash: false,
   compress: true,
   images: {
@@ -70,7 +73,8 @@ module.exports = {
   },
   async headers() {
     return [
-      { source: '/(.*)', headers: [...securityHeaders, indexFollow] },
+      { source: '/(.*)', headers: [...securityHeaders, ...(process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production' ? [noindexFollow] : [])] },
+      ...privateRoutes.map((route) => ({ source: `/${route}/:path*`, headers: [noindexFollow] })),
       { source: '/admin/:path*', headers: [...securityHeaders, noindexNofollow] },
       { source: '/api/categories', headers: [
         ...securityHeaders,

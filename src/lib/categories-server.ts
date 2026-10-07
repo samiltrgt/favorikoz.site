@@ -1,10 +1,11 @@
 import { createSupabaseAnon } from '@/lib/supabase/server'
+import { cache } from 'react'
 import { loadCategorySortConfig, MENU_SORT_SLUG } from '@/lib/category-sort-config'
 import { buildCategoryTree, type CategoryTreeRow } from '@/lib/category-tree'
 
 export type PublicCategoryNode = CategoryTreeRow & { subcategories: PublicCategoryNode[] }
 
-export async function getPublicCategories(): Promise<{
+export const getPublicCategories = cache(async function getPublicCategories(): Promise<{
   tree: PublicCategoryNode[]
   flat: CategoryTreeRow[]
 }> {
@@ -25,4 +26,4 @@ export async function getPublicCategories(): Promise<{
   const tree = buildCategoryTree(flat, sortConfig) as PublicCategoryNode[]
 
   return { tree, flat }
-}
+})

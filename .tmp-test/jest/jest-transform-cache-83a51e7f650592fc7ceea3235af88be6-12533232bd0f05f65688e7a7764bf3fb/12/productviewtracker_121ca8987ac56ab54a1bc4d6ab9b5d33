@@ -1,0 +1,25 @@
+0110c42e6a97577b7114e0298d4a89ac
+"use client";
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, /** Ürün detay — ViewContent / view_item (client island; SSR sayfayı bozmaz) */ "default", {
+    enumerable: true,
+    get: function() {
+        return ProductViewTracker;
+    }
+});
+const _datalayer = require("../lib/analytics/datalayer");
+const _useconsentedtracking = require("../lib/analytics/use-consented-tracking");
+function ProductViewTracker({ productId, name, price }) {
+    (0, _useconsentedtracking.useConsentedTracking)(productId, (channels)=>(0, _datalayer.trackViewContent)({
+            productId,
+            name,
+            value: price,
+            ...channels
+        }));
+    return null;
+}
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcTGVub3ZvXFxEb2N1bWVudHNcXEdpdEh1YlxcZmF2b3Jpa296LnNpdGVcXHNyY1xcY29tcG9uZW50c1xccHJvZHVjdC12aWV3LXRyYWNrZXIudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIid1c2UgY2xpZW50J1xyXG5cclxuaW1wb3J0IHsgdHJhY2tWaWV3Q29udGVudCB9IGZyb20gJ0AvbGliL2FuYWx5dGljcy9kYXRhbGF5ZXInXHJcbmltcG9ydCB7IHVzZUNvbnNlbnRlZFRyYWNraW5nIH0gZnJvbSAnQC9saWIvYW5hbHl0aWNzL3VzZS1jb25zZW50ZWQtdHJhY2tpbmcnXHJcblxyXG50eXBlIFByb3BzID0ge1xyXG4gIHByb2R1Y3RJZDogc3RyaW5nXHJcbiAgbmFtZTogc3RyaW5nXHJcbiAgcHJpY2U6IG51bWJlclxyXG59XHJcblxyXG4vKiogw5xyw7xuIGRldGF5IOKAlCBWaWV3Q29udGVudCAvIHZpZXdfaXRlbSAoY2xpZW50IGlzbGFuZDsgU1NSIHNheWZhecSxIGJvem1heikgKi9cclxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gUHJvZHVjdFZpZXdUcmFja2VyKHsgcHJvZHVjdElkLCBuYW1lLCBwcmljZSB9OiBQcm9wcykge1xyXG4gIHVzZUNvbnNlbnRlZFRyYWNraW5nKHByb2R1Y3RJZCwgKGNoYW5uZWxzKSA9PiB0cmFja1ZpZXdDb250ZW50KHsgcHJvZHVjdElkLCBuYW1lLCB2YWx1ZTogcHJpY2UsIC4uLmNoYW5uZWxzIH0pKVxyXG5cclxuICByZXR1cm4gbnVsbFxyXG59XHJcbiJdLCJuYW1lcyI6WyJQcm9kdWN0Vmlld1RyYWNrZXIiLCJwcm9kdWN0SWQiLCJuYW1lIiwicHJpY2UiLCJ1c2VDb25zZW50ZWRUcmFja2luZyIsImNoYW5uZWxzIiwidHJhY2tWaWV3Q29udGVudCIsInZhbHVlIl0sIm1hcHBpbmdzIjoiQUFBQTs7Ozs7K0JBV0EsNkVBQTZFLEdBQzdFOzs7ZUFBd0JBOzs7MkJBVlM7c0NBQ0k7QUFTdEIsU0FBU0EsbUJBQW1CLEVBQUVDLFNBQVMsRUFBRUMsSUFBSSxFQUFFQyxLQUFLLEVBQVM7SUFDMUVDLElBQUFBLDBDQUFvQixFQUFDSCxXQUFXLENBQUNJLFdBQWFDLElBQUFBLDJCQUFnQixFQUFDO1lBQUVMO1lBQVdDO1lBQU1LLE9BQU9KO1lBQU8sR0FBR0UsUUFBUTtRQUFDO0lBRTVHLE9BQU87QUFDVCJ9

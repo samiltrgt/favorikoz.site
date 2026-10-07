@@ -9,6 +9,8 @@ import ProductPurchase, { FavButton } from '@/components/product-purchase'
 import ProductViewTracker from '@/components/product-view-tracker'
 import { getPopularProductSlugs, getProductBySlug } from '@/lib/get-product-by-slug'
 import { formatTRY } from '@/lib/price'
+import { getProductSeo, validProductReviews } from '@/lib/product-seo'
+import { getProductBreadcrumbs, getProductSeoReviews, getRelatedProducts } from '@/lib/product-seo-server'
 
 export const revalidate = 60
 
@@ -28,22 +30,25 @@ export default async function ProductDetailPage({ params }: Props) {
   if (!product) notFound()
 
   const allImages = [product.image, ...(product.images || [])].filter(Boolean) as string[]
-  const rating = product.rating
-  const reviewsCount = product.reviews_count ?? 0
+  const [breadcrumbs, reviewRows, relatedProducts] = await Promise.all([getProductBreadcrumbs(product), getProductSeoReviews(product.id).catch(() => null), getRelatedProducts(product)])
+  const reviewsUnavailable = reviewRows === null
+  const reviews = validProductReviews(reviewRows || [])
+  const reviewsCount = reviews.length
+  const rating = reviewsCount ? reviews.reduce((sum, review) => sum + review.ratingValue, 0) / reviewsCount : null
+  const { content } = getProductSeo(product)
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
       <ProductViewTracker productId={product.id} name={product.name} price={product.price} />
 
-      <nav className="bg-gray-50 py-3">
+      <nav aria-label="Kategori yolu" className="bg-gray-50 py-3">
         <div className="container">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-black">Anasayfa</Link>
-            <span>/</span>
-            <Link href="/tum-urunler" className="hover:text-black">Tüm Ürünler</Link>
-            <span>/</span>
-            <span className="text-black line-clamp-1">{product.name}</span>
+            {breadcrumbs.map((item, index) => <span key={item.href} className="inline-flex items-center gap-2">
+              {index > 0 && <span aria-hidden="true">/</span>}
+              {index === breadcrumbs.length - 1 ? <span aria-current="page" className="text-black line-clamp-1">{item.name}</span> : <Link href={item.href} className="hover:text-black">{item.name}</Link>}
+            </span>)}
           </div>
         </div>
       </nav>
@@ -86,14 +91,13 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3 text-gray-600">
-                  <div className="flex items-center gap-1">
+                  {rating !== null && <div className="flex items-center gap-1">
                     <span className="text-yellow-500">⭐</span>
                     <span className="font-semibold">
-                      {typeof rating === 'number' ? rating.toFixed(1) : rating}
+                      {rating.toFixed(1)}
                     </span>
-                  </div>
-                  <span>·</span>
-                  <span className="font-medium">{reviewsCount} değerlendirme</span>
+                  </div>}
+                  <span className="font-medium">{reviewsUnavailable ? 'Değerlendirmeler yüklenemedi' : reviewsCount ? `${reviewsCount} değerlendirme` : 'Henüz değerlendirme yok'}</span>
                   {product.in_stock === false && (
                     <>
                       <span>·</span>
@@ -116,8 +120,8 @@ export default async function ProductDetailPage({ params }: Props) {
               }}
             />
 
-            {product.description && (
-              <details className="rounded-xl border border-gray-200 overflow-hidden group">
+            {product.description && !content && (
+              <details open className="rounded-xl border border-gray-200 overflow-hidden group">
                 <summary className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <h2 className="text-lg font-bold text-black">Ürün Açıklaması</h2>
                   <ChevronDown className="w-5 h-5 text-gray-600 transition-transform group-open:rotate-180" />
@@ -129,6 +133,18 @@ export default async function ProductDetailPage({ params }: Props) {
                 </div>
               </details>
             )}
+
+            {content && <section className="rounded-xl border border-gray-200 p-6 space-y-4" aria-labelledby="product-guide-heading">
+              <h2 id="product-guide-heading" className="text-lg font-bold">{content.heading}</h2>
+              {content.paragraphs.map(paragraph => <p key={paragraph} className="text-gray-700 leading-relaxed">{paragraph}</p>)}
+              <dl className="grid grid-cols-2 gap-3 text-sm">{content.facts.map(fact => <div key={fact.label}><dt className="font-semibold">{fact.label}</dt><dd className="text-gray-700">{fact.value}</dd></div>)}</dl>
+              {content.selectionNote && <p className="text-sm text-gray-600">{content.selectionNote}</p>}
+            </section>}
+
+            {relatedProducts.length > 0 && <section className="rounded-xl border border-gray-200 p-6">
+              <h2 className="text-lg font-bold mb-3">Aynı kategorideki ürünler</h2>
+              <ul className="space-y-2">{relatedProducts.map(item => <li key={item.slug}><Link href={`/urun/${encodeURIComponent(item.slug)}`} className="text-gray-700 underline hover:text-black">{item.name}</Link></li>)}</ul>
+            </section>}
 
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 p-4 bg-white hover:bg-gray-50 transition-colors duration-200">
@@ -148,7 +164,7 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
 
         <div className="container max-w-6xl mx-auto px-4">
-          <ProductReviews productId={product.id} productName={product.name} />
+          <ProductReviews productId={product.id} productName={product.name} initialLoadError={reviewsUnavailable} initialReviews={reviews.map(review => ({ id: review.id!, verified: review.verified === true, author: review.author, rating: review.ratingValue, comment: review.reviewBody, date: new Date(review.datePublished).toLocaleDateString('tr-TR') }))} />
         </div>
       </div>
 

@@ -1,24 +1,10 @@
 import type { MetadataRoute } from 'next'
-import { headers } from 'next/headers'
-import { getSiteUrl } from '@/lib/site-url'
+import { getSiteUrl, isPreviewDeployment } from '@/lib/site-url'
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  let baseUrl = getSiteUrl()
-  try {
-    const headersList = await headers()
-    const host = headersList.get('host')
-    const proto = headersList.get('x-forwarded-proto') ?? 'https'
-    if (host) baseUrl = `${proto === 'https' ? 'https' : 'http'}://${host}`
-  } catch {
-    // fallback env
-  }
-
+export default function robots(): MetadataRoute.Robots {
+  if (isPreviewDeployment()) return { rules: { userAgent: '*', disallow: '/' } }
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/admin/', '/api/', '/checkout', '/payment/', '/_next/'],
-    },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    rules: { userAgent: '*', allow: '/', disallow: ['/admin/', '/api/'] },
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   }
 }

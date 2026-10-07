@@ -20,6 +20,8 @@ export interface ProductCardProduct {
   image: string
   rating?: number
   reviews_count?: number
+  /** Set only when rating/count were calculated from verified live reviews. */
+  ratings_verified?: boolean
   in_stock?: boolean
   is_new?: boolean
   is_best_seller?: boolean
@@ -44,6 +46,14 @@ export default function ProductCard({
   index = 0,
 }: ProductCardProps) {
   const compact = variant === 'compact'
+  const hasRating =
+    product.ratings_verified === true &&
+    typeof product.rating === 'number' && Number.isFinite(product.rating) &&
+    product.rating >= 1 && product.rating <= 5 &&
+    typeof product.reviews_count === 'number' && Number.isInteger(product.reviews_count) &&
+    product.reviews_count > 0
+  const hasNoReviews = product.ratings_verified === true && product.reviews_count === 0
+  const showRating = hasRating || hasNoReviews
   const [isCartLoading, setIsCartLoading] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -141,26 +151,26 @@ export default function ProductCard({
               {product.brand && (
                 <p className="text-gray-400 text-xs mb-2 uppercase tracking-wide">{product.brand}</p>
               )}
-              <div
+              {showRating && <div
                 className="flex items-center gap-1"
                 role="img"
-                aria-label={`5 üzerinden ${product.rating || 0}`}
+                aria-label={hasRating ? `5 üzerinden ${product.rating}` : 'Henüz değerlendirme yok'}
               >
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     aria-hidden
                     className={`w-3 h-3 ${
-                      i < Math.floor(product.rating || 0)
+                      hasRating && i < Math.floor(product.rating || 0)
                         ? 'text-black'
                         : 'text-gray-300'
                     }`}
                   />
                 ))}
                 <span className="text-xs text-gray-400 ml-1" aria-hidden>
-                  ({product.reviews_count ?? 0})
+                  {hasRating ? `(${product.reviews_count})` : 'Henüz değerlendirme yok'}
                 </span>
-              </div>
+              </div>}
             </div>
             <div className="flex items-center gap-4 flex-shrink-0">
               <div className="text-right">
@@ -233,6 +243,8 @@ export default function ProductCard({
             coverClassName="object-cover"
             containClassName="object-cover"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+            loading={index < 2 ? 'eager' : 'lazy'}
+            fetchPriority={index < 2 ? 'high' : 'auto'}
           />
         </Link>
 
@@ -293,24 +305,24 @@ export default function ProductCard({
 
         {subtitle ? <p className="pcard__desc">{subtitle}</p> : null}
 
-        <div
+        {showRating && <div
           className="pcard__rating"
           role="img"
-          aria-label={`5 üzerinden ${ratingValue}`}
+          aria-label={hasRating ? `5 üzerinden ${ratingValue}` : 'Henüz değerlendirme yok'}
         >
           <div className="pcard__stars" aria-hidden>
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className="pcard__star pcard__star--on"
+                className={`pcard__star ${hasRating && i < Math.floor(ratingValue) ? 'pcard__star--on' : 'pcard__star--off'}`}
                 strokeWidth={0}
               />
             ))}
           </div>
           <span className="pcard__count" aria-hidden>
-            ({product.reviews_count || 0})
+            {hasRating ? `(${product.reviews_count})` : 'Henüz değerlendirme yok'}
           </span>
-        </div>
+        </div>}
       </div>
     </article>
   )

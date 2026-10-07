@@ -1,0 +1,63 @@
+02da3b4a5059a97e44ba618aaa784bf2
+/**
+ * Merkezi fiyat birimleri:
+ * - DB, sepet, kupon, kargo ve sipariş: tam sayı kuruş (TL * 100).
+ * - API ürün gösterimi ve ekrandaki fiyatlar: TL.
+ * - Ödeme sağlayıcısına gönderilen fiyat: iki ondalıklı TL metni.
+ */ /** DB → display (API/UI ürün fiyatı) */ "use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    dbToDisplay: function() {
+        return dbToDisplay;
+    },
+    displayToDb: function() {
+        return displayToDb;
+    },
+    formatTRY: function() {
+        return formatTRY;
+    },
+    kurusToTl: function() {
+        return kurusToTl;
+    },
+    toCartPrice: function() {
+        return toCartPrice;
+    },
+    toDisplayPrice: function() {
+        return toDisplayPrice;
+    }
+});
+function dbToDisplay(dbPrice) {
+    return dbPrice / 100;
+}
+function displayToDb(displayPrice) {
+    const kurus = Math.round((displayPrice + Number.EPSILON) * 100);
+    if (!Number.isFinite(displayPrice) || !Number.isSafeInteger(kurus)) {
+        throw new Error("Ge\xe7ersiz fiyat");
+    }
+    return kurus;
+}
+function toDisplayPrice(cartPrice) {
+    return kurusToTl(cartPrice);
+}
+function toCartPrice(displayPrice) {
+    return displayToDb(displayPrice);
+}
+function kurusToTl(kurus) {
+    return kurus / 100;
+}
+function formatTRY(amount) {
+    return amount.toLocaleString("tr-TR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcTGVub3ZvXFxEb2N1bWVudHNcXEdpdEh1YlxcZmF2b3Jpa296LnNpdGVcXHNyY1xcbGliXFxwcmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogTWVya2V6aSBmaXlhdCBiaXJpbWxlcmk6XHJcbiAqIC0gREIsIHNlcGV0LCBrdXBvbiwga2FyZ28gdmUgc2lwYXJpxZ86IHRhbSBzYXnEsSBrdXJ1xZ8gKFRMICogMTAwKS5cclxuICogLSBBUEkgw7xyw7xuIGfDtnN0ZXJpbWkgdmUgZWtyYW5kYWtpIGZpeWF0bGFyOiBUTC5cclxuICogLSDDlmRlbWUgc2HEn2xhecSxY8Sxc8SxbmEgZ8O2bmRlcmlsZW4gZml5YXQ6IGlraSBvbmRhbMSxa2zEsSBUTCBtZXRuaS5cclxuICovXHJcblxyXG4vKiogREIg4oaSIGRpc3BsYXkgKEFQSS9VSSDDvHLDvG4gZml5YXTEsSkgKi9cclxuZXhwb3J0IGZ1bmN0aW9uIGRiVG9EaXNwbGF5KGRiUHJpY2U6IG51bWJlcik6IG51bWJlciB7XHJcbiAgcmV0dXJuIGRiUHJpY2UgLyAxMDBcclxufVxyXG5cclxuLyoqIERpc3BsYXkg4oaSIERCICovXHJcbmV4cG9ydCBmdW5jdGlvbiBkaXNwbGF5VG9EYihkaXNwbGF5UHJpY2U6IG51bWJlcik6IG51bWJlciB7XHJcbiAgY29uc3Qga3VydXMgPSBNYXRoLnJvdW5kKChkaXNwbGF5UHJpY2UgKyBOdW1iZXIuRVBTSUxPTikgKiAxMDApXHJcbiAgaWYgKCFOdW1iZXIuaXNGaW5pdGUoZGlzcGxheVByaWNlKSB8fCAhTnVtYmVyLmlzU2FmZUludGVnZXIoa3VydXMpKSB7XHJcbiAgICB0aHJvdyBuZXcgRXJyb3IoJ0dlw6dlcnNpeiBmaXlhdCcpXHJcbiAgfVxyXG4gIHJldHVybiBrdXJ1c1xyXG59XHJcblxyXG4vKiogU2VwZXQga3VydcWfIOKGkiBla3JhbiBUTCAqL1xyXG5leHBvcnQgZnVuY3Rpb24gdG9EaXNwbGF5UHJpY2UoY2FydFByaWNlOiBudW1iZXIpOiBudW1iZXIge1xyXG4gIHJldHVybiBrdXJ1c1RvVGwoY2FydFByaWNlKVxyXG59XHJcblxyXG4vKiogRWtyYW4gVEwg4oaSIHNlcGV0IGt1cnXFnyAqL1xyXG5leHBvcnQgZnVuY3Rpb24gdG9DYXJ0UHJpY2UoZGlzcGxheVByaWNlOiBudW1iZXIpOiBudW1iZXIge1xyXG4gIHJldHVybiBkaXNwbGF5VG9EYihkaXNwbGF5UHJpY2UpXHJcbn1cclxuXHJcbi8qKiBLdXJ1xZ8g4oaSIFRMIChzaXBhcmnFnyAvIGUtcG9zdGEpICovXHJcbmV4cG9ydCBmdW5jdGlvbiBrdXJ1c1RvVGwoa3VydXM6IG51bWJlcik6IG51bWJlciB7XHJcbiAgcmV0dXJuIGt1cnVzIC8gMTAwXHJcbn1cclxuXHJcbi8qKiBEaXNwbGF5ICh2ZXlhIFRMKSB0dXRhcsSxIHRyLVRSIHBhcmEgbWV0bmkg4oCUIHNlbWJvbCB5b2sgKi9cclxuZXhwb3J0IGZ1bmN0aW9uIGZvcm1hdFRSWShhbW91bnQ6IG51bWJlcik6IHN0cmluZyB7XHJcbiAgcmV0dXJuIGFtb3VudC50b0xvY2FsZVN0cmluZygndHItVFInLCB7XHJcbiAgICBtaW5pbXVtRnJhY3Rpb25EaWdpdHM6IDIsXHJcbiAgICBtYXhpbXVtRnJhY3Rpb25EaWdpdHM6IDIsXHJcbiAgfSlcclxufVxyXG4iXSwibmFtZXMiOlsiZGJUb0Rpc3BsYXkiLCJkaXNwbGF5VG9EYiIsImZvcm1hdFRSWSIsImt1cnVzVG9UbCIsInRvQ2FydFByaWNlIiwidG9EaXNwbGF5UHJpY2UiLCJkYlByaWNlIiwiZGlzcGxheVByaWNlIiwia3VydXMiLCJNYXRoIiwicm91bmQiLCJOdW1iZXIiLCJFUFNJTE9OIiwiaXNGaW5pdGUiLCJpc1NhZmVJbnRlZ2VyIiwiRXJyb3IiLCJjYXJ0UHJpY2UiLCJhbW91bnQiLCJ0b0xvY2FsZVN0cmluZyIsIm1pbmltdW1GcmFjdGlvbkRpZ2l0cyIsIm1heGltdW1GcmFjdGlvbkRpZ2l0cyJdLCJtYXBwaW5ncyI6IkFBQUE7Ozs7O0NBS0MsR0FFRCxzQ0FBc0M7Ozs7Ozs7Ozs7O0lBQ3RCQSxXQUFXO2VBQVhBOztJQUtBQyxXQUFXO2VBQVhBOztJQXdCQUMsU0FBUztlQUFUQTs7SUFMQUMsU0FBUztlQUFUQTs7SUFMQUMsV0FBVztlQUFYQTs7SUFMQUMsY0FBYztlQUFkQTs7O0FBZFQsU0FBU0wsWUFBWU0sT0FBZTtJQUN6QyxPQUFPQSxVQUFVO0FBQ25CO0FBR08sU0FBU0wsWUFBWU0sWUFBb0I7SUFDOUMsTUFBTUMsUUFBUUMsS0FBS0MsS0FBSyxDQUFDLEFBQUNILENBQUFBLGVBQWVJLE9BQU9DLE9BQU8sQUFBRCxJQUFLO0lBQzNELElBQUksQ0FBQ0QsT0FBT0UsUUFBUSxDQUFDTixpQkFBaUIsQ0FBQ0ksT0FBT0csYUFBYSxDQUFDTixRQUFRO1FBQ2xFLE1BQU0sSUFBSU8sTUFBTTtJQUNsQjtJQUNBLE9BQU9QO0FBQ1Q7QUFHTyxTQUFTSCxlQUFlVyxTQUFpQjtJQUM5QyxPQUFPYixVQUFVYTtBQUNuQjtBQUdPLFNBQVNaLFlBQVlHLFlBQW9CO0lBQzlDLE9BQU9OLFlBQVlNO0FBQ3JCO0FBR08sU0FBU0osVUFBVUssS0FBYTtJQUNyQyxPQUFPQSxRQUFRO0FBQ2pCO0FBR08sU0FBU04sVUFBVWUsTUFBYztJQUN0QyxPQUFPQSxPQUFPQyxjQUFjLENBQUMsU0FBUztRQUNwQ0MsdUJBQXVCO1FBQ3ZCQyx1QkFBdUI7SUFDekI7QUFDRiJ9
