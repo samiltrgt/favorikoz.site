@@ -87,7 +87,7 @@ export default function FixedPromoCarousel({ promo, products }: FixedPromoCarous
     <section className="pc-section" aria-labelledby={headingId} style={{ '--pc-promo': promo.backgroundColor ?? '#9a3d6a' } as CSSProperties}>
       <div className="pc-grid">
         <aside className="pc-promo">
-          <h2 id={headingId}>{promo.title}</h2>
+          <h1 id={headingId}>{promo.title}</h1>
           {promo.description ? <p>{promo.description}</p> : null}
           <SiteAnchor className="pc-promo-cta" href={promo.href}>{promo.ctaLabel}</SiteAnchor>
         </aside>

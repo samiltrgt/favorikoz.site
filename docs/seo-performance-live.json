@@ -1,0 +1,780 @@
+{
+  "measuredAt": "2026-10-07T19:22:32.144Z",
+  "origin": "https://favorikozmetik.com",
+  "conditions": "390x844, DPR1, CPU4x, 150ms latency, 1.6Mbps download, cold context, 6s post-load observation; lab only. Cross-origin resource bytes may be unavailable.",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "xRobotsTag": null,
+      "lcp": 11272,
+      "cls": 0.004653702747018261,
+      "lcpElement": "<img alt=\"Protez tırnak başlangıç seti, UV lamba ve tırnak bakım ürünleri\" fetchpriority=\"high\" loading=\"eager\" width=\"2172\" height=\"724\" decoding=\"async\" data-nimg=\"1\" style=\"color:transparent;width:100%;height:auto\" sizes=\"100vw\" srcset=\"/seo-images/a7bf365ed84cf583423b-420.webp 320w, /seo-images/a7bf365ed84cf583423b-420.webp 320w, /seo-images/a7",
+      "ttfbMs": 1203,
+      "domContentLoadedMs": 14381.20000000298,
+      "loadMs": 19746.300000000745,
+      "title": "Favori Kozmetik | Tırnak, Saç ve Kişisel Bakım Ürünleri",
+      "canonical": "https://www.favorikozmetik.com/",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Favori Kozmetik — Tırnak, Saç ve Kişisel Bakım",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/b2c1985ec753d8705d27-420.webp",
+          "durationMs": 7620.599999997765,
+          "transferBytes": 15754,
+          "decodedBytes": 15454
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c955fe5c61f800ec62fb-420.webp",
+          "durationMs": 8637,
+          "transferBytes": 7216,
+          "decodedBytes": 6916
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/a7bf365ed84cf583423b-420.webp",
+          "naturalWidth": 390,
+          "displayWidth": 390,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/b2c1985ec753d8705d27-420.webp",
+          "naturalWidth": 390,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c955fe5c61f800ec62fb-420.webp",
+          "naturalWidth": 390,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "",
+          "naturalWidth": 0,
+          "displayWidth": 390,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/ellisan.png",
+          "naturalWidth": 239,
+          "displayWidth": 82,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/opzia.png",
+          "naturalWidth": 229,
+          "displayWidth": 52,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/runail.png",
+          "naturalWidth": 499,
+          "displayWidth": 78,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/brands/qnail.png",
+          "naturalWidth": 455,
+          "displayWidth": 88,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/1ece45144801073521c1-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/d865d5d95b56f921ea2f-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1855/prod/QC_PREP/20260415/12/f8cb62fc-c127-390f-88b3-7bc6db1345ee/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1803/prod/QC_PREP/20251225/11/40feee13-6e52-333e-8eba-9d6f4bf8d3f0/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1806/prod/QC_PREP/20251230/16/2801b92f-2850-3cd1-afb4-469df1c008b6/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop",
+          "naturalWidth": 72,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop",
+          "naturalWidth": 72,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop",
+          "naturalWidth": 72,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1826/prod/QC_PREP/20260212/16/f72ff625-45a7-3324-a289-e54f88dcc0b2/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1825/prod/QC_PREP/20260212/17/44093fb7-7611-3de9-9bfb-6ab95a258a07/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1826/prod/QC_ENRICHMENT/20260213/15/96283498-8643-398f-b045-4a4b460e44e9/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1826/prod/QC_ENRICHMENT/20260213/15/32b635d5-2d24-3dbd-8a9b-81c7256881ff/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 208,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/ad2950d3-251f-3ee8-94a4-d9fa31f43b6d/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1801/prod/QC_PREP/20251217/15/6343a208-6221-3af5-bc81-bf4ef4dd7767/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/cd4a842b-4829-34af-abcc-6baebfa33955/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1793/prod/QC_PREP/20251120/12/c3e74d8d-23d4-3798-9174-5463ab1b56d4/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_138_50-1-13580959022588.jpg",
+          "naturalWidth": 49,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1814/prod/QC_PREP/20260122/14/03c7d1ea-af61-302e-9909-97efeb0d9fa1/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1921/prod/QC_PREP/20260505/13/2f9c7832-60bc-375f-89c3-90fc6c74b031/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1893/prod/QC_PREP/20260505/13/c67ed575-e3d9-3b76-9c4f-6331babe660a/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "naturalWidth": 180,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1892/prod/QC_PREP/20260518/00/a1798af8-1346-3958-8164-213b78181901/1_org_zoom.jpg",
+          "naturalWidth": 473,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/ad2950d3-251f-3ee8-94a4-d9fa31f43b6d/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1801/prod/QC_PREP/20251217/15/6343a208-6221-3af5-bc81-bf4ef4dd7767/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1800/prod/QC_PREP/20251217/15/cd4a842b-4829-34af-abcc-6baebfa33955/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1793/prod/QC_PREP/20251120/12/c3e74d8d-23d4-3798-9174-5463ab1b56d4/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_138_50-1-13580959022588.jpg",
+          "naturalWidth": 49,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1814/prod/QC_PREP/20260122/14/03c7d1ea-af61-302e-9909-97efeb0d9fa1/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1921/prod/QC_PREP/20260505/13/2f9c7832-60bc-375f-89c3-90fc6c74b031/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1893/prod/QC_PREP/20260505/13/c67ed575-e3d9-3b76-9c4f-6331babe660a/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "naturalWidth": 180,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1892/prod/QC_PREP/20260518/00/a1798af8-1346-3958-8164-213b78181901/1_org_zoom.jpg",
+          "naturalWidth": 473,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/4100afa7-c23b-47c9-8057-32958567ef7c/1512/img-0456.webp",
+          "naturalWidth": 180,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/a81682f6-3c67-4def-bd50-5c92383333bf/1512/img-0460.webp",
+          "naturalWidth": 126,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/5ee73aab-eb8a-4705-bd49-056fb603d92a/1512/710qs-4h1ql.webp",
+          "naturalWidth": 1142,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/712117f5-e0a0-450c-9a6a-fd2afde865e2/1512/71oxw9csbil.webp",
+          "naturalWidth": 1142,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://staleks.tr/cdn/shop/files/87cf17bc7c3c492ce8bdd1620f30d8ea.jpg?v=1772723592&width=1240",
+          "naturalWidth": 223,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1804/prod/QC_PREP/20251224/10/7be4707b-e1c2-3695-b4c3-a202ae066644/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1535/product/media/images/prod/QC/20240910/13/50234020-4616-33a6-9d99-4d89719e8a8b/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1588/prod/QC/20241018/12/00484cbc-8ffc-39a4-b2f4-04ee875ecdd1/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.myikas.com/images/27541c2f-8d4e-4f4e-ade6-c463a33a3f11/274b8e6b-6c56-4468-89e4-ef5cdce67d0f/image_1512.webp",
+          "naturalWidth": 162,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/dc781bd4-d669-3427-8947-af778aaf81da/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/e43ae5c7-4619-3c03-bdbc-685bc9229d12/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/b187f393-b34a-3818-9ee7-97d711c297de/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/a39e36e1fa6db5b59216-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/0afcc7f7-114c-3844-bda9-d79a167622b2/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1152/product/media/images/prod/SPM/PIM/20240130/16/204cb599-f83c-34b4-bf10-7b17f1a7179a/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/f72a192a-8b4f-35d6-b14b-7f5367dc07ba/1_org_zoom.jpg",
+          "naturalWidth": 216,
+          "displayWidth": 0,
+          "loading": "eager"
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/ty1154/product/media/images/prod/SPM/PIM/20240130/16/793dd8a0-53d8-30e3-9252-8acbc45abad5/1_org_zoom.jpg",
+          "naturalWidth": 914,
+          "displayWidth": 0,
+          "loading": "eager"
+        }
+      ],
+      "resourceCount": 86,
+      "transferredBytesVisibleToTiming": 568418,
+      "pageErrors": []
+    },
+    {
+      "path": "/kategori/tirnak",
+      "status": 200,
+      "xRobotsTag": null,
+      "lcp": 7416,
+      "cls": 0.0036415399474405336,
+      "lcpElement": "<p class=\"text-sm text-gray-700 leading-relaxed mb-4\">Deneyiminizi iyileştirmek ve reklam performansını ölçmek için çerez kullanıyoruz. Pazarlama çerezleri yalnızca onayınızla etkinleşir. Ayrıntılar için <a class=\"underline text-black hover:text-gray-700\" href=\"/cerez-politikasi\">Çerez Politikası</a>.</p>",
+      "ttfbMs": 1618.699999999255,
+      "domContentLoadedMs": 3818,
+      "loadMs": 6733.29999999702,
+      "title": "Tırnak ve Protez Tırnak Malzemeleri | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/kategori/tirnak",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Tırnak",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/c7c6a5dc47d5fc8ad184-320.webp",
+          "durationMs": 3541.599999997765,
+          "transferBytes": 30608,
+          "decodedBytes": 30308
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/d865d5d95b56f921ea2f-320.webp",
+          "durationMs": 2250.400000002235,
+          "transferBytes": 13038,
+          "decodedBytes": 12738
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/1ece45144801073521c1-320.webp",
+          "durationMs": 2854,
+          "transferBytes": 17148,
+          "decodedBytes": 16848
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1801/prod/QC_PREP/20251217/20/2110ac81-b574-3d65-a369-e67625afb5f2/1_org_zoom.jpg",
+          "durationMs": 2621.60000000149,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "durationMs": 3020.89999999851,
+          "transferBytes": 36314,
+          "decodedBytes": 36014
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c0e4f2e6018905df48fd-320.webp",
+          "durationMs": 3176.599999997765,
+          "transferBytes": 8630,
+          "decodedBytes": 8330
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 2767.199999999255,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "durationMs": 2718.60000000149,
+          "transferBytes": 27712,
+          "decodedBytes": 27412
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/3231423683f6f0f951c2-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 171,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/0ba01cbdbd11cc9b3764-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 171,
+          "loading": "eager"
+        }
+      ],
+      "resourceCount": 54,
+      "transferredBytesVisibleToTiming": 586568,
+      "pageErrors": []
+    },
+    {
+      "path": "/kategori/tirnak/cihazlar/toz-toplayici",
+      "status": 200,
+      "xRobotsTag": null,
+      "lcp": 2876,
+      "cls": 0.0033762157184250127,
+      "lcpElement": "<img alt=\"Tek Fanlı Toz Toplama 80 Watt\" fetchpriority=\"high\" loading=\"eager\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcset=\"https://cosskozmetik.com/cdn/shop/files/WhatsApp",
+      "ttfbMs": 1730.5,
+      "domContentLoadedMs": 3047.400000002235,
+      "loadMs": 4318.300000000745,
+      "title": "Toz Toplayıcı Ürünleri | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/kategori/tirnak/cihazlar/toz-toplayici",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Toz Toplayıcı",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 1430.3999999985099,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "naturalWidth": 180,
+          "displayWidth": 171,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c0e4f2e6018905df48fd-320.webp",
+          "naturalWidth": 195,
+          "displayWidth": 171,
+          "loading": "eager"
+        }
+      ],
+      "resourceCount": 45,
+      "transferredBytesVisibleToTiming": 459871,
+      "pageErrors": []
+    },
+    {
+      "path": "/tum-urunler",
+      "status": 200,
+      "xRobotsTag": null,
+      "lcp": 3788,
+      "cls": 0.0036415399474405336,
+      "lcpElement": "<img alt=\"Strong 210 Freze Seti UV LED Kurutucu 3 Fanlı Toz Toplayıcı Masa Lambası 4'lü Set\" fetchpriority=\"high\" loading=\"eager\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw\" srcs",
+      "ttfbMs": 2329.39999999851,
+      "domContentLoadedMs": 4200.099999997765,
+      "loadMs": 7568.699999999255,
+      "title": "Tüm Ürünler | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/tum-urunler",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Tüm Ürünler",
+          "visible": true
+        }
+      ],
+      "images": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/c7c6a5dc47d5fc8ad184-320.webp",
+          "durationMs": 2014.5,
+          "transferBytes": 30608,
+          "decodedBytes": 30308
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/d865d5d95b56f921ea2f-320.webp",
+          "durationMs": 1907.800000000745,
+          "transferBytes": 13038,
+          "decodedBytes": 12738
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/1ece45144801073521c1-320.webp",
+          "durationMs": 3742.800000000745,
+          "transferBytes": 17148,
+          "decodedBytes": 16848
+        },
+        {
+          "url": "https://cdn.dsmcdn.com/mnresize/620/920/ty1801/prod/QC_PREP/20251217/20/2110ac81-b574-3d65-a369-e67625afb5f2/1_org_zoom.jpg",
+          "durationMs": 3477.199999999255,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/WhatsAppImage2026-05-22at13.08.29_1.jpg?v=1779457023&width=1000",
+          "durationMs": 3553.2000000029802,
+          "transferBytes": 36314,
+          "decodedBytes": 36014
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c0e4f2e6018905df48fd-320.webp",
+          "durationMs": 3153.300000000745,
+          "transferBytes": 8630,
+          "decodedBytes": 8330
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/51Zj48i3XzL._AC_SL1000.jpg?v=1715610094&width=700",
+          "durationMs": 3581.300000000745,
+          "transferBytes": 36776,
+          "decodedBytes": 36476
+        },
+        {
+          "url": "https://cosskozmetik.com/cdn/shop/files/61mcw8jn-zl._ac_sl1500__20.09.2023_ce3526a.jpg?v=1715339111&width=1000",
+          "durationMs": 3539.300000000745,
+          "transferBytes": 27712,
+          "decodedBytes": 27412
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_139_50-1-9222841065115.jpg",
+          "durationMs": 3566.199999999255,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://www.runailshop.com/images/product/product_138_50-1-13580959022588.jpg",
+          "durationMs": 3606.800000000745,
+          "transferBytes": 0,
+          "decodedBytes": 0
+        }
+      ],
+      "largestVisibleImages": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/3231423683f6f0f951c2-320.webp",
+          "naturalWidth": 195,
+          "displayWidth": 171,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/0ba01cbdbd11cc9b3764-320.webp",
+          "naturalWidth": 195,
+          "displayWidth": 171,
+          "loading": "eager"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/c7c6a5dc47d5fc8ad184-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 171,
+          "loading": "lazy"
+        },
+        {
+          "url": "https://favorikozmetik.com/seo-images/d865d5d95b56f921ea2f-320.webp",
+          "naturalWidth": 243,
+          "displayWidth": 171,
+          "loading": "lazy"
+        }
+      ],
+      "resourceCount": 52,
+      "transferredBytesVisibleToTiming": 621896,
+      "pageErrors": []
+    },
+    {
+      "path": "/urun/microbrush-100lu-4sxx1b3fk",
+      "status": 200,
+      "xRobotsTag": null,
+      "lcp": 6664,
+      "cls": 0.003141775791199659,
+      "lcpElement": "<img alt=\"Microbrush 100'lü\" fetchpriority=\"high\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"(max-width: 1024px) 100vw, 50vw\" srcset=\"/seo-images/8c06b111d7eb9eba3945-320.webp 160w, /seo-images/8c06b111d7eb9eba3945-320.webp 192w, /seo",
+      "ttfbMs": 1798.0999999977648,
+      "domContentLoadedMs": 5630.699999999255,
+      "loadMs": 7595.800000000745,
+      "title": "Microbrush 100’lü Aplikatör | Favori Kozmetik",
+      "canonical": "https://www.favorikozmetik.com/urun/microbrush-100lu-4sxx1b3fk",
+      "robots": [
+        {
+          "name": "robots",
+          "content": "index, follow"
+        },
+        {
+          "name": "googlebot",
+          "content": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+        }
+      ],
+      "h1": [
+        {
+          "text": "Microbrush 100'lü",
+          "visible": true
+        }
+      ],
+      "images": [],
+      "largestVisibleImages": [
+        {
+          "url": "https://favorikozmetik.com/seo-images/8c06b111d7eb9eba3945-640.webp",
+          "naturalWidth": 594,
+          "displayWidth": 358,
+          "loading": "auto"
+        }
+      ],
+      "resourceCount": 34,
+      "transferredBytesVisibleToTiming": 332707,
+      "pageErrors": []
+    }
+  ]
+}

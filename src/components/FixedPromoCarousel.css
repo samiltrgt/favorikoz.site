@@ -5,7 +5,7 @@
 .pc-grid { display: grid; grid-template-columns: calc((100% - 36px) / 4) minmax(0, 1fr); gap: var(--pc-gap); align-items: start; }
 /* Promo matches product photo height (4/5), not the name/price block below. */
 .pc-promo { aspect-ratio: 4 / 5; align-self: start; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 28px 30px; background: var(--pc-promo, var(--color-rose-deep, #9a3d6a)); color: #fff; text-align: center; overflow-y: auto; border-radius: var(--radius-card, 10px); }
-.pc-promo h2 { flex-shrink: 0; margin: 0; font-size: clamp(var(--text-26, 26px), 3vw, var(--text-48, 48px)); font-weight: var(--weight-thin, 300); line-height: var(--lh-display-md, 1.04); letter-spacing: var(--tracking-48, -0.037em); overflow-wrap: anywhere; }
+.pc-promo h1 { flex-shrink: 0; margin: 0; font-size: clamp(var(--text-26, 26px), 3vw, var(--text-48, 48px)); font-weight: var(--weight-thin, 300); line-height: var(--lh-display-md, 1.04); letter-spacing: var(--tracking-48, -0.037em); overflow-wrap: anywhere; }
 .pc-promo p { flex-shrink: 0; margin: 0; max-width: 290px; font-size: var(--text-14, 14px); line-height: var(--lh-sm, 1.55); font-weight: var(--weight-ui, 500); letter-spacing: var(--tracking-14, -0.019em); }
 .pc-promo-cta { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 12px 40px; max-width: 100%; border: 1px solid #fff; border-radius: var(--radius-button, 600px); font-size: var(--text-14, 14px); font-weight: var(--weight-ui, 500); letter-spacing: var(--tracking-14, -0.019em); box-shadow: none; }
 .pc-promo-cta:hover { background: #fff; color: var(--pc-promo); }
@@ -27,7 +27,7 @@
     padding: 18px 10px;
     gap: 16px;
   }
-  .pc-promo h2 { font-size: clamp(var(--text-20, 20px), 5.8vw, var(--text-32, 32px)); font-weight: var(--weight-thin, 300); letter-spacing: var(--tracking-32, -0.028em); }
+  .pc-promo h1 { font-size: clamp(var(--text-20, 20px), 5.8vw, var(--text-32, 32px)); font-weight: var(--weight-thin, 300); letter-spacing: var(--tracking-32, -0.028em); }
   .pc-promo p { font-size: var(--text-12, 12px); line-height: 1.35; }
   .pc-promo-cta { min-height: 44px; padding: 8px 14px; font-size: var(--text-12, 12px); }
   .pc-product { flex-basis: 92%; }

@@ -1,5 +1,7 @@
 # İlk kapsamlı SEO çalışması — teslim ve kabul
 
+**Yayın sonrası güncelleme:** Ana sayfadaki giriş bloğu kullanıcı isteğiyle kaldırıldı; üretimde www→apex yönlendirme tutarsızlığı tespit edilip kodda düzeltildi. Güncel durum ve canlı ölçümler `seo-live-followup.md` içinde. Aşağıdaki kayıt ilk yerel teslimin tarihsel kanıtıdır.
+
 Son doğrulama: 7 Ekim 2026. Kod ve içerik değişiklikleri çalışma alanında tamamlandı. Yayına alınmadı. Aşağıdaki sonuçlar `.next-seo` dizininde oluşturulan yerel üretim build'ine aittir.
 
 ## Tamamlanan kapsam

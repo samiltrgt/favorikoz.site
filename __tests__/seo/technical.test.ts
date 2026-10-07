@@ -8,10 +8,10 @@ afterEach(() => { process.env = { ...originalEnv } })
 test('canonical origin rejects request-like deployment and local origins', () => {
   process.env.NEXT_PUBLIC_BASE_URL = 'https://www.favorikozmetik.com/path?test=1'
   process.env.VERCEL_URL = 'preview-123.vercel.app'
-  expect(getSiteUrl()).toBe('https://www.favorikozmetik.com')
+  expect(getSiteUrl()).toBe('https://favorikozmetik.com')
   for (const origin of ['http://localhost:3000', 'https://preview.vercel.app', 'javascript:alert(1)', 'https://user:pass@example.com', 'https://127.0.0.1']) {
     process.env.NEXT_PUBLIC_BASE_URL = origin
-    expect(getSiteUrl()).toBe('https://www.favorikozmetik.com')
+    expect(getSiteUrl()).toBe('https://favorikozmetik.com')
   }
   process.env.NEXT_PUBLIC_BASE_URL = 'https://shop.example.com/'
   expect(getSiteUrl()).toBe('https://shop.example.com')

@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test'
 dotenv.config({ path: '.env.local', quiet: true })
 const origin = process.argv[2] || 'http://localhost:3100'
 const output = process.argv[3] || 'docs/seo-acceptance.json'
-const production = 'https://www.favorikozmetik.com'
+const production = process.argv[4] || 'https://favorikozmetik.com'
 const baseline = JSON.parse(await fs.readFile('docs/seo-baseline.json', 'utf8'))
 const outcomes = []
 async function check(label, run) {
@@ -115,11 +115,14 @@ await check('mobile cart to checkout renders without submitting an order', async
     await page.route('**/api/payment', route => { paymentRequests += 1; return route.abort() })
     const errors = []; page.on('pageerror', error => errors.push(error.message))
     const product = baseline.candidateProducts[0]
-    await page.goto(`${origin}/urun/${product.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+    await page.goto(`${origin}/urun/${product.slug}`, { waitUntil: 'load', timeout: 60000 })
+    const initialCookieChoice = page.getByRole('button', { name: 'Reddet', exact: true })
+    if (await initialCookieChoice.isVisible()) await initialCookieChoice.click()
     await page.getByRole('button', { name: 'Sepete Ekle', exact: true }).click()
+    await page.waitForFunction(slug => JSON.parse(localStorage.getItem('cart:kurus:v2') || '[]').some(item => item.slug === slug), product.slug, { timeout: 15000 })
     await page.goto(`${origin}/sepet`, { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.getByRole('heading', { name: 'Sepetim', exact: true }).waitFor({ timeout: 15000 })
-    assert.ok((await page.locator('body').innerText()).includes(product.name), 'selected product absent from cart')
+    await page.getByText(product.name, { exact: true }).first().waitFor({ timeout: 15000 })
     await page.goto(`${origin}/checkout`, { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.getByRole('heading', { name: 'Kişisel Bilgiler', exact: true }).waitFor({ timeout: 15000 })
     const rejectCookies = page.getByRole('button', { name: 'Reddet', exact: true })
@@ -138,9 +141,9 @@ await check('mobile cart to checkout renders without submitting an order', async
     await page.getByRole('heading', { name: 'Ödeme Bilgileri', exact: true }).waitFor()
     assert.equal(paymentRequests, 0, 'payment endpoint must never be called in acceptance check')
     assert.equal(errors.length, 0, errors.join('; '))
-    await page.screenshot({ path: 'docs/seo-checkout-mobile.png', fullPage: true })
+    await page.screenshot({ path: output.replace(/\.json$/, '-checkout-mobile.png'), fullPage: true })
     return { product: product.slug, checkoutRendered: true, shippingStep: true, paymentForm: true, orderSubmitted: false, paymentRequests, pageErrors: errors }
   } finally { await browser.close() }
 })
-await fs.writeFile(output, JSON.stringify({ checkedAt: new Date().toISOString(), origin, production, checks: outcomes, passed: outcomes.every(value => value.passed), note: 'Local production-build acceptance, public anonymous catalog. No live payment/order submitted. Search Console and external Google Rich Results validation not covered.' }, null, 2))
+await fs.writeFile(output, JSON.stringify({ checkedAt: new Date().toISOString(), origin, production, checks: outcomes, passed: outcomes.every(value => value.passed), note: 'HTTP/browser acceptance, public anonymous catalog. Production is the explicitly expected canonical origin; verifying a legacy origin does not certify domain consistency. No live payment/order submitted. Search Console and external Google Rich Results validation not covered.' }, null, 2))
 if (outcomes.some(value => !value.passed)) process.exitCode = 1

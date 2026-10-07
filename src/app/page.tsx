@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import FeaturesSection from '@/components/features-section'
@@ -101,18 +100,6 @@ export default async function HomePage() {
           whiteLogos={brandMarqueeWhiteLogos}
           banners={campaignBanners}
         />
-
-        <section className="container py-8 md:py-10" aria-labelledby="home-catalog-heading">
-          <h1 id="home-catalog-heading" className="text-2xl md:text-3xl font-light text-black mb-3">Favori Kozmetik — Tırnak, Saç ve Kişisel Bakım</h1>
-          <p className="text-gray-600 max-w-3xl leading-relaxed mb-5">Tırnak uygulama malzemeleri, kirpik ekipmanları, kuaför ürünleri ve günlük bakım seçeneklerini ihtiyacınıza göre inceleyin.</p>
-          <nav aria-label="Ürün kategorileri" className="flex flex-wrap gap-3">
-            {[
-              ['tirnak', 'Tırnak Malzemeleri'], ['ipek-kirpik', 'İpek Kirpik'],
-              ['kuafor-malzemeleri', 'Kuaför Malzemeleri'], ['sac-bakimi', 'Saç Bakımı'],
-              ['kisisel-bakim', 'Kişisel Bakım'],
-            ].map(([slug, label]) => <Link key={slug} href={`/kategori/${slug}`} className="rounded-full border border-gray-300 px-4 py-2 text-sm hover:border-black">{label}</Link>)}
-          </nav>
-        </section>
 
         {fixedPromoProducts.length > 0 && (
           <div className="section-content-visibility">
