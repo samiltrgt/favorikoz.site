@@ -7,16 +7,16 @@ import {
 import type { CartItem } from '@/lib/cart'
 
 describe('analytics/value', () => {
-  it('adValueFromCart converts cart 10x to display TL', () => {
+  it('adValueFromCart converts cart kuruş to display TL', () => {
     const cart: CartItem[] = [
-      { id: 'p1', slug: 'a', name: 'A', image: '', price: 12500, qty: 1 }, // 1250 TL
+      { id: 'p1', slug: 'a', name: 'A', image: '', price: 125000, qty: 1 }, // 1250 TL
     ]
     expect(adValueFromCart(cart)).toBe(1250)
   })
 
   it('adItemsFromCart uses unit price in TL', () => {
     const cart: CartItem[] = [
-      { id: 'p1', slug: 'a', name: 'A', image: '', price: 1000, qty: 2 }, // 100 TL unit
+      { id: 'p1', slug: 'a', name: 'A', image: '', price: 10000, qty: 2 }, // 100 TL unit
     ]
     expect(adItemsFromCart(cart)).toEqual([
       { id: 'p1', quantity: 2, item_price: 100 },

@@ -1,29 +1,32 @@
 /**
  * Merkezi fiyat birimleri:
- * - DB (products.price): display * 1000
- * - Display (API/UI): (db / 100) / 10 — ürün kartlarında ₺ olarak gösterilir
- * - Cart (10x): display * 10
- * - Sipariş tutarları: genelde kuruş (TL * 100)
+ * - DB, sepet, kupon, kargo ve sipariş: tam sayı kuruş (TL * 100).
+ * - API ürün gösterimi ve ekrandaki fiyatlar: TL.
+ * - Ödeme sağlayıcısına gönderilen fiyat: iki ondalıklı TL metni.
  */
 
 /** DB → display (API/UI ürün fiyatı) */
 export function dbToDisplay(dbPrice: number): number {
-  return (dbPrice / 100) / 10
+  return dbPrice / 100
 }
 
 /** Display → DB */
 export function displayToDb(displayPrice: number): number {
-  return Math.round(displayPrice * 1000)
+  const kurus = Math.round((displayPrice + Number.EPSILON) * 100)
+  if (!Number.isFinite(displayPrice) || !Number.isSafeInteger(kurus)) {
+    throw new Error('Geçersiz fiyat')
+  }
+  return kurus
 }
 
-/** Cart (10x) → display */
+/** Sepet kuruş → ekran TL */
 export function toDisplayPrice(cartPrice: number): number {
-  return cartPrice / 10
+  return kurusToTl(cartPrice)
 }
 
-/** Display → cart (10x) */
+/** Ekran TL → sepet kuruş */
 export function toCartPrice(displayPrice: number): number {
-  return displayPrice * 10
+  return displayToDb(displayPrice)
 }
 
 /** Kuruş → TL (sipariş / e-posta) */

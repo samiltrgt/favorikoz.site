@@ -3,7 +3,8 @@ import { getIyzicoCredentials, initialize3DSPayment } from '@/lib/iyzico'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, validateCouponForSubtotal } from '@/lib/coupons'
 import { allocateIyzicoDiscount } from '@/lib/iyzico-payment-amount'
-import { dbToDisplay, toCartPrice, toDisplayPrice } from '@/lib/price'
+import { kurusToTl } from '@/lib/price'
+import { calculateCheckoutTotals } from '@/lib/checkout-pricing'
 import { captureOrderTracking } from '@/lib/tracking/identity'
 
 type BasketItem = {
@@ -102,21 +103,26 @@ export async function POST(request: NextRequest) {
       if (!product.in_stock || product.stock_quantity < quantity) {
         throw new Error(`${product.name} için yeterli stok bulunmuyor`)
       }
-      // products.price is DB; convert to cart 10x
-      const unitPrice10x = Math.round(toCartPrice(dbToDisplay(Number(product.price))))
+      const unitPriceKurus = Number(product.price)
+      if (!Number.isSafeInteger(unitPriceKurus) || unitPriceKurus <= 0) {
+        throw new Error('Sepette geçersiz ürün fiyatı bulundu')
+      }
       return {
         id: product.id,
         name: product.name,
         category: product.category_slug || 'Genel',
         quantity,
-        unitPrice10x,
+        unitPriceKurus,
       }
     })
 
-    const subtotalBeforeCoupon10x = canonicalItems.reduce((sum, i) => sum + i.unitPrice10x * i.quantity, 0)
+    const subtotalBeforeCouponKurus = canonicalItems.reduce((sum, i) => sum + i.unitPriceKurus * i.quantity, 0)
+    if (!Number.isSafeInteger(subtotalBeforeCouponKurus)) {
+      return NextResponse.json({ success: false, error: 'Sepet tutarı geçersiz' }, { status: 400 })
+    }
 
-    let discountAmount10x = 0
-    let subtotalAfterCoupon10x = subtotalBeforeCoupon10x
+    let discountAmountKurus = 0
+    let subtotalAfterCouponKurus = subtotalBeforeCouponKurus
     let appliedCoupon: {
       code: string
       discount_type: 'percent' | 'fixed'
@@ -128,14 +134,14 @@ export async function POST(request: NextRequest) {
       const couponResult = await validateCouponForSubtotal({
         supabase: ordersClient,
         couponCode,
-        subtotal10x: subtotalBeforeCoupon10x,
+        subtotalKurus: subtotalBeforeCouponKurus,
         customerIdentityKey,
       })
       if (!couponResult.valid) {
         return NextResponse.json({ success: false, error: couponResult.error }, { status: 400 })
       }
-      discountAmount10x = couponResult.discountAmount10x
-      subtotalAfterCoupon10x = couponResult.subtotalAfterDiscount10x
+      discountAmountKurus = couponResult.discountAmountKurus
+      subtotalAfterCouponKurus = couponResult.subtotalAfterDiscountKurus
       appliedCoupon = {
         code: couponResult.coupon.code,
         discount_type: couponResult.coupon.discount_type,
@@ -143,20 +149,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate shipping: free if >= 2000 TL (20000 in 10x format), otherwise 100 TL (1000 in 10x format)
-    const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL (10x formatında)
-    const SHIPPING_COST = 1000 // 100 TL (10x formatında)
-    const shipping10x = subtotalAfterCoupon10x >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-
-    // Total price in 10x format
-    const totalPrice10x = subtotalAfterCoupon10x + shipping10x
+    const totals = calculateCheckoutTotals(subtotalBeforeCouponKurus, discountAmountKurus)
+    const { shippingKurus, totalKurus } = totals
+    if (body.expectedTotalKurus !== undefined && body.expectedTotalKurus !== totalKurus) {
+      return NextResponse.json({ success: false, error: 'Fiyat değişti. Lütfen sepeti yenileyin.' }, { status: 409 })
+    }
 
     // Iyzico rejects non-positive basket lines. Spread coupons across actual products.
     let discountedLineKurus: number[]
     try {
       discountedLineKurus = allocateIyzicoDiscount(
-        canonicalItems.map((item) => Math.round(toCartPrice(item.unitPrice10x * item.quantity))),
-        Math.round(toCartPrice(discountAmount10x))
+        canonicalItems.map((item) => item.unitPriceKurus * item.quantity),
+        discountAmountKurus
       )
     } catch (error) {
       return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Kupon indirimi geçersiz' }, { status: 400 })
@@ -171,17 +175,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    if (shipping10x > 0) {
+    if (shippingKurus > 0) {
       basketItemsForIyzico.push({
         id: 'shipping',
         name: 'Kargo',
         category1: 'Kargo',
         itemType: 'VIRTUAL',
-        price: toPriceString(toDisplayPrice(shipping10x)),
+        price: toPriceString(kurusToTl(shippingKurus)),
       })
     }
-    const basketTotalKurus = discountedLineKurus.reduce((sum, price) => sum + price, 0) + Math.round(toCartPrice(shipping10x))
-    if (basketTotalKurus !== Math.round(toCartPrice(totalPrice10x))) {
+    const basketTotalKurus = discountedLineKurus.reduce((sum, price) => sum + price, 0) + shippingKurus
+    if (basketTotalKurus !== totalKurus) {
       return NextResponse.json({ success: false, error: 'Kupon indirimi ile ödeme tutarı uyuşmuyor' }, { status: 400 })
     }
     const priceStr = toPriceString(basketTotalKurus / 100)
@@ -330,18 +334,18 @@ export async function POST(request: NextRequest) {
             items: canonicalItems.map((item) => ({
               product_id: item.id,
               name: item.name,
-              price: toCartPrice(item.unitPrice10x), // cart 10x → order kuruş-like
+              price: item.unitPriceKurus,
               quantity: item.quantity,
             })) as any,
-            subtotal: Math.round(toCartPrice(subtotalAfterCoupon10x)),
-            shipping_cost: Math.round(toCartPrice(shipping10x)),
-            total: Math.round(toCartPrice(totalPrice10x)),
+            subtotal: subtotalAfterCouponKurus,
+            shipping_cost: shippingKurus,
+            total: totalKurus,
             coupon_code: appliedCoupon?.code || null,
             coupon_discount_type: appliedCoupon?.discount_type || null,
             coupon_discount_value: appliedCoupon?.discount_value || null,
-            discount_amount: Math.round(toCartPrice(discountAmount10x)),
-            subtotal_before_coupon: Math.round(toCartPrice(subtotalBeforeCoupon10x)),
-            subtotal_after_coupon: Math.round(toCartPrice(subtotalAfterCoupon10x)),
+            discount_amount: discountAmountKurus,
+            subtotal_before_coupon: subtotalBeforeCouponKurus,
+            subtotal_after_coupon: subtotalAfterCouponKurus,
             status: 'pending',
             payment_method: 'iyzico',
             payment_status: 'pending',

@@ -19,9 +19,10 @@ import {
 } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import { getCart } from '@/lib/cart'
+import { refreshCartPrices } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
-import { toDisplayPrice } from '@/lib/price'
+import { formatTRY, toDisplayPrice } from '@/lib/price'
+import { calculateCheckoutTotals, FREE_SHIPPING_THRESHOLD_KURUS } from '@/lib/checkout-pricing'
 import { adItemsFromCart, adValueFromCart } from '@/lib/analytics/value'
 import { trackAddPaymentInfo, trackInitiateCheckout } from '@/lib/analytics/datalayer'
 import { getCheckoutTrackingPayload } from '@/lib/analytics/tracking'
@@ -43,10 +44,12 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<Step>('info')
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [pricesVerified, setPricesVerified] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentUncertain, setPaymentUncertain] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [couponCode, setCouponCode] = useState('')
+  const [validatedCouponCode, setValidatedCouponCode] = useState('')
   const [couponDiscount, setCouponDiscount] = useState(0)
   const [couponError, setCouponError] = useState<string | null>(null)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
@@ -102,16 +105,16 @@ export default function CheckoutPage() {
     const loadData = async () => {
       try {
         // Load cart
-        const cart = getCart()
+        const cart = await refreshCartPrices()
         setCartItems(cart)
+        setPricesVerified(true)
         const storedCoupon = getAppliedCouponCode()
         if (storedCoupon) setCouponCode(storedCoupon)
 
-    // Load user profile if logged in
-        const response = await fetch('/api/auth/me')
-        const result = await response.json()
+        // A profile lookup failure must not invalidate a successful price quote.
+        const result = await fetch('/api/auth/me').then(response => response.json()).catch(() => null)
         
-        if (result.success && result.user) {
+        if (result?.success && result.user) {
           const fullName = result.user.name || ''
           const nameParts = fullName.split(' ')
           const firstName = nameParts[0] || ''
@@ -125,8 +128,10 @@ export default function CheckoutPage() {
             phone: result.user.phone || ''
           }))
         }
+        if (storedCoupon) await applyCoupon(storedCoupon, result?.user?.email || '')
       } catch (error) {
         console.error('Error loading data:', error)
+        setError('Güncel ürün fiyatları doğrulanamadı. Ödeme için lütfen sepeti yenileyin.')
       } finally {
         setIsLoading(false)
       }
@@ -137,42 +142,56 @@ export default function CheckoutPage() {
 
   // Calculations
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0)
-  const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL in 10x format
-  const SHIPPING_COST = 1000 // 100 TL
-  const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscount)
-  const shipping = subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-  const total = subtotalAfterCoupon + shipping
+  const totals = calculateCheckoutTotals(subtotal, couponDiscount)
+  const subtotalAfterCoupon = totals.subtotalAfterDiscountKurus
+  const shipping = totals.shippingKurus
+  const total = totals.totalKurus
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) {
+  const applyCoupon = async (restoredCode?: string, restoredEmail?: string) => {
+    const codeToApply = (restoredCode ?? couponCode).trim().toUpperCase()
+    if (!codeToApply) {
       setCouponError('Lütfen kupon kodu girin')
       setCouponDiscount(0)
+      setValidatedCouponCode('')
       clearAppliedCouponCode()
       return
     }
     try {
       setIsApplyingCoupon(true)
       setCouponError(null)
+      const refreshedCart = await refreshCartPrices()
+      setCartItems(refreshedCart)
+      setPricesVerified(true)
+      setError(null)
       const response = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          couponCode,
-          email: formData.email || '',
-          items: cartItems.map((item) => ({ id: item.id, quantity: item.qty })),
+          couponCode: codeToApply,
+          email: restoredEmail ?? (formData.email || ''),
+          items: refreshedCart.map(item => ({ id: item.id, quantity: item.qty })),
         }),
       })
       const result = await response.json()
       if (!result.success) {
         setCouponDiscount(0)
+        setValidatedCouponCode('')
         setCouponError(result.error || 'Kupon uygulanamadı')
         clearAppliedCouponCode()
         return
       }
-      setCouponDiscount(Number(result.data.discountAmount || 0))
-      setAppliedCouponCode(couponCode)
+      const refreshedSubtotal = refreshedCart.reduce((sum, item) => sum + item.price * item.qty, 0)
+      if (result.data.subtotalKurus !== refreshedSubtotal) throw new Error('Basket quote changed during coupon validation')
+      const amount = result.data.discountAmountKurus
+      if (!Number.isSafeInteger(amount) || amount < 0 || amount > refreshedSubtotal) throw new Error('Invalid coupon amount')
+      setCouponDiscount(amount)
+      setValidatedCouponCode(codeToApply)
+      setAppliedCouponCode(codeToApply)
     } catch {
       setCouponDiscount(0)
+      setValidatedCouponCode('')
+      setPricesVerified(false)
+      setError('Güncel ürün fiyatları doğrulanamadı. Ödeme için lütfen sepeti yenileyin.')
       setCouponError('Kupon doğrulanırken hata oluştu')
       clearAppliedCouponCode()
     } finally {
@@ -237,7 +256,11 @@ export default function CheckoutPage() {
   }
 
   const handlePayment = async () => {
-    if (paymentUncertain || isProcessing) return
+    if (paymentUncertain || isProcessing || isApplyingCoupon) return
+    if (isLoading || !pricesVerified || cartItems.length === 0) {
+      setError('Güncel ürün fiyatları doğrulanamadı. Ödeme için lütfen sepeti yenileyin.')
+      return
+    }
     if (!formData.termsAccepted || !formData.kvkkAccepted) {
       setError('Lütfen sözleşmeleri kabul edin')
       return
@@ -267,13 +290,14 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          expectedTotalKurus: total,
           items: cartItems.map(item => ({
             id: item.id,
             name: item.name,
             category: 'Kozmetik',
             quantity: item.qty
           })),
-          couponCode,
+          couponCode: validatedCouponCode,
           tracking,
           customerInfo: {
             name: formData.name,
@@ -362,6 +386,7 @@ export default function CheckoutPage() {
           <div className="max-w-md mx-auto text-center">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Sepetiniz Boş</h1>
+            {error && <p role="alert" className="mb-4 text-red-600">{error}</p>}
             <p className="text-gray-600 mb-6">Ödeme yapabilmek için sepetinize ürün eklemelisiniz.</p>
             <Link
               href="/tum-urunler"
@@ -655,7 +680,7 @@ export default function CheckoutPage() {
                           </div>
                         </div>
                         <div className="font-medium">
-                          {subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD ? (
+                          {subtotalAfterCoupon >= FREE_SHIPPING_THRESHOLD_KURUS ? (
                             <span className="text-green-600">Ücretsiz</span>
                           ) : (
                             <span>₺100</span>
@@ -858,10 +883,10 @@ export default function CheckoutPage() {
                     </button>
                     <button
                       onClick={handlePayment}
-                      disabled={paymentUncertain || isProcessing || !formData.termsAccepted || !formData.kvkkAccepted}
+                      disabled={paymentUncertain || isProcessing || isApplyingCoupon || !pricesVerified || !formData.termsAccepted || !formData.kvkkAccepted}
                       className="flex-1 bg-green-600 text-white py-4 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {isProcessing ? 'İşleniyor...' : `₺${toDisplayPrice(total).toFixed(2)} Öde`}
+                      {isProcessing ? 'İşleniyor...' : `₺${formatTRY(toDisplayPrice(total))} Öde`}
                     </button>
                   </div>
                 </div>
@@ -891,7 +916,7 @@ export default function CheckoutPage() {
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-gray-500">Adet: {item.qty}</span>
                         <span className="text-sm font-medium text-black">
-                          ₺{toDisplayPrice(item.price * item.qty).toFixed(2)}
+                          ₺{formatTRY(toDisplayPrice(item.price * item.qty))}
                         </span>
                       </div>
                     </div>
@@ -906,13 +931,19 @@ export default function CheckoutPage() {
                   <div className="flex gap-2">
                     <input
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      disabled={isApplyingCoupon || isProcessing}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase())
+                        setCouponDiscount(0)
+                        setValidatedCouponCode('')
+                        clearAppliedCouponCode()
+                      }}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                       placeholder="KODUNUZU GİRİN"
                     />
                     <button
-                      onClick={applyCoupon}
-                      disabled={isApplyingCoupon}
+                      onClick={() => void applyCoupon()}
+                      disabled={isApplyingCoupon || isProcessing}
                       className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white hover:bg-black disabled:opacity-60"
                     >
                       {isApplyingCoupon ? '...' : 'Uygula'}
@@ -923,13 +954,13 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Ara Toplam</span>
-                  <span className="font-medium text-black">₺{toDisplayPrice(subtotal).toFixed(2)}</span>
+                  <span className="font-medium text-black">₺{formatTRY(toDisplayPrice(subtotal))}</span>
             </div>
 
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Kupon İndirimi</span>
-                    <span className="font-medium text-green-600">-₺{toDisplayPrice(couponDiscount).toFixed(2)}</span>
+                    <span className="font-medium text-green-600">-₺{formatTRY(toDisplayPrice(couponDiscount))}</span>
                   </div>
                 )}
 
@@ -938,20 +969,20 @@ export default function CheckoutPage() {
                     Kargo (Bugün Kargoda)
                   </span>
                   <span className={`font-medium ${shipping === 0 ? 'text-green-600' : 'text-black'}`}>
-                    {shipping === 0 ? 'Ücretsiz' : `₺${toDisplayPrice(shipping).toFixed(2)}`}
+                    {shipping === 0 ? 'Ücretsiz' : `₺${formatTRY(toDisplayPrice(shipping))}`}
               </span>
             </div>
             
             {/* Free Shipping Progress */}
-                {subtotalAfterCoupon < FREE_SHIPPING_THRESHOLD && formData.shippingMethod === 'standard' && (
+                {subtotalAfterCoupon < FREE_SHIPPING_THRESHOLD_KURUS && formData.shippingMethod === 'standard' && (
                   <div className="pt-2">
                     <div className="text-xs text-orange-600 mb-2">
-                  Ücretsiz kargo için ₺{toDisplayPrice(FREE_SHIPPING_THRESHOLD - subtotalAfterCoupon).toFixed(2)} daha ekleyin
+                  Ücretsiz kargo için ₺{formatTRY(toDisplayPrice(FREE_SHIPPING_THRESHOLD_KURUS - subtotalAfterCoupon))} daha ekleyin
                 </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div 
                         className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((subtotalAfterCoupon / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((subtotalAfterCoupon / FREE_SHIPPING_THRESHOLD_KURUS) * 100, 100)}%` }}
                       />
                 </div>
               </div>
@@ -959,7 +990,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-base font-bold text-black pt-3 border-t border-gray-200">
               <span>Toplam</span>
-                  <span>₺{toDisplayPrice(total).toFixed(2)}</span>
+                  <span>₺{formatTRY(toDisplayPrice(total))}</span>
             </div>
           </div>
 

@@ -369,7 +369,7 @@ async function loadEditorialCategories(
   return rows
 }
 
-export const getHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v7'], {
+export const getHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v7-kurus-v2'], {
   tags: [PRODUCTS_CACHE_TAG],
   revalidate: CATALOG_REVALIDATE_SECONDS,
 })

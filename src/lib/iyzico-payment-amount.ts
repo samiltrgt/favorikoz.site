@@ -1,10 +1,10 @@
 /**
  * Iyzico /api/payment ile aynı tutarı üretir (paidPrice / basket toplamı).
- * Sipariş satırı: price alanı = (checkout’taki 10x fiyat) * 10 (kuruş benzeri).
+ * Sipariş satırı: price alanı kuruş cinsindedir.
  * orders.total = ödeme başlatılırken Iyzico'ya gönderilen nihai tutar (kuruş).
  */
 
-import { kurusToTl, toDisplayPrice } from '@/lib/price'
+import { kurusToTl } from '@/lib/price'
 
 export function toPriceString(value: number): string {
   return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2)
@@ -55,21 +55,19 @@ export function buildIyzicoPaidPriceFromOrder(order: OrderAmountInput): string {
   }
 
   const items = (order.items as OrderItemRow[]) || []
-  let sumBasketTL = 0
+  let sumBasketKurus = 0
   for (const item of items) {
     const qty = item.quantity || 1
-    const price10x = toDisplayPrice(item.price)
-    const lineTotalTL = toDisplayPrice(price10x * qty)
-    sumBasketTL += parseFloat(toPriceString(lineTotalTL))
+    sumBasketKurus += Number(item.price) * qty
   }
   if (order.shipping_cost > 0) {
-    sumBasketTL += parseFloat(toPriceString(kurusToTl(order.shipping_cost)))
+    sumBasketKurus += Number(order.shipping_cost)
   }
   const discount = Number(order.discount_amount ?? 0)
   if (discount > 0) {
-    sumBasketTL -= parseFloat(toPriceString(kurusToTl(discount)))
+    sumBasketKurus -= discount
   }
-  return toPriceString(Math.max(0, sumBasketTL))
+  return toPriceString(kurusToTl(Math.max(0, sumBasketKurus)))
 }
 
 /** A successful provider response must describe this exact order and collected amount. */

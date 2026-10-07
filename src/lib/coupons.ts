@@ -1,4 +1,4 @@
-import { toCartPrice } from '@/lib/price'
+import { displayToDb } from '@/lib/price'
 
 type CouponRow = {
   id: string
@@ -17,8 +17,8 @@ export type CouponValidationResult =
   | {
       valid: true
       coupon: CouponRow
-      discountAmount10x: number
-      subtotalAfterDiscount10x: number
+      discountAmountKurus: number
+      subtotalAfterDiscountKurus: number
       totalUsedCount: number
       customerUsedCount: number
     }
@@ -31,30 +31,30 @@ export function getCustomerIdentityKey(email?: string | null): string {
   return (email || '').trim().toLowerCase()
 }
 
-export function calculateCouponDiscount10x(
-  subtotal10x: number,
+export function calculateCouponDiscountKurus(
+  subtotalKurus: number,
   discountType: 'percent' | 'fixed',
   discountValue: number
 ): number {
-  if (subtotal10x <= 0) return 0
+  if (subtotalKurus <= 0) return 0
 
   let discount = 0
   if (discountType === 'percent') {
-    discount = Math.round((subtotal10x * discountValue) / 100)
+    discount = Math.round((subtotalKurus * discountValue) / 100)
   } else {
-    // fixed value is stored in TL (display), subtotal is in 10x
-    discount = Math.round(toCartPrice(discountValue))
+    // Fixed coupon values are stored in TL.
+    discount = displayToDb(discountValue)
   }
-  return Math.max(0, Math.min(discount, subtotal10x))
+  return Math.max(0, Math.min(discount, subtotalKurus))
 }
 
 export async function validateCouponForSubtotal(params: {
   supabase: any
   couponCode: string
-  subtotal10x: number
+  subtotalKurus: number
   customerIdentityKey: string
 }): Promise<CouponValidationResult> {
-  const { supabase, couponCode, subtotal10x, customerIdentityKey } = params
+  const { supabase, couponCode, subtotalKurus, customerIdentityKey } = params
   const normalizedCode = normalizeCouponCode(couponCode)
   if (!normalizedCode) {
     return { valid: false, error: 'Kupon kodu giriniz' }
@@ -106,14 +106,14 @@ export async function validateCouponForSubtotal(params: {
     return { valid: false, error: 'Bu kuponu kullanım hakkınız doldu' }
   }
 
-  const discountAmount10x = calculateCouponDiscount10x(subtotal10x, coupon.discount_type, Number(coupon.discount_value))
-  const subtotalAfterDiscount10x = Math.max(0, subtotal10x - discountAmount10x)
+  const discountAmountKurus = calculateCouponDiscountKurus(subtotalKurus, coupon.discount_type, Number(coupon.discount_value))
+  const subtotalAfterDiscountKurus = Math.max(0, subtotalKurus - discountAmountKurus)
 
   return {
     valid: true,
     coupon,
-    discountAmount10x,
-    subtotalAfterDiscount10x,
+    discountAmountKurus,
+    subtotalAfterDiscountKurus,
     totalUsedCount: totalUsedCount || 0,
     customerUsedCount: customerUsedCount || 0,
   }

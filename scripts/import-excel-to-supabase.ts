@@ -16,22 +16,22 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../src/lib/supabase/database.types'
 import * as dotenv from 'dotenv'
 import * as XLSX from 'xlsx'
+import { writeFileSync } from 'node:fs'
+import { isValidOptionalOldPrice, isValidSalePrice, parseExcelPrice } from './lib/excel-price'
+import { displayToDb } from '../src/lib/price'
+import { findExistingExcelProduct, isAutoBarcode } from './lib/excel-product-match'
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+let supabase: ReturnType<typeof createClient<Database>>
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase credentials in .env.local')
-  console.error('Required: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY')
-  process.exit(1)
+function initializeSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) throw new Error('Missing Supabase credentials in .env.local')
+  supabase = createClient<Database>(supabaseUrl, supabaseKey, { auth: { persistSession: false } })
 }
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-})
 
 // ============================================
 // YARDIMCI FONKSİYONLAR
@@ -60,6 +60,9 @@ function toNumber(v: any): number {
   const n = parseFloat(s)
   return isNaN(n) ? 0 : n
 }
+
+interface PriceIssue { row: number; name: string; field: string; value: unknown }
+const priceIssues: PriceIssue[] = []
 
 function pick(row: any, keys: string[]): any {
   const lower: Record<string, any> = {}
@@ -307,67 +310,8 @@ function isValidProductImageUrl(url: string): boolean {
   }
 }
 
-function isAutoBarcode(barcode: string | null | undefined): boolean {
-  return /^FK\d{6,}$/i.test(String(barcode || '').trim())
-}
-
-type ExistingProductRow = {
-  id: string
-  barcode: string | null
-  price: number | null
-  original_price: number | null
-  created_at: string | null
-}
-
-function pickExistingProduct(rows: ExistingProductRow[]): ExistingProductRow | null {
-  if (!rows.length) return null
-  const sorted = [...rows].sort((a, b) => {
-    const aAuto = isAutoBarcode(a.barcode)
-    const bAuto = isAutoBarcode(b.barcode)
-    if (aAuto !== bAuto) return aAuto ? 1 : -1
-    const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0
-    const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0
-    return aCreated - bCreated
-  })
-  return sorted[0]
-}
-
-async function findExistingProduct(
-  product: ParsedProduct
-): Promise<ExistingProductRow | null> {
-  const { data: activeList, error: activeFindError } = await supabase
-    .from('products')
-    .select('id, barcode, price, original_price, created_at')
-    .eq('barcode', product.barcode)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: true })
-    .limit(1)
-
-  if (activeFindError) throw activeFindError
-  if (activeList && activeList.length > 0) return activeList[0]
-
-  const { data: deletedList, error: deletedFindError } = await supabase
-    .from('products')
-    .select('id, barcode, price, original_price, created_at')
-    .eq('barcode', product.barcode)
-    .not('deleted_at', 'is', null)
-    .order('created_at', { ascending: true })
-    .limit(1)
-
-  if (deletedFindError) throw deletedFindError
-  if (deletedList && deletedList.length > 0) return deletedList[0]
-
-  // Aynı isimli eski kayıt (farklı FK barkod) varsa güncelle — çift ilan oluşmasın
-  const { data: byNameList, error: byNameError } = await supabase
-    .from('products')
-    .select('id, barcode, price, original_price, created_at')
-    .eq('name', product.name)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: true })
-    .limit(5)
-
-  if (byNameError) throw byNameError
-  return pickExistingProduct((byNameList || []) as ExistingProductRow[])
+async function findExistingProduct(product: ParsedProduct) {
+  return findExistingExcelProduct(supabase, product)
 }
 
 // ============================================
@@ -401,26 +345,29 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
   if (!name) return null
 
   const brand = pick(row, ['Marka', 'marka', 'brand']) || 'Favori'
-  const price = toNumber(pick(row, [
+  const saleValue = pick(row, [
     'Trendyol\'da Satılacak Fiyat (KDV Dahil)',
     'trendyol satış fiyatı',
     'trendyol satis fiyati',
     'trendyol satış fiyat',
     'trendyol satis fiyat',
     'trendyol fiyat',
-    'trendyol',
-    'fiyat',
-    'price',
-    'satis fiyati',
-    'satış fiyatı'
-  ]))
-  const originalPrice = toNumber(pick(row, [
+    'trendyol'
+  ])
+  const price = parseExcelPrice(saleValue)
+  const oldPriceValue = pick(row, [
     'Piyasa Satış Fiyatı (KDV Dahil)',
     'liste fiyatı',
     'liste fiyati',
     'eski fiyat',
     'original price'
-  ]))
+  ])
+  const originalPrice = oldPriceValue == null || String(oldPriceValue).trim() === '' ? null : parseExcelPrice(oldPriceValue)
+  if (!isValidSalePrice(price)) priceIssues.push({ row: idx + 2, name: String(name), field: 'Trendyol satış fiyatı', value: saleValue })
+  if (oldPriceValue != null && String(oldPriceValue).trim() !== '' &&
+    (originalPrice === null || !isValidOptionalOldPrice(originalPrice))) {
+    priceIssues.push({ row: idx + 2, name: String(name), field: 'Piyasa satış fiyatı', value: oldPriceValue })
+  }
   const categoryRaw =
     pick(row, ['Kategori İsmi', 'kategori', 'category', 'kategori adı']) ??
     (Object.keys(row || {}).length > 0 ? row[Object.keys(row)[0]] : undefined)
@@ -472,7 +419,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     : 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop'
   const imageRejected = !!rawImage && !isValidProductImageUrl(rawImage)
   
-  const barcode = pick(row, [
+  const barcode = String(pick(row, [
     'Barkod',
     'barkod',
     'barcode',
@@ -481,7 +428,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     'sku',
     'ürün kodu',
     'urun kodu'
-  ]) || ''
+  ]) || '').trim()
 
   // Ek görseller (Görsel 2-8)
   const images: string[] = []
@@ -529,9 +476,10 @@ function readExcelFile(xlsxPath: string): ParsedProduct[] {
   console.log(`📊 Found ${rows.length} rows in Excel\n`)
 
   const products: ParsedProduct[] = []
+  priceIssues.length = 0
   rows.forEach((row, idx) => {
     const product = parseExcelRow(row, idx)
-    if (product) products.push(product)
+    if (product && isValidSalePrice(product.price)) products.push(product)
   })
 
   console.log(`✅ Parsed ${products.length} valid products\n`)
@@ -589,8 +537,8 @@ async function importToSupabase(products: ParsedProduct[]) {
           images?: string[];
           barcode?: string;
         } = {
-          price: Math.round(product.price * 100), // TL → kuruş
-          original_price: product.originalPrice ? Math.round(product.originalPrice * 100) : null,
+          price: displayToDb(product.price),
+          original_price: product.originalPrice ? displayToDb(product.originalPrice) : null,
           discount: product.discount ?? null,
           stock_quantity: product.stockQty,
           in_stock: isInStock,
@@ -644,8 +592,8 @@ async function importToSupabase(products: ParsedProduct[]) {
             slug,
             name: product.name,
             brand: product.brand,
-            price: Math.round(product.price * 100), // TL → kuruş
-            original_price: product.originalPrice ? Math.round(product.originalPrice * 100) : null,
+            price: displayToDb(product.price),
+            original_price: product.originalPrice ? displayToDb(product.originalPrice) : null,
             discount: product.discount ?? null,
             image: product.image,
             images: product.images,
@@ -692,6 +640,7 @@ async function importToSupabase(products: ParsedProduct[]) {
     errors.forEach(e => console.log(`   - ${e.name}: ${e.error}`))
   }
 
+  if (errorCount > 0) throw new Error(`Import incomplete: ${errorCount} product(s) failed; see the import log.`)
   console.log('\n✅ Import completed!\n')
 }
 
@@ -700,15 +649,33 @@ async function importToSupabase(products: ParsedProduct[]) {
 // ============================================
 
 async function main() {
-  const xlsxArg = process.argv[2]
+  const args = process.argv.slice(2)
+  const dryRun = args.includes('--dry-run')
+  const planOutput = args.find(arg => arg.startsWith('--plan-output='))?.slice('--plan-output='.length)
+  const xlsxArg = args.find((arg) => !arg.startsWith('--'))
   if (!xlsxArg) {
     console.error('❌ Usage: npx tsx scripts/import-excel-to-supabase.ts "C:\\path\\to\\file.xlsx"')
     process.exit(1)
   }
 
   try {
-    await loadDbCategories()
     const products = readExcelFile(xlsxArg)
+    if (priceIssues.length) {
+      console.error(`❌ ${priceIssues.length} invalid price value(s):`)
+      priceIssues.forEach((issue) => console.error(`   Row ${issue.row} | ${issue.name} | ${issue.field}: ${String(issue.value)}`))
+      if (!dryRun) throw new Error('Price preflight failed; no database writes were made.')
+    }
+    console.log(`💰 Price summary: ${products.length} products; ${products.filter((p) => p.originalPrice).length} with reference prices`)
+    if (planOutput && !priceIssues.length) {
+      writeFileSync(planOutput, JSON.stringify(products.map(p => ({ name: p.name, barcode: p.barcode, priceKurus: displayToDb(p.price), originalPriceKurus: p.originalPrice ? displayToDb(p.originalPrice) : null })), null, 2))
+    }
+    if (dryRun) {
+      console.log(`✅ Dry run complete. ${products.length} importable rows; no database writes performed.`)
+      if (priceIssues.length) process.exitCode = 1
+      return
+    }
+    initializeSupabase()
+    await loadDbCategories()
     await importToSupabase(products)
   } catch (error: any) {
     console.error('💥 Fatal error:', error.message)

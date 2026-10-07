@@ -8,28 +8,27 @@ import {
 } from '@/lib/price'
 
 describe('dbToDisplay / displayToDb', () => {
-  it('converts DB ↔ display with the /100/10 and *1000 rules', () => {
-    expect(dbToDisplay(149900)).toBe(149.9)
-    expect(displayToDb(149.9)).toBe(149900)
-    expect(dbToDisplay(1000)).toBe(1)
-    expect(displayToDb(1)).toBe(1000)
-  })
-
-  it('rounds displayToDb', () => {
-    expect(displayToDb(12.3456)).toBe(12346)
+  it('converts integer kuruş to and from display TL', () => {
+    expect(dbToDisplay(14999)).toBe(149.99)
+    expect(displayToDb(149.99)).toBe(14999)
+    expect(displayToDb(175)).toBe(17500)
+    expect(displayToDb(6500)).toBe(650000)
+    expect(displayToDb(319.9)).toBe(31990)
+    expect(displayToDb(149.99)).toBe(14999)
+    expect(displayToDb(12.3456)).toBe(1235)
   })
 })
 
 describe('toDisplayPrice / toCartPrice', () => {
-  it('converts cart 10x ↔ display', () => {
-    expect(toCartPrice(149.9)).toBe(1499)
-    expect(toDisplayPrice(1499)).toBe(149.9)
+  it('converts cart kuruş ↔ display TL', () => {
+    expect(toCartPrice(149.9)).toBe(14990)
+    expect(toDisplayPrice(14990)).toBe(149.9)
   })
 })
 
 describe('kurusToTl', () => {
   it('divides by 100', () => {
-    expect(kurusToTl(14990)).toBe(149.9)
+    expect(kurusToTl(14999)).toBe(149.99)
     expect(kurusToTl(0)).toBe(0)
   })
 })
@@ -39,6 +38,8 @@ describe('formatTRY', () => {
     expect(formatTRY(100)).toBe('100,00')
     expect(formatTRY(99.99)).toBe('99,99')
     expect(formatTRY(1500.5)).toBe('1.500,50')
+    expect(formatTRY(319.9)).toBe('319,90')
+    expect(formatTRY(6500)).toBe('6.500,00')
   })
 
   it('handles zero and small values', () => {

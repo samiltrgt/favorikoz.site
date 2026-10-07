@@ -36,10 +36,27 @@ describe('payment initialization persists trustworthy tracking before provider p
     jest.mocked(initialize3DSPayment).mockResolvedValue({ status: 'success', threeDSHtmlContent: 'encoded-bank-form' })
     mockInsert.mockResolvedValue({ error: null })
     mockDb.from.mockImplementation((table: string) => table === 'products'
-      ? { select: () => ({ in: async () => ({ data: [{ id: 'p1', name: 'Product', price: 500000, in_stock: true, stock_quantity: 10 }], error: null }) }) }
+      ? { select: () => ({ in: async () => ({ data: [{ id: 'p1', name: 'Product', price: 50000, in_stock: true, stock_quantity: 10 }], error: null }) }) }
       : { insert: mockInsert })
   })
   afterEach(() => jest.restoreAllMocks())
+
+  it.each([
+    [17500, '175.00', 27500, '275.00'],
+    [650000, '6500.00', 650000, '6500.00'],
+    [31990, '319.90', 41990, '419.90'],
+  ])('preserves %i kuruş from database to order and provider', async (price, line, total, paid) => {
+    mockDb.from.mockImplementation((table: string) => table === 'products'
+      ? { select: () => ({ in: async () => ({ data: [{ id: 'p1', name: 'Product', price, in_stock: true, stock_quantity: 10 }], error: null }) }) }
+      : { insert: mockInsert })
+    const response = await POST(request(undefined, { expectedTotalKurus: total }))
+    expect(response.status).toBe(200)
+    expect(mockInsert.mock.calls[0][0].total).toBe(total)
+    const provider = jest.mocked(initialize3DSPayment).mock.calls[0][0]
+    expect(provider.basketItems[0].price).toBe(line)
+    expect(provider.price).toBe(paid)
+    expect(provider.paidPrice).toBe(paid)
+  })
 
   it('fails closed when service role or provider credentials are missing', async () => {
     jest.mocked(createSupabaseAdmin).mockImplementationOnce(() => { throw new Error('Missing service role') })
@@ -63,6 +80,13 @@ describe('payment initialization persists trustworthy tracking before provider p
   it('never charges the card if the order cannot be persisted', async () => {
     mockInsert.mockResolvedValueOnce({ error: { message: 'Missing migration column' } })
     expect((await POST(request(grantedConsent))).status).toBe(503)
+    expect(initialize3DSPayment).not.toHaveBeenCalled()
+  })
+
+  it('rejects a stale client total before creating an order or starting payment', async () => {
+    const response = await POST(request(undefined, { expectedTotalKurus: 59999 }))
+    expect(response.status).toBe(409)
+    expect(mockInsert).not.toHaveBeenCalled()
     expect(initialize3DSPayment).not.toHaveBeenCalled()
   })
 
@@ -111,11 +135,11 @@ describe('payment initialization persists trustworthy tracking before provider p
   it('sends positive discounted product lines whose total matches price, paidPrice and the stored order', async () => {
     mockDb.from.mockImplementation((table: string) => table === 'products'
       ? { select: () => ({ in: async () => ({ data: [
-        { id: 'p1', name: 'First', price: 500000, in_stock: true, stock_quantity: 10 },
-        { id: 'p2', name: 'Second', price: 1000000, in_stock: true, stock_quantity: 10 },
+        { id: 'p1', name: 'First', price: 50000, in_stock: true, stock_quantity: 10 },
+        { id: 'p2', name: 'Second', price: 100000, in_stock: true, stock_quantity: 10 },
       ], error: null }) }) }
       : { insert: mockInsert })
-    jest.mocked(validateCouponForSubtotal).mockResolvedValueOnce({ valid: true, discountAmount10x: 1234, subtotalAfterDiscount10x: 13766, coupon: { code: 'DISCOUNT', discount_type: 'fixed', discount_value: 123.4 } } as any)
+    jest.mocked(validateCouponForSubtotal).mockResolvedValueOnce({ valid: true, discountAmountKurus: 12340, subtotalAfterDiscountKurus: 137660, coupon: { code: 'DISCOUNT', discount_type: 'fixed', discount_value: 123.4 } } as any)
     const response = await POST(request(grantedConsent, { couponCode: 'DISCOUNT', items: [{ id: 'p1', quantity: 1 }, { id: 'p2', quantity: 1 }] }))
     expect({ status: response.status, body: await response.json() }).toEqual(expect.objectContaining({ status: 200 }))
     const payment = jest.mocked(initialize3DSPayment).mock.calls[0][0]
@@ -130,7 +154,7 @@ describe('payment initialization persists trustworthy tracking before provider p
   })
 
   it('rejects a fully discounted coupon before creating an order or charging even with shipping', async () => {
-    jest.mocked(validateCouponForSubtotal).mockResolvedValueOnce({ valid: true, discountAmount10x: 5000, subtotalAfterDiscount10x: 0, coupon: { code: 'FREE', discount_type: 'percent', discount_value: 100 } } as any)
+    jest.mocked(validateCouponForSubtotal).mockResolvedValueOnce({ valid: true, discountAmountKurus: 50000, subtotalAfterDiscountKurus: 0, coupon: { code: 'FREE', discount_type: 'percent', discount_value: 100 } } as any)
     const response = await POST(request(undefined, { couponCode: 'FREE' }))
     expect(response.status).toBe(400)
     expect((await response.json()).error).toContain('Tam indirimli')

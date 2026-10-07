@@ -1,5 +1,5 @@
 import { catalogItem, catalogXml, validGtin } from '@/lib/analytics/catalog'
-const row = { id: 'p1', slug: 'test', name: 'Bakım & <Krem>', price: 650000, image: '/test.jpg', stock_quantity: 2, barcode: '4006381333931' }
+const row = { id: 'p1', slug: 'test', name: 'Bakım & <Krem>', price: 65000, image: '/test.jpg', stock_quantity: 2, barcode: '4006381333931' }
 test('catalog keeps product identity and converts DB currency to TRY', () => {
   expect(catalogItem(row, 'https://example.com')).toMatchObject({ id: 'p1', price: '650.00 TRY', availability: 'in_stock', image_link: 'https://example.com/test.jpg', gtin: row.barcode })
 })

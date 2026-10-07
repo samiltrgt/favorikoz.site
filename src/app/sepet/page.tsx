@@ -6,9 +6,10 @@ import ProductImage from '@/components/product-image'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import { getCart, setCart } from '@/lib/cart'
+import { refreshCartPrices, setCart } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
-import { formatTRY, toDisplayPrice } from '@/lib/price'
+import { formatTRY, toCartPrice, toDisplayPrice } from '@/lib/price'
+import { calculateCheckoutTotals, FREE_SHIPPING_THRESHOLD_KURUS } from '@/lib/checkout-pricing'
 
 // UI tipinde sepet öğesi
 type UIItem = {
@@ -30,19 +31,21 @@ export default function CartPage() {
   const [removingItem, setRemovingItem] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [couponCode, setCouponCode] = useState('')
+  const [validatedCouponCode, setValidatedCouponCode] = useState('')
   const [couponDiscount, setCouponDiscount] = useState(0)
   const [couponError, setCouponError] = useState<string | null>(null)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+  const [priceError, setPriceError] = useState<string | null>(null)
 
   // LocalStorage'dan sepet yükle ve API'den ürün bilgilerini al
   useEffect(() => {
     const loadCartItems = async () => {
       try {
-        const local = getCart()
+        const local = await refreshCartPrices()
         const response = await fetch('/api/products')
         const result = await response.json()
-        
-        if (result.success) {
+        if (!response.ok || !result.success) throw new Error('Product details unavailable')
+        {
           const products = result.data || []
           const ui: UIItem[] = local.map(l => {
             const p = products.find((x: any) => x.slug === l.slug) || {}
@@ -51,18 +54,22 @@ export default function CartPage() {
               slug: l.slug,
               name: l.name,
               brand: (p as any).brand,
-              price: l.price, // Fiyat zaten doğru formatta
-              originalPrice: (p as any).originalPrice ? (p as any).originalPrice : undefined, // Orijinal fiyat zaten doğru formatta
+              price: l.price,
+              originalPrice: p.original_price ? toCartPrice(Number(p.original_price)) : undefined,
               image: l.image,
               quantity: l.qty,
             }
           })
           setCartItems(ui)
           const storedCoupon = getAppliedCouponCode()
-          if (storedCoupon) setCouponCode(storedCoupon)
+          if (storedCoupon) {
+            setCouponCode(storedCoupon)
+            await applyCoupon(storedCoupon)
+          }
         }
       } catch (error) {
         console.error('Error loading cart items:', error)
+        setPriceError('Güncel ürün fiyatları doğrulanamadı. Lütfen sayfayı yenileyin veya tekrar deneyin.')
       } finally {
         setIsLoading(false)
       }
@@ -78,24 +85,17 @@ export default function CartPage() {
 
   // Sepet toplam hesaplama
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
-  const discount = cartItems.reduce((total, item) => {
-    if (item.originalPrice) {
-      return total + ((item.originalPrice - item.price) * item.quantity)
-    }
-    return total
-  }, 0)
-  // 2000 TL ve üzeri ücretsiz kargo, değilse 100 TL kargo ücreti
-  // Fiyatlar 10 ile çarpılmış formatta tutuluyor (100 TL = 1000 birim)
-  // Bu yüzden 2000 TL = 20000 birim, 100 TL kargo = 1000 birim
-  const FREE_SHIPPING_THRESHOLD = 20000 // 2000 TL
-  const SHIPPING_COST = 1000 // 100 TL (display için /10 yapılacak)
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-  const total = Math.max(0, subtotal - discount - couponDiscount + shipping)
+  const discount = cartItems.reduce((total, item) => total + (Math.max(0, (item.originalPrice || 0) - item.price) * item.quantity), 0)
+  const totals = calculateCheckoutTotals(subtotal, couponDiscount)
+  const shipping = totals.shippingKurus
+  const total = totals.totalKurus
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) {
+  const applyCoupon = async (restoredCode?: string) => {
+    const codeToApply = (restoredCode ?? couponCode).trim().toUpperCase()
+    if (!codeToApply) {
       setCouponError('Lütfen kupon kodu girin')
       setCouponDiscount(0)
+      setValidatedCouponCode('')
       clearAppliedCouponCode()
       return
     }
@@ -103,26 +103,40 @@ export default function CartPage() {
     try {
       setIsApplyingCoupon(true)
       setCouponError(null)
+      const refreshed = await refreshCartPrices()
+      setPriceError(null)
+      setCartItems(items => items.map(item => {
+        const current = refreshed.find(entry => entry.id === item.id)
+        return current ? { ...item, price: current.price } : item
+      }))
       const response = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          couponCode,
-          items: cartItems.map((item) => ({ id: item.id, quantity: item.quantity })),
+          couponCode: codeToApply,
+          items: refreshed.map(item => ({ id: item.id, quantity: item.qty })),
         }),
       })
       const result = await response.json()
       if (!result.success) {
         setCouponDiscount(0)
+        setValidatedCouponCode('')
         setCouponError(result.error || 'Kupon uygulanamadı')
         clearAppliedCouponCode()
         return
       }
-      setCouponDiscount(Number(result.data.discountAmount || 0))
-      setAppliedCouponCode(couponCode)
+      const refreshedSubtotal = refreshed.reduce((sum, item) => sum + item.price * item.qty, 0)
+      if (result.data.subtotalKurus !== refreshedSubtotal) throw new Error('Basket quote changed during coupon validation')
+      const amount = result.data.discountAmountKurus
+      if (!Number.isSafeInteger(amount) || amount < 0 || amount > refreshedSubtotal) throw new Error('Invalid coupon amount')
+      setCouponDiscount(amount)
+      setValidatedCouponCode(codeToApply)
+      setAppliedCouponCode(codeToApply)
     } catch {
       setCouponDiscount(0)
+      setValidatedCouponCode('')
       setCouponError('Kupon doğrulanırken hata oluştu')
+      setPriceError('Güncel ürün fiyatları doğrulanamadı. Lütfen sayfayı yenileyin veya tekrar deneyin.')
       clearAppliedCouponCode()
     } finally {
       setIsApplyingCoupon(false)
@@ -131,7 +145,11 @@ export default function CartPage() {
 
   // Miktar güncelleme
   const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return
+    if (newQuantity < 1 || newQuantity > 99 || isApplyingCoupon || removingItem) return
+    setCouponCode('')
+    setCouponDiscount(0)
+    setValidatedCouponCode('')
+    clearAppliedCouponCode()
     
     setIsUpdating(true)
     setCartItems(items => {
@@ -146,6 +164,11 @@ export default function CartPage() {
 
   // Ürün silme
   const removeItem = (id: string) => {
+    if (isApplyingCoupon || removingItem) return
+    setCouponCode('')
+    setCouponDiscount(0)
+    setValidatedCouponCode('')
+    clearAppliedCouponCode()
     setRemovingItem(id)
     setTimeout(() => {
       setCartItems(items => {
@@ -190,6 +213,7 @@ export default function CartPage() {
 
           {/* Empty Cart */}
           <div className="text-center py-20 animate-fade-in-up">
+            {priceError && <p className="mb-4 text-red-600">{priceError}</p>}
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8 animate-float">
               <ShoppingBag className="w-12 h-12 text-gray-400" />
             </div>
@@ -273,6 +297,7 @@ export default function CartPage() {
                       {/* Remove Button */}
                       <button
                         onClick={() => removeItem(item.id)}
+                        disabled={isApplyingCoupon || !!removingItem}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 active:scale-95"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -296,7 +321,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-3 self-start sm:self-auto">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          disabled={isUpdating || item.quantity <= 1}
+                          disabled={isUpdating || isApplyingCoupon || !!removingItem || item.quantity <= 1}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
                         >
                           <Minus className="w-3 h-3" />
@@ -308,7 +333,7 @@ export default function CartPage() {
                         
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          disabled={isUpdating}
+                          disabled={isUpdating || isApplyingCoupon || !!removingItem || item.quantity >= 99}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 transition-all duration-200 active:scale-95"
                         >
                           <Plus className="w-3 h-3" />
@@ -333,19 +358,26 @@ export default function CartPage() {
                   <div className="flex gap-2">
                     <input
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      disabled={isApplyingCoupon}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase())
+                        setCouponDiscount(0)
+                        setValidatedCouponCode('')
+                        clearAppliedCouponCode()
+                      }}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                       placeholder="KODUNUZU GİRİN"
                     />
                     <button
-                      onClick={applyCoupon}
-                      disabled={isApplyingCoupon}
+                      onClick={() => void applyCoupon()}
+                      disabled={isApplyingCoupon || isUpdating || !!removingItem}
                       className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white hover:bg-black disabled:opacity-60"
                     >
                       {isApplyingCoupon ? '...' : 'Uygula'}
                     </button>
                   </div>
-                  {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
+              {priceError && <p className="mb-3 text-sm text-red-600">{priceError}</p>}
+              {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
                   {couponDiscount > 0 && <p className="mt-2 text-xs text-green-600">Kupon indirimi uygulandı</p>}
                 </div>
 
@@ -356,7 +388,7 @@ export default function CartPage() {
                 
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>İndirim</span>
+                    <span>Ürünlerde Tasarruf</span>
                     <span>-₺{formatTRY(toDisplayPrice(discount))}</span>
                   </div>
                 )}
@@ -384,7 +416,7 @@ export default function CartPage() {
               </div>
 
               {/* Free Shipping Progress */}
-              {subtotal < FREE_SHIPPING_THRESHOLD && (
+              {totals.subtotalAfterDiscountKurus < FREE_SHIPPING_THRESHOLD_KURUS && (
                 <div className="mb-6 p-4 bg-orange-50 rounded-xl animate-pulse-slow">
                   <div className="flex items-center gap-2 mb-2">
                     <Truck className="w-4 h-4 text-orange-600 animate-float" />
@@ -395,11 +427,11 @@ export default function CartPage() {
                   <div className="w-full bg-orange-200 rounded-full h-2 mb-2">
                     <div 
                       className="bg-orange-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((totals.subtotalAfterDiscountKurus / FREE_SHIPPING_THRESHOLD_KURUS) * 100, 100)}%` }}
                     ></div>
                   </div>
                   <p className="text-xs text-orange-700">
-                    ₺{toDisplayPrice(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} daha ekleyin
+                    ₺{formatTRY(toDisplayPrice(FREE_SHIPPING_THRESHOLD_KURUS - totals.subtotalAfterDiscountKurus))} daha ekleyin
                   </p>
                 </div>
               )}
@@ -407,6 +439,8 @@ export default function CartPage() {
               {/* Checkout Button */}
               <Link
                 href="/checkout"
+                aria-disabled={!!priceError || cartItems.length === 0}
+                onClick={(event) => { if (priceError) event.preventDefault() }}
                 className="w-full bg-black hover:bg-gray-800 hover:scale-105 active:scale-95 text-white font-light text-lg py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mb-4 group"
               >
                 <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />

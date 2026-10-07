@@ -1,6 +1,9 @@
 import { allocateIyzicoDiscount, buildIyzicoPaidPriceFromOrder, matchesIyzicoOrderPayment, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 
 describe('iyzico order verification', () => {
+  it('reconstructs fallback totals from kuruş item prices exactly once', () => {
+    expect(buildIyzicoPaidPriceFromOrder({ items: [{ price: 14999, quantity: 1 }], shipping_cost: 10000 })).toBe('249.99')
+  })
   const order = { total: 60000, items: [], shipping_cost: 10000, iyzico_basket_id: 'basket-1' }
   it('compares provider TL to stored kuruş with the same basket and currency', () => {
     expect(buildIyzicoPaidPriceFromOrder(order)).toBe('600.00')

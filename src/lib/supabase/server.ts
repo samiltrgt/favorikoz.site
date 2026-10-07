@@ -63,6 +63,12 @@ export function createSupabaseAnon() {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseAnonEnv()
 
   return createClient(supabaseUrl, supabaseAnonKey, {
+    // Separate raw catalog responses from caches created with the legacy unit.
+    global: { fetch: (input, init) => {
+      const headers = new Headers(init?.headers)
+      headers.set('x-pricing-unit', 'kurus-v2')
+      return fetch(input, { ...init, headers })
+    } },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

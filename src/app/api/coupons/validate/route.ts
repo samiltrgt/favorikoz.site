@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 import { getCustomerIdentityKey, normalizeCouponCode, validateCouponForSubtotal } from '@/lib/coupons'
-import { dbToDisplay, toCartPrice } from '@/lib/price'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { devError } from '@/lib/logger'
 
@@ -121,7 +120,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Ürünler doğrulanamadı' }, { status: 500 })
     }
 
-    let subtotal10x = 0
+    let subtotalKurus = 0
     for (const item of items) {
       const qty = item.quantity ?? 1
       const product = products.find((p: { id: string }) => p.id === item.id)
@@ -131,14 +130,21 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      subtotal10x += Math.round(toCartPrice(dbToDisplay(Number(product.price))) * qty)
+      const unitPriceKurus = Number(product.price)
+      if (!Number.isSafeInteger(unitPriceKurus) || unitPriceKurus <= 0) {
+        return NextResponse.json({ success: false, error: 'Ürün fiyatı geçersiz' }, { status: 400 })
+      }
+      subtotalKurus += unitPriceKurus * qty
+      if (!Number.isSafeInteger(subtotalKurus)) {
+        return NextResponse.json({ success: false, error: 'Sepet tutarı geçersiz' }, { status: 400 })
+      }
     }
 
     const customerIdentityKey = getCustomerIdentityKey(email)
     const result = await validateCouponForSubtotal({
       supabase,
       couponCode,
-      subtotal10x,
+      subtotalKurus,
       customerIdentityKey,
     })
 
@@ -152,9 +158,9 @@ export async function POST(request: NextRequest) {
         couponCode: result.coupon.code,
         discountType: result.coupon.discount_type,
         discountValue: Number(result.coupon.discount_value),
-        subtotal: subtotal10x,
-        discountAmount: result.discountAmount10x,
-        subtotalAfterDiscount: result.subtotalAfterDiscount10x,
+        subtotalKurus,
+        discountAmountKurus: result.discountAmountKurus,
+        subtotalAfterDiscountKurus: result.subtotalAfterDiscountKurus,
       },
     })
   } catch (error) {
