@@ -16,6 +16,7 @@ function client() {
       not: () => { matches = []; return query },
       order: () => query,
       limit: async (n: number) => ({ data: matches.slice(0, n), error: null }),
+      range: async (from: number, to: number) => ({ data: matches.slice(from, to + 1), error: null }),
     }
     return query
   } }
@@ -28,6 +29,10 @@ it('matches a moved Excel row by name rather than overwriting the old FK barcode
 
 it('does not borrow an unrelated product when a generated barcode exists but the name is new', async () => {
   expect(await findExistingExcelProduct(client(), { name: 'New product', barcode: 'FK001098' })).toBeNull()
+})
+
+it('reuses the same product after Excel whitespace and letter case change', async () => {
+  expect((await findExistingExcelProduct(client(), { name: '  JEL   109  ', barcode: 'FK009999' }))?.id).toBe('correct')
 })
 
 it('uses a real barcode even when the source name changes', async () => {

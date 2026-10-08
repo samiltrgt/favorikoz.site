@@ -1,136 +1,54 @@
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { planExcelDuplicates, type DedupeProduct } from './lib/excel-product-dedupe'
 
-dotenv.config({ path: '.env.local' })
+dotenv.config({ path: '.env.local', quiet: true })
 
-type ProductRow = {
-  id: string
-  name: string
-  barcode: string | null
-  slug: string
-  stock_quantity: number | null
-  in_stock: boolean | null
-  created_at: string | null
-  image: string | null
-}
-
-function isAutoBarcode(barcode: string | null | undefined): boolean {
-  return /^FK\d{6,}$/i.test(String(barcode || '').trim())
-}
-
-function normalizeName(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, ' ')
-}
-
-async function fetchAllProducts(supabase: ReturnType<typeof createClient>): Promise<ProductRow[]> {
-  const pageSize = 1000
-  let from = 0
-  const all: ProductRow[] = []
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('products')
-      .select('id,name,barcode,slug,stock_quantity,in_stock,created_at,image')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: true })
-      .range(from, from + pageSize - 1)
-
+async function loadProducts(supabase: ReturnType<typeof createClient>) {
+  const products: DedupeProduct[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('products').select('*')
+      .is('deleted_at', null).order('id').range(from, from + 999)
     if (error) throw error
-    const batch = (data || []) as ProductRow[]
-    all.push(...batch)
-    if (batch.length < pageSize) break
-    from += pageSize
+    products.push(...(data || []) as DedupeProduct[])
+    if ((data || []).length < 1000) return products
   }
-
-  return all
-}
-
-function pickKeeper(group: ProductRow[]): ProductRow {
-  const sorted = [...group].sort((a, b) => {
-    const aAuto = isAutoBarcode(a.barcode)
-    const bAuto = isAutoBarcode(b.barcode)
-    if (aAuto !== bAuto) return aAuto ? 1 : -1
-
-    const aImg = !!(a.image && !a.image.includes('unsplash'))
-    const bImg = !!(b.image && !b.image.includes('unsplash'))
-    if (aImg !== bImg) return aImg ? -1 : 1
-
-    const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0
-    const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0
-    return aCreated - bCreated
-  })
-  return sorted[0]
 }
 
 async function main() {
-  const dryRun = !process.argv.includes('--apply')
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const apply = process.argv.includes('--apply')
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } })
+  const products = await loadProducts(supabase)
+  const { actions, skippedGroups } = planExcelDuplicates(products)
+  const duplicateIds = actions.flatMap(a => a.duplicates.map(p => p.id))
+  console.log(JSON.stringify({ activeProducts: products.length, excelDuplicateGroups: actions.length,
+    duplicates: duplicateIds.length, skippedVariantGroups: skippedGroups, apply }))
+  for (const a of actions) console.log(`KEEP ${a.keeper.id} | ${a.keeper.name} | hide ${a.duplicates.length}`)
+  if (!apply || !duplicateIds.length) return
 
-  const products = await fetchAllProducts(supabase)
-  console.log('Active products:', products.length)
-
-  const byName = new Map<string, ProductRow[]>()
-  for (const p of products) {
-    const key = normalizeName(p.name)
-    if (!byName.has(key)) byName.set(key, [])
-    byName.get(key)!.push(p)
+  // Full records and the merge plan allow recovery without touching order history.
+  mkdirSync('.pricing-backups', { recursive: true })
+  const backup = `.pricing-backups/excel-dedupe-${Date.now()}.json`
+  writeFileSync(backup, JSON.stringify({ products, actions }, null, 2))
+  console.log(`Backup: ${backup}`)
+  for (const { keeper, imageSource } of actions) {
+    if (imageSource.id === keeper.id) continue
+    const { data, error } = await supabase.from('products')
+      .update({ image: imageSource.image, images: imageSource.images })
+      .eq('id', keeper.id).is('deleted_at', null).select('id')
+    if (error) throw error
+    if (data?.length !== 1) throw new Error(`Keeper update failed: ${keeper.id}`)
   }
-
-  const duplicateGroups = [...byName.values()].filter((g) => g.length > 1)
-  const toDelete: ProductRow[] = []
-  const keepers: ProductRow[] = []
-
-  for (const group of duplicateGroups) {
-    const keeper = pickKeeper(group)
-    keepers.push(keeper)
-    for (const p of group) {
-      if (p.id !== keeper.id) toDelete.push(p)
-    }
-  }
-
-  console.log('Duplicate name groups:', duplicateGroups.length)
-  console.log('Products to soft-delete:', toDelete.length)
-  console.log('Mode:', dryRun ? 'DRY RUN' : 'APPLY')
-
-  console.log('\nSample merges:')
-  for (const group of duplicateGroups.slice(0, 12)) {
-    const keeper = pickKeeper(group)
-    console.log(`\nKEEP: ${keeper.name.slice(0, 55)}`)
-    console.log(`  barcode=${keeper.barcode} stok=${keeper.stock_quantity} slug=${keeper.slug}`)
-    for (const p of group) {
-      if (p.id === keeper.id) continue
-      console.log(`  DEL:  barcode=${p.barcode} stok=${p.stock_quantity} slug=${p.slug}`)
-    }
-  }
-
-  if (dryRun) {
-    console.log('\nDry run only. Pass --apply to soft-delete duplicates.')
-    return
-  }
-
   const now = new Date().toISOString()
-  let deleted = 0
-  for (const p of toDelete) {
-    const { error } = await supabase
-      .from('products')
-      .update({ deleted_at: now, in_stock: false })
-      .eq('id', p.id)
-
-    if (error) {
-      console.error('Failed to delete', p.id, p.name.slice(0, 40), error.message)
-    } else {
-      deleted++
-    }
-  }
-
-  console.log(`\n✅ Soft-deleted ${deleted} duplicate products`)
-  console.log(`✅ Kept ${keepers.length} canonical listings (stock unchanged)`)
+  const { data, error } = await supabase.from('products').update({ deleted_at: now, in_stock: false })
+    .in('id', duplicateIds).is('deleted_at', null).select('id')
+  if (error) throw error
+  if (data?.length !== duplicateIds.length) throw new Error('Not all duplicate listings were hidden')
+  const remaining = await loadProducts(supabase)
+  if (planExcelDuplicates(remaining).actions.length) throw new Error('Excel duplicates remain')
+  console.log(`Verified: ${data.length} duplicate listings hidden; ${remaining.length} active products; 0 Excel duplicate groups.`)
 }
 
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
+main().catch(error => { console.error(error); process.exitCode = 1 })
