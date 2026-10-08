@@ -39,6 +39,14 @@ export function parseExcelPrice(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/** Reference prices occasionally have a stray period after a complete decimal. */
+export function parseExcelReferencePrice(value: unknown): number | null {
+  if (typeof value === 'string' && /^\d+\.\d{1,2}\.$/.test(value.trim())) {
+    return parseExcelPrice(value.trim().slice(0, -1))
+  }
+  return parseExcelPrice(value)
+}
+
 export function isValidSalePrice(price: number | null): price is number {
   if (price === null || !Number.isFinite(price) || price <= 0) return false
   const kurus = Math.round((price + Number.EPSILON) * 100)

@@ -1,6 +1,12 @@
-import { isValidSalePrice, parseExcelPrice } from '../../scripts/lib/excel-price'
+import { isValidSalePrice, parseExcelPrice, parseExcelReferencePrice } from '../../scripts/lib/excel-price'
 
 describe('parseExcelPrice', () => {
+  it('repairs a trailing period only for reference prices', () => {
+    expect(parseExcelReferencePrice('150.0.')).toBe(150)
+    expect(parseExcelPrice('150.0.')).toBeNull()
+    expect(parseExcelReferencePrice('1.2.3')).toBeNull()
+    expect(parseExcelReferencePrice('150..')).toBeNull()
+  })
   it.each([
     [175, 175],
     ['175.0', 175],

@@ -17,7 +17,7 @@ import type { Database } from '../src/lib/supabase/database.types'
 import * as dotenv from 'dotenv'
 import * as XLSX from 'xlsx'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { isValidOptionalOldPrice, isValidSalePrice, parseExcelPrice } from './lib/excel-price'
+import { isValidOptionalOldPrice, isValidSalePrice, parseExcelPrice, parseExcelReferencePrice } from './lib/excel-price'
 import { displayToDb } from '../src/lib/price'
 import { findExistingExcelProduct, isAutoBarcode, normalizeExcelProductName } from './lib/excel-product-match'
 
@@ -334,6 +334,7 @@ interface ParsedProduct {
   image: string
   images: string[]
   imageRejected?: boolean
+  imageProvided?: boolean
   barcode: string
   rating: number
   reviews: number
@@ -362,7 +363,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     'eski fiyat',
     'original price'
   ])
-  const originalPrice = oldPriceValue == null || String(oldPriceValue).trim() === '' ? null : parseExcelPrice(oldPriceValue)
+  const originalPrice = oldPriceValue == null || String(oldPriceValue).trim() === '' ? null : parseExcelReferencePrice(oldPriceValue)
   if (!isValidSalePrice(price)) priceIssues.push({ row: idx + 2, name: String(name), field: 'Trendyol satış fiyatı', value: saleValue })
   if (oldPriceValue != null && String(oldPriceValue).trim() !== '' &&
     (originalPrice === null || !isValidOptionalOldPrice(originalPrice))) {
@@ -458,6 +459,7 @@ function parseExcelRow(row: any, idx: number): ParsedProduct | null {
     image,
     images,
     imageRejected,
+    imageProvided: isValidProductImageUrl(rawImage),
     barcode: barcode || `FK${String(idx + 1).padStart(6, '0')}`,
     rating: 4.6,
     reviews: Math.floor(Math.random() * 150) + 5,
@@ -524,6 +526,9 @@ async function importToSupabase(products: ParsedProduct[]) {
         const isInStock = product.stockQty > 0 ? product.inStock : false
         
         const updateData: {
+          name: string;
+          brand: string;
+          description: string;
           price: number;
           original_price: number | null;
           discount: number | null;
@@ -537,6 +542,9 @@ async function importToSupabase(products: ParsedProduct[]) {
           images?: string[];
           barcode?: string;
         } = {
+          name: product.name,
+          brand: product.brand,
+          description: product.description,
           price: displayToDb(product.price),
           original_price: product.originalPrice ? displayToDb(product.originalPrice) : null,
           discount: product.discount ?? null,
@@ -546,7 +554,7 @@ async function importToSupabase(products: ParsedProduct[]) {
           deleted_at: null,
         }
         // Excel'de geçerli görsel varsa güncelle; yoksa panelden yükleneni koru
-        if (!product.imageRejected && isValidProductImageUrl(product.image)) {
+        if (product.imageProvided) {
           updateData.image = product.image
           updateData.images = product.images
         }
