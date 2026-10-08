@@ -9,7 +9,7 @@ export function normalizeExcelProductName(name: string): string {
 }
 
 export async function findExistingExcelProduct(supabase: any, product: { name: string; barcode: string }): Promise<ExistingProduct | null> {
-  const fields = 'id, name, barcode, price, original_price, created_at'
+  const fields = 'id, name, barcode, price, original_price, created_at, category_slug, subcategory_slug'
   // A row-derived FK barcode is not stable when Excel rows move.
   if (!isAutoBarcode(product.barcode)) {
     const active = await supabase.from('products').select(fields).eq('barcode', product.barcode)

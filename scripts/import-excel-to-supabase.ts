@@ -16,10 +16,10 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../src/lib/supabase/database.types'
 import * as dotenv from 'dotenv'
 import * as XLSX from 'xlsx'
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { isValidOptionalOldPrice, isValidSalePrice, parseExcelPrice } from './lib/excel-price'
 import { displayToDb } from '../src/lib/price'
-import { findExistingExcelProduct, isAutoBarcode } from './lib/excel-product-match'
+import { findExistingExcelProduct, isAutoBarcode, normalizeExcelProductName } from './lib/excel-product-match'
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
@@ -648,9 +648,74 @@ async function importToSupabase(products: ParsedProduct[]) {
 // MAIN
 // ============================================
 
+async function syncProductCategories(products: ParsedProduct[], dryRun: boolean) {
+  const changes = new Map<string, any>()
+  const active: any[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('products')
+      .select('id,name,barcode,category_slug,subcategory_slug,created_at')
+      .is('deleted_at', null).order('id').range(from, from + 999)
+    if (error) throw error
+    active.push(...(data || []))
+    if ((data || []).length < 1000) break
+  }
+  for (const product of products) {
+    if (!product.subcategorySlug || !product.categorySlugFromSub) {
+      throw new Error(`Category could not be resolved: ${product.name}`)
+    }
+    const matches = !isAutoBarcode(product.barcode)
+      ? active.filter(row => row.barcode === product.barcode)
+      : active.filter(row => normalizeExcelProductName(row.name) === normalizeExcelProductName(product.name))
+    if (matches.length > 1) throw new Error(`Ambiguous active product: ${product.name}`)
+    const existing = matches[0]
+    if (!existing) throw new Error(`Active product not found: ${product.name}`)
+    const target = { category_slug: product.categorySlugFromSub, subcategory_slug: product.subcategorySlug }
+    const previous = changes.get(existing.id)
+    if (previous && JSON.stringify(previous.target) !== JSON.stringify(target)) {
+      throw new Error(`Conflicting Excel categories for ${product.name}`)
+    }
+    if (existing.category_slug !== target.category_slug || existing.subcategory_slug !== target.subcategory_slug) {
+      changes.set(existing.id, { id: existing.id, name: product.name, target,
+        before: { category_slug: existing.category_slug, subcategory_slug: existing.subcategory_slug } })
+    }
+  }
+  const plan = Array.from(changes.values())
+  const counts: Record<string, number> = {}
+  for (const item of plan) counts[item.target.subcategory_slug] = (counts[item.target.subcategory_slug] || 0) + 1
+  console.log('Category-only plan:', JSON.stringify({ changes: plan.length, counts, dryRun }))
+  if (dryRun || !plan.length) return
+  mkdirSync('.pricing-backups', { recursive: true })
+  const backupPath = `.pricing-backups/categories-${Date.now()}.json`
+  writeFileSync(backupPath, JSON.stringify(plan, null, 2))
+  console.log(`Category backup: ${backupPath}`)
+  // No price, stock, image, barcode or deletion fields are changed in this mode.
+  for (const subcategory of Object.keys(counts)) {
+    const group = plan.filter(item => item.target.subcategory_slug === subcategory)
+    const { data, error } = await supabase.from('products').update(group[0].target)
+      .in('id', group.map(item => item.id)).is('deleted_at', null).select('id')
+    if (error) throw error
+    if (data?.length !== group.length) throw new Error(`Category update incomplete: ${subcategory}`)
+  }
+  for (let from = 0; from < plan.length; from += 500) {
+    const batch = plan.slice(from, from + 500)
+    const { data, error } = await supabase.from('products').select('id,category_slug,subcategory_slug,deleted_at')
+      .in('id', batch.map(item => item.id))
+    if (error) throw error
+    if (data?.length !== batch.length) throw new Error('Category verification missing products')
+    for (const row of data || []) {
+      const expected = changes.get(row.id).target
+      if (row.deleted_at || row.category_slug !== expected.category_slug || row.subcategory_slug !== expected.subcategory_slug) {
+        throw new Error(`Category verification failed: ${row.id}`)
+      }
+    }
+  }
+  console.log(`Verified ${plan.length} category corrections.`)
+}
+
 async function main() {
   const args = process.argv.slice(2)
   const dryRun = args.includes('--dry-run')
+  const categoriesOnly = args.includes('--categories-only')
   const planOutput = args.find(arg => arg.startsWith('--plan-output='))?.slice('--plan-output='.length)
   const xlsxArg = args.find((arg) => !arg.startsWith('--'))
   if (!xlsxArg) {
@@ -659,7 +724,17 @@ async function main() {
   }
 
   try {
+    // Category names in the workbook may refer to nested database categories.
+    // Load the tree before parsing, otherwise branded categories fall back to generic ones.
+    if (!dryRun || categoriesOnly) {
+      initializeSupabase()
+      await loadDbCategories()
+    }
     const products = readExcelFile(xlsxArg)
+    if (categoriesOnly) {
+      await syncProductCategories(products, dryRun)
+      return
+    }
     if (priceIssues.length) {
       console.error(`❌ ${priceIssues.length} invalid price value(s):`)
       priceIssues.forEach((issue) => console.error(`   Row ${issue.row} | ${issue.name} | ${issue.field}: ${String(issue.value)}`))
@@ -674,8 +749,6 @@ async function main() {
       if (priceIssues.length) process.exitCode = 1
       return
     }
-    initializeSupabase()
-    await loadDbCategories()
     await importToSupabase(products)
   } catch (error: any) {
     console.error('💥 Fatal error:', error.message)
