@@ -74,6 +74,8 @@ module.exports = {
   async headers() {
     return [
       { source: '/(.*)', headers: [...securityHeaders, ...(process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production' ? [noindexFollow] : [])] },
+      // New derivatives are content-addressed; retained legacy files are never overwritten.
+      { source: '/seo-images/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
       ...privateRoutes.map((route) => ({ source: `/${route}/:path*`, headers: [noindexFollow] })),
       { source: '/admin/:path*', headers: [...securityHeaders, noindexNofollow] },
       { source: '/api/categories', headers: [

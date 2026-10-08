@@ -177,8 +177,8 @@ function ProductRail({
 
   useLayoutEffect(() => {
     const el = trackRef.current
-    if (!el || dragging) return
-    el.style.transition = reducedMotion || step <= 0 ? 'none' : `transform ${SLIDE_MS}ms ${SLIDE_EASE}`
+    if (!el || dragging || step <= 0) return
+    el.style.transition = reducedMotion ? 'none' : `transform ${SLIDE_MS}ms ${SLIDE_EASE}`
     el.style.transform = `translate3d(${-offsetIndex * step}px, 0, 0)`
   }, [offsetIndex, step, reducedMotion, dragging])
 
@@ -186,7 +186,7 @@ function ProductRail({
 
   return (
     <div className="ep-rail">
-      <div ref={trackRef} className="ep-track" data-base={base}>
+      <div ref={trackRef} className="ep-track" data-base={base} style={{ '--ep-offset': -offsetIndex } as CSSProperties}>
         {products.map((product) => (
           <div className="ep-slide" key={product.id}>
             <Card product={product} />
@@ -215,6 +215,8 @@ function CategoryRow({
   const rowRef = useRef<HTMLElement>(null)
   const controlRef = useRef<HTMLDivElement>(null)
   const arrowsRef = useRef<HTMLDivElement>(null)
+  const arrowBounds = useRef<{ top: number; min: number; max: number } | null>(null)
+  const lastMeasuredWidth = useRef('')
   const dragRef = useRef<DragSession | null>(null)
   const suppressClick = useRef(false)
   const gestureId = useRef(0)
@@ -240,6 +242,10 @@ function CategoryRow({
     const cols = mobile ? MOBILE_PAGE_SIZE : 4
     const col = (width - gap * (cols - 1)) / cols
     if (!(col > 0)) return
+    const measurement = `${width}:${gap}:${cols}`
+    if (lastMeasuredWidth.current === measurement) return
+    lastMeasuredWidth.current = measurement
+    arrowBounds.current = null
     row.style.setProperty('--ep-col', `${col}px`)
     row.style.setProperty('--ep-gap', `${gap}px`)
     setStep(col + gap)
@@ -253,6 +259,12 @@ function CategoryRow({
     ro.observe(row)
     return () => ro.disconnect()
   }, [measure, count, isMobile])
+
+  useEffect(() => {
+    const invalidate = () => { arrowBounds.current = null }
+    window.addEventListener('scroll', invalidate, { passive: true })
+    return () => window.removeEventListener('scroll', invalidate)
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -399,13 +411,17 @@ function CategoryRow({
     if (!control || !arrows) return
     if (window.matchMedia('(max-width: 639px)').matches) return
 
-    const rect = control.getBoundingClientRect()
-    const arrowsHeight = arrows.offsetHeight
-    const pad = 12
-    const min = arrowsHeight / 2 + pad
-    const max = rect.height - arrowsHeight / 2 - pad
+    // Measure once on entry/resize/scroll, rather than forcing a layout read
+    // after every pointer-follow style write.
+    if (!arrowBounds.current) {
+      const rect = control.getBoundingClientRect()
+      const arrowsHeight = arrows.offsetHeight
+      const pad = 12
+      arrowBounds.current = { top: rect.top, min: arrowsHeight / 2 + pad, max: rect.height - arrowsHeight / 2 - pad }
+    }
+    const { top, min, max } = arrowBounds.current
     if (max <= min) return
-    const y = event.clientY - rect.top
+    const y = event.clientY - top
     const clamped = Math.min(max, Math.max(min, y))
     arrows.style.top = `${clamped}px`
     arrows.style.bottom = 'auto'
@@ -413,6 +429,7 @@ function CategoryRow({
   }
 
   const resetArrowFollow = () => {
+    arrowBounds.current = null
     const arrows = arrowsRef.current
     if (!arrows) return
     arrows.style.top = ''

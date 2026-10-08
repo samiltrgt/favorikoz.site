@@ -2,9 +2,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ProductCard from '@/components/product-card'
 
 jest.mock('next/image', () => {
-  return function MockImage({ src, alt, fill, priority, fetchPriority, ...props }: any) {
+  return function MockImage({ src, alt, fill, priority, fetchPriority, unoptimized, blurDataURL, onLoadingComplete, ...props }: any) {
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img src={src} alt={alt} {...props} />
+    return <img src={src} alt={alt} data-fetch-priority={fetchPriority} {...props} />
   }
 })
 
@@ -58,6 +58,28 @@ describe('ProductCard Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  it('renders visible content without starting an observer-driven entry animation', () => {
+    render(<ProductCard product={mockProduct} index={30} />)
+    const card = screen.getByTestId('product-card')
+    expect(card).not.toHaveClass('animate-fade-in-up')
+    expect(card.style.animationDelay).toBe('')
+    expect(screen.getByText('Test Product Name')).toBeVisible()
+  })
+
+  it.each([undefined, 2, 30])('keeps unspecified/offscreen card index %s out of high priority', (index) => {
+    render(<ProductCard product={mockProduct} index={index} />)
+    const image = screen.getByRole('img', { name: 'Test Product Name' })
+    expect(image).toHaveAttribute('loading', 'lazy')
+    expect(image).toHaveAttribute('data-fetch-priority', 'auto')
+  })
+
+  it.each([0, 1])('prioritizes explicitly identified initial card %s', (index) => {
+    render(<ProductCard product={mockProduct} index={index} />)
+    const image = screen.getByRole('img', { name: 'Test Product Name' })
+    expect(image).toHaveAttribute('loading', 'eager')
+    expect(image).toHaveAttribute('data-fetch-priority', 'high')
   })
 
   it('does not present unreviewed products as rated', () => {

@@ -62,6 +62,7 @@ export interface HomeFontenayLayout {
   subtitle: string
   href: string
   cta: string
+  productIds: string[]
 }
 
 export interface HomeLayoutConfig {
@@ -88,6 +89,7 @@ export const DEFAULT_HOME_LAYOUT: HomeLayoutConfig = {
     subtitle: 'Sizin için ürettiğimiz profesyonel kalite ürünlerimiz',
     href: '/tum-urunler',
     cta: 'Tümünü Gör',
+    productIds: [],
   },
 }
 
@@ -157,6 +159,7 @@ export function parseHomeLayout(raw: unknown): HomeLayoutConfig {
       subtitle: cleanText(fontenay.subtitle, DEFAULT_HOME_LAYOUT.fontenay.subtitle, 180),
       href: normalizeHref(fontenay.href, DEFAULT_HOME_LAYOUT.fontenay.href),
       cta: cleanText(fontenay.cta, DEFAULT_HOME_LAYOUT.fontenay.cta, 40),
+      productIds: cleanIds(fontenay.productIds),
     },
   }
 }

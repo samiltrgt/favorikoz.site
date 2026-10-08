@@ -43,7 +43,7 @@ interface ProductCardProps {
 export default function ProductCard({
   product,
   variant = 'grid',
-  index = 0,
+  index,
 }: ProductCardProps) {
   const compact = variant === 'compact'
   const hasRating =
@@ -56,33 +56,15 @@ export default function ProductCard({
   const showRating = hasRating || hasNoReviews
   const [isCartLoading, setIsCartLoading] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
-  const cardRef = useRef<HTMLDivElement>(null)
   const addedTimer = useRef<number | null>(null)
-  const [fadeIn, setFadeIn] = useState(false)
+  // Only callers that know a card is in the initial viewport opt into priority.
+  const firstScreen = index !== undefined && index < 2
 
   useEffect(() => {
     return () => {
       if (addedTimer.current) window.clearTimeout(addedTimer.current)
     }
   }, [])
-
-  useEffect(() => {
-    if (variant === 'list') return
-    const el = cardRef.current
-    if (!el || fadeIn) return
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setFadeIn(true)
-          io.disconnect()
-        }
-      },
-      { rootMargin: '80px 0px', threshold: 0.01 }
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [fadeIn, variant])
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -140,6 +122,8 @@ export default function ProductCard({
               coverClassName="object-cover"
               containClassName="object-cover"
               sizes="80px"
+              loading={firstScreen ? 'eager' : 'lazy'}
+              fetchPriority={firstScreen ? 'high' : 'auto'}
             />
           </div>
           <div className="flex-1 flex items-center justify-between min-w-0">
@@ -225,9 +209,7 @@ export default function ProductCard({
 
   return (
     <article
-      ref={cardRef}
-      className={`pcard${compact ? ' pcard--compact' : ''}${fadeIn ? ' animate-fade-in-up' : ''}`}
-      style={fadeIn ? { animationDelay: `${index * 50}ms` } : undefined}
+      className={`pcard${compact ? ' pcard--compact' : ''}`}
       data-testid="product-card"
     >
       <div className="pcard__media">
@@ -243,8 +225,8 @@ export default function ProductCard({
             coverClassName="object-cover"
             containClassName="object-cover"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-            loading={index < 2 ? 'eager' : 'lazy'}
-            fetchPriority={index < 2 ? 'high' : 'auto'}
+            loading={firstScreen ? 'eager' : 'lazy'}
+            fetchPriority={firstScreen ? 'high' : 'auto'}
           />
         </Link>
 

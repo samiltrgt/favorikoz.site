@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createSupabaseAnon } from '@/lib/supabase/server'
 import { dbToDisplay } from '@/lib/price'
+import { optimizedImageSource } from '@/lib/responsive-image-server'
 
 export type ProductBySlug = {
   id: string
@@ -38,7 +39,8 @@ export const getProductBySlug = cache(async (slug: string): Promise<ProductBySlu
   return {
     ...data,
     in_stock: data.in_stock === true && typeof data.stock_quantity === 'number' && data.stock_quantity > 0,
-    images: Array.isArray(data.images) ? (data.images as string[]) : [],
+    image: typeof data.image === 'string' ? optimizedImageSource(data.image) : data.image,
+    images: Array.isArray(data.images) ? (data.images as unknown[]).filter((src): src is string => typeof src === 'string').map(optimizedImageSource) : [],
     price: dbToDisplay(data.price),
     original_price: data.original_price != null ? dbToDisplay(data.original_price) : null,
   }

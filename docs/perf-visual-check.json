@@ -1,0 +1,366 @@
+[
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "js": true,
+    "docWidth": 390,
+    "rows": [
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      }
+    ],
+    "high": [
+      {
+        "alt": "Protez tırnak başlangıç seti, UV lamba ve tırnak bakım ürünleri",
+        "top": -1089
+      },
+      {
+        "alt": "Profesyonel Protez Tırnak Seti - Full Tırnak Seti",
+        "top": -825
+      },
+      {
+        "alt": "Ekonomik Protez Tırnak Seti - Yeni Başlayanlar İçin Protez Tırnak Seti",
+        "top": -825
+      }
+    ],
+    "missing": [],
+    "errors": []
+  },
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "js": true,
+    "docWidth": 1440,
+    "rows": [
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 40
+          },
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 40
+          },
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          },
+          {
+            "width": 325,
+            "left": 1420
+          }
+        ],
+        "visible": true
+      }
+    ],
+    "high": [
+      {
+        "alt": "Protez tırnak başlangıç seti, UV lamba ve tırnak bakım ürünleri",
+        "top": -1648
+      },
+      {
+        "alt": "Profesyonel Protez Tırnak Seti - Full Tırnak Seti",
+        "top": -1074
+      },
+      {
+        "alt": "Ekonomik Protez Tırnak Seti - Yeni Başlayanlar İçin Protez Tırnak Seti",
+        "top": -1074
+      }
+    ],
+    "missing": [],
+    "errors": []
+  },
+  {
+    "name": "desktop-nojs",
+    "width": 1440,
+    "height": 900,
+    "js": false,
+    "docWidth": 1440,
+    "rows": [
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 40
+          },
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 40
+          },
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 1360,
+        "cards": [
+          {
+            "width": 325,
+            "left": 385
+          },
+          {
+            "width": 325,
+            "left": 730
+          },
+          {
+            "width": 325,
+            "left": 1075
+          },
+          {
+            "width": 325,
+            "left": 1420
+          }
+        ],
+        "visible": true
+      }
+    ],
+    "high": [
+      {
+        "alt": "Protez tırnak başlangıç seti, UV lamba ve tırnak bakım ürünleri",
+        "top": -1648
+      },
+      {
+        "alt": "Profesyonel Protez Tırnak Seti - Full Tırnak Seti",
+        "top": -1074
+      },
+      {
+        "alt": "Ekonomik Protez Tırnak Seti - Yeni Başlayanlar İçin Protez Tırnak Seti",
+        "top": -1074
+      }
+    ],
+    "missing": [],
+    "errors": []
+  },
+  {
+    "name": "mobile-nojs",
+    "width": 390,
+    "height": 844,
+    "js": false,
+    "docWidth": 390,
+    "rows": [
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      },
+      {
+        "width": 358,
+        "cards": [
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          },
+          {
+            "width": 0,
+            "left": 0
+          }
+        ],
+        "visible": true
+      }
+    ],
+    "high": [
+      {
+        "alt": "Protez tırnak başlangıç seti, UV lamba ve tırnak bakım ürünleri",
+        "top": -1089
+      },
+      {
+        "alt": "Profesyonel Protez Tırnak Seti - Full Tırnak Seti",
+        "top": -825
+      },
+      {
+        "alt": "Ekonomik Protez Tırnak Seti - Yeni Başlayanlar İçin Protez Tırnak Seti",
+        "top": -825
+      }
+    ],
+    "missing": [],
+    "errors": []
+  }
+]

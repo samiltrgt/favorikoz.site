@@ -1,0 +1,11 @@
+{
+  "verifiedAt": "2026-10-08T08:15:50.104Z",
+  "entries": 2444,
+  "uniqueSourceGroups": 2436,
+  "verifiedFiles": 7266,
+  "derivativeBytes": 210828784,
+  "actualWidthBelow320": 10,
+  "manifestBytes": 403880,
+  "manifestGzipBytes": 88819,
+  "passed": true
+}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
+import Image from '@/components/responsive-image'
 import Link from 'next/link'
 import BrandMarquee, { type BrandLogo } from '@/components/BrandMarquee'
 
@@ -26,18 +26,42 @@ export default function HomeEditorialStack({
 }: HomeEditorialStackProps) {
   const slides = banners.filter((banner) => banner.src && banner.href)
   const [current, setCurrent] = useState(0)
-  const [paused, setPaused] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const paused = hovered || focused
+  const [loaded, setLoaded] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
+  const sectionRef = useRef<HTMLElement>(null)
   const total = slides.length
   const index = total > 0 ? ((current % total) + total) % total : 0
 
   useEffect(() => {
-    if (total < 2 || paused) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const onLoad = () => setLoaded(true)
+    if (document.readyState === 'complete') onLoad()
+    else window.addEventListener('load', onLoad, { once: true })
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onMotionChange = () => setReducedMotion(mq.matches)
+    onMotionChange()
+    mq.addEventListener('change', onMotionChange)
+    return () => { window.removeEventListener('load', onLoad); mq.removeEventListener('change', onMotionChange) }
+  }, [])
+
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+    const observer = new IntersectionObserver(([entry]) => setVisible(Boolean(entry?.isIntersecting)))
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [total])
+
+  useEffect(() => {
+    if (total < 2 || paused || !loaded || !visible || reducedMotion) return
     const timer = window.setInterval(() => {
       setCurrent((value) => (value + 1) % total)
     }, 6000)
     return () => window.clearInterval(timer)
-  }, [paused, total, index])
+  }, [paused, total, index, loaded, visible, reducedMotion])
 
   if (total === 0) {
     return (
@@ -50,13 +74,14 @@ export default function HomeEditorialStack({
   return (
     <>
       <section
+        ref={sectionRef}
         className="fh-slider fh-campaign"
         aria-roledescription="carousel"
         aria-label="Kampanya bannerları"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocus={() => setPaused(true)}
-        onBlur={() => setPaused(false)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false) }}
       >
         <div className="fh-campaign-viewport">
           <div

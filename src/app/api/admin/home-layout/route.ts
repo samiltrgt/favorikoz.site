@@ -24,6 +24,7 @@ async function withProducts(config: HomeLayoutConfig) {
   const ids = [
     ...config.featured.productIds,
     ...config.rows.flatMap((row) => row.productIds),
+    ...config.fontenay.productIds,
   ]
   const uniqueIds = Array.from(new Set(ids))
   const byId = new Map<string, { id: string; name: string; brand: string | null; image: string | null }>()
@@ -61,7 +62,14 @@ async function withProducts(config: HomeLayoutConfig) {
       productIds: row.productIds,
       products: resolve(row.productIds),
     })),
-    fontenay: config.fontenay,
+    fontenay: {
+      title: config.fontenay.title,
+      subtitle: config.fontenay.subtitle,
+      href: config.fontenay.href,
+      cta: config.fontenay.cta,
+      productIds: config.fontenay.productIds,
+      products: resolve(config.fontenay.productIds),
+    },
   }
 }
 

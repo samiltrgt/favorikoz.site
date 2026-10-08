@@ -26,6 +26,8 @@
 }
 
 .ep-row {
+  container-type: inline-size;
+  --ep-card-width: calc((100cqi - 3 * var(--ep-gap)) / 4);
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -61,11 +63,12 @@
   width: max-content;
   will-change: transform;
   backface-visibility: hidden;
+  transform: translate3d(calc(var(--ep-offset, 0) * (var(--ep-card-width) + var(--ep-gap))), 0, 0);
 }
 .ep-slide {
-  flex: 0 0 var(--ep-col);
-  width: var(--ep-col);
-  min-width: var(--ep-col);
+  flex: 0 0 var(--ep-card-width);
+  width: var(--ep-card-width);
+  min-width: var(--ep-card-width);
 }
 .ep-slide img,
 .ep-mcard img {
@@ -241,6 +244,8 @@
     padding: 20px 16px 28px;
   }
   .ep-row {
+    --ep-gap: 12px;
+    --ep-card-width: calc((100cqi - 12px) / 2);
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
     margin-bottom: 48px;

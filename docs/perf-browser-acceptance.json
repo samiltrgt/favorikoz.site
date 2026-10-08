@@ -1,0 +1,418 @@
+{
+  "origin": "http://localhost:3102",
+  "checkedAt": "2026-10-08T08:32:52.855Z",
+  "evidence": [
+    {
+      "width": 390,
+      "javaScriptEnabled": true,
+      "viewport": 390,
+      "document": 390,
+      "rows": [
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        },
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        },
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "http://localhost:3102/seo-images/f1ee2c942ede003efe7d-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/c90dc64787d1ce74c377-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/cde1e8dba37f1f3f8530-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/60a83e2e88cdcf6b30e5-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 82.078125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 51.90625
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 78.453125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 87.734375
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 82.078125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 51.90625
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 78.453125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 87.734375
+        }
+      ],
+      "errors": [],
+      "interactions": "editorial, promo, banner passed"
+    },
+    {
+      "width": 390,
+      "javaScriptEnabled": false,
+      "viewport": 390,
+      "document": 390,
+      "rows": [
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        },
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        },
+        {
+          "width": 358,
+          "cards": [
+            173,
+            173,
+            173,
+            173
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "http://localhost:3102/seo-images/f1ee2c942ede003efe7d-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/c90dc64787d1ce74c377-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/cde1e8dba37f1f3f8530-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/60a83e2e88cdcf6b30e5-828.webp",
+          "sizes": "100vw",
+          "width": 390
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 82.078125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 51.90625
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 78.453125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 87.734375
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 82.078125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 51.90625
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 78.453125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 87.734375
+        }
+      ],
+      "errors": [],
+      "interactions": "SSR visibility passed"
+    },
+    {
+      "width": 1440,
+      "javaScriptEnabled": true,
+      "viewport": 1440,
+      "document": 1440,
+      "rows": [
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        },
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        },
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "http://localhost:3102/seo-images/f1ee2c942ede003efe7d-2188.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/c90dc64787d1ce74c377-2172.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/cde1e8dba37f1f3f8530-2171.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 106.21875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 67.171875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 101.53125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 113.546875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 106.21875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 67.171875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 101.53125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 113.546875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 106.21875
+        }
+      ],
+      "errors": [],
+      "interactions": "editorial, promo, banner passed"
+    },
+    {
+      "width": 1440,
+      "javaScriptEnabled": false,
+      "viewport": 1440,
+      "document": 1440,
+      "rows": [
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        },
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        },
+        {
+          "width": 1360,
+          "cards": [
+            325,
+            325,
+            325,
+            325
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "http://localhost:3102/seo-images/f1ee2c942ede003efe7d-2188.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/c90dc64787d1ce74c377-2172.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/cde1e8dba37f1f3f8530-2171.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/60a83e2e88cdcf6b30e5-2188.webp",
+          "sizes": "100vw",
+          "width": 1440
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 106.21875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 67.171875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 101.53125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 113.546875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/448ea68f53ca87f283d0-239.webp",
+          "sizes": "",
+          "width": 106.21875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/6f85628de0dcd08c118f-229.webp",
+          "sizes": "",
+          "width": 67.171875
+        },
+        {
+          "src": "http://localhost:3102/seo-images/ca0f7e9ef156070c94d9-240.webp",
+          "sizes": "",
+          "width": 101.53125
+        },
+        {
+          "src": "http://localhost:3102/seo-images/04a099d5ea0debf772e7-240.webp",
+          "sizes": "",
+          "width": 113.546875
+        }
+      ],
+      "errors": [],
+      "interactions": "SSR visibility passed"
+    },
+    {
+      "productImage": {
+        "src": "http://localhost:3102/seo-images/f59d1b8f97756ce289a9-960.webp",
+        "width": 358,
+        "loaded": true,
+        "srcset": "/seo-images/f59d1b8f97756ce289a9-320.webp 320w, /seo-images/f59d1b8f97756ce289a9-640.webp 640w, /seo-images/f59d1b8f97756ce289a9-960.webp 960w"
+      },
+      "cacheControl": "public, max-age=31536000, immutable"
+    },
+    {
+      "deviceScaleFactor": 1,
+      "selected": {
+        "src": "http://localhost:3102/seo-images/d388ae1146bfff53aacd-320.webp",
+        "width": 208.140625
+      }
+    }
+  ]
+}

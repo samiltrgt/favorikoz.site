@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-08T08:19:43.591Z",
+  "manifest": "src/data/optimized-images.json",
+  "sourceEntries": 2444,
+  "uniqueSourceGroups": 2436,
+  "uniqueReferencedFiles": 7266,
+  "verifiedFiles": 7266,
+  "totalBytes": 210828784,
+  "mismatches": [],
+  "missing": [],
+  "decodeErrors": [],
+  "nonWebpFiles": 0,
+  "sourceCoverageByHost": {
+    "cdn.dsmcdn.com": 2236,
+    "staleks.tr": 140,
+    "cdn.myikas.com": 33,
+    "local-path": 8,
+    "cosskozmetik.com": 7,
+    "www.runailshop.com": 6,
+    "bvbhkvngwvuiiuhuovid.supabase.co": 5,
+    "www.favorikozmetik.com": 4,
+    "favorikozmetik.com": 4,
+    "images.unsplash.com": 1
+  }
+}

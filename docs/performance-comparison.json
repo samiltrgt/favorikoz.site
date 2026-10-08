@@ -1,0 +1,161 @@
+{
+  "checkedAt": "2026-10-08T08:33:34.044Z",
+  "method": "Two isolated local production builds. Before from Git HEAD archive at port3101; after working tree at port3102. Sequential cold Lighthouse runs. Home median of 3 runs per build; category/product single paired samples, not statistical estimates. Dynamic catalog/home data can change between runs. These are local lab measurements, not deployed field Core Web Vitals.",
+  "lighthouseVersion": "13.5.0",
+  "chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36",
+  "settings": {
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    },
+    "screen": {
+      "mobile": true,
+      "width": 412,
+      "height": 823,
+      "deviceScaleFactor": 1.75,
+      "disabled": false
+    },
+    "method": "simulate"
+  },
+  "home": {
+    "before": {
+      "score": 59,
+      "first-contentful-paint": 2123.157,
+      "largest-contentful-paint": 16150.289499999993,
+      "speed-index": 5116.463300384576,
+      "total-blocking-time": 284,
+      "cumulative-layout-shift": 0.004832215954137502,
+      "total-byte-weight": 2803820
+    },
+    "after": {
+      "score": 80,
+      "first-contentful-paint": 2106.276,
+      "largest-contentful-paint": 4919.605000000001,
+      "speed-index": 2772.0771999978715,
+      "total-blocking-time": 56,
+      "cumulative-layout-shift": 0.0041250263904247415,
+      "total-byte-weight": 788301
+    },
+    "runs": {
+      "before": [
+        {
+          "score": 53,
+          "first-contentful-paint": 2123.157,
+          "largest-contentful-paint": 15710.581,
+          "speed-index": 5116.463300384576,
+          "total-blocking-time": 643,
+          "cumulative-layout-shift": 0.004485264915572787,
+          "total-byte-weight": 2803820
+        },
+        {
+          "score": 59,
+          "first-contentful-paint": 2866.9624999999996,
+          "largest-contentful-paint": 16567.717999999986,
+          "speed-index": 6991.268837892865,
+          "total-blocking-time": 252.0000000000009,
+          "cumulative-layout-shift": 0.005142257307748524,
+          "total-byte-weight": 2804276
+        },
+        {
+          "score": 64,
+          "first-contentful-paint": 2111.2185000000004,
+          "largest-contentful-paint": 16150.289499999993,
+          "speed-index": 4813.78177728383,
+          "total-blocking-time": 284,
+          "cumulative-layout-shift": 0.004832215954137502,
+          "total-byte-weight": 2802818
+        }
+      ],
+      "after": [
+        {
+          "score": 77,
+          "first-contentful-paint": 2141.082,
+          "largest-contentful-paint": 5225.5109999999995,
+          "speed-index": 3600.904973716647,
+          "total-blocking-time": 42.5,
+          "cumulative-layout-shift": 0.011965243256969656,
+          "total-byte-weight": 788170
+        },
+        {
+          "score": 81,
+          "first-contentful-paint": 2106.276,
+          "largest-contentful-paint": 4685.689999999999,
+          "speed-index": 2106.276,
+          "total-blocking-time": 56,
+          "cumulative-layout-shift": 0.003595003314489709,
+          "total-byte-weight": 788301
+        },
+        {
+          "score": 80,
+          "first-contentful-paint": 2106.0449999999996,
+          "largest-contentful-paint": 4919.605000000001,
+          "speed-index": 2772.0771999978715,
+          "total-blocking-time": 63,
+          "cumulative-layout-shift": 0.0041250263904247415,
+          "total-byte-weight": 788444
+        }
+      ]
+    }
+  },
+  "category": {
+    "path": "/kategori/tirnak",
+    "before": {
+      "score": 77,
+      "first-contentful-paint": 1804.6605,
+      "largest-contentful-paint": 5261.65125,
+      "speed-index": 4277.504356644,
+      "total-blocking-time": 44.5,
+      "cumulative-layout-shift": 0.004563070441868558,
+      "total-byte-weight": 891415
+    },
+    "after": {
+      "score": 83,
+      "first-contentful-paint": 1812.066,
+      "largest-contentful-paint": 4552.164999999999,
+      "speed-index": 1812.066,
+      "total-blocking-time": 74,
+      "cumulative-layout-shift": 0.0037672976342669343,
+      "total-byte-weight": 770256
+    }
+  },
+  "product": {
+    "path": "/urun/microbrush-100lu-4sxx1b3fk",
+    "before": {
+      "score": 94,
+      "first-contentful-paint": 1504.905,
+      "largest-contentful-paint": 3055.9050000000007,
+      "speed-index": 2235.532514780916,
+      "total-blocking-time": 28.000000000000455,
+      "cumulative-layout-shift": 0.003628488999057649,
+      "total-byte-weight": 389123
+    },
+    "after": {
+      "score": 96,
+      "first-contentful-paint": 1508.5439999999999,
+      "largest-contentful-paint": 2774.696,
+      "speed-index": 1508.5439999999999,
+      "total-blocking-time": 63.5,
+      "cumulative-layout-shift": 0.004292863328224125,
+      "total-byte-weight": 336659
+    }
+  },
+  "acceptance": {
+    "seoChecks": 48,
+    "seoPassed": true,
+    "browserScenarios": 6,
+    "focusedTests": 70,
+    "suites": 12,
+    "build": "passed; 102 routes",
+    "typeCheck": "passed"
+  },
+  "notes": [
+    "LCP top metric uses simulated throttling; observed trace insight subparts use actual recorded trace and are not the same duration.",
+    "Before and after first home LCP node is the Full Tirnak Seti promo product, not the banner.",
+    "CSS remains render-blocking. Existing swap font preserved; Turkish subset retained. Legacy framework polyfills not stripped.",
+    "New responsive derivatives total 201 MiB deployment storage. Unknown future catalog images fall back to originals until optimizer maintenance run."
+  ]
+}

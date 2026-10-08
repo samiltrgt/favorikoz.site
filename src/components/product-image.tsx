@@ -1,6 +1,7 @@
 'use client'
 
-import Image, { type ImageProps } from 'next/image'
+import type { ImageProps } from 'next/image'
+import ResponsiveImage from '@/components/responsive-image'
 import { useCallback, useState } from 'react'
 
 /** Kareye yakın görseller cover ile doldurulur; uzun/dar olanlar contain ile sığdırılır. */
@@ -36,5 +37,5 @@ export default function ProductImage({
   const fitClass = fit === 'cover' ? coverClassName : containClassName
   const merged = [fitClass, className].filter(Boolean).join(' ')
 
-  return <Image {...props} className={merged} onLoad={handleLoad} />
+  return <ResponsiveImage {...props} className={merged} onLoad={handleLoad} />
 }

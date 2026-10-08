@@ -3,6 +3,7 @@ import { createSupabaseAnon } from '@/lib/supabase/server'
 import { CATALOG_REVALIDATE_SECONDS, PRODUCTS_CACHE_TAG } from '@/lib/product-cache'
 import { dbToDisplay, formatTRY } from '@/lib/price'
 import { siteBrands } from '@/lib/site-brands'
+import { optimizedImageSource } from '@/lib/responsive-image-server'
 import {
   DEFAULT_CAMPAIGN_BANNERS,
   HOME_LAYOUT_LINK,
@@ -105,11 +106,13 @@ function toEditorialProduct(product: HomeProduct): EditorialProduct | null {
   }
 }
 
-function normalizeProductPrice<T extends { price: number; original_price?: number | null }>(
+function normalizeProductPrice<T extends { price: number; original_price?: number | null; image?: string | null; images?: unknown }>(
   product: T
 ): T {
   return {
     ...product,
+    image: typeof product.image === 'string' ? optimizedImageSource(product.image) : product.image,
+    images: Array.isArray(product.images) ? product.images.filter((src): src is string => typeof src === 'string').map(optimizedImageSource) : product.images,
     price: dbToDisplay(product.price),
     original_price: product.original_price ? dbToDisplay(product.original_price) : null,
   }
@@ -201,7 +204,6 @@ async function loadHomeSections(): Promise<HomeSections> {
     .map((row: any) => row.products)
     .filter(Boolean)
     .map(normalizeProductPrice) as HomeProduct[]
-  const ownProductionProducts = ownProductionManaged.length > 0 ? ownProductionManaged : products
 
   const promoBanners = (promoBannersRes.data || []) as HomePromoBanner[]
 
@@ -226,10 +228,25 @@ async function loadHomeSections(): Promise<HomeSections> {
     ? curatedPromo
     : fallbackPromoProducts
 
+  // Fontenay / ürettiğimiz ürünler: öne çıkanlar gibi homeLayout.productIds öncelikli.
+  const curatedFontenay = homeLayout.fontenay.productIds.length
+    ? await fetchProductsByIds(supabase, homeLayout.fontenay.productIds)
+    : []
+  const automaticFontenay = products
+    .filter((product) => (product.brand || '').toLocaleLowerCase('tr').includes('fontenay'))
+    .slice(0, 12)
+  const ownProductionProducts = homeLayout.fontenay.productIds.length
+    ? curatedFontenay
+    : ownProductionManaged.length > 0
+      ? ownProductionManaged
+      : automaticFontenay.length > 0
+        ? automaticFontenay
+        : products.slice(0, 12)
+
   const campaignBanners = bannersRes.error
     ? DEFAULT_CAMPAIGN_BANNERS.map((banner, index) => ({
         id: `default-${index}`,
-        src: banner.src,
+        src: optimizedImageSource(banner.src),
         alt: banner.alt,
         href: banner.href,
         width: banner.width,
@@ -244,7 +261,7 @@ async function loadHomeSections(): Promise<HomeSections> {
         .filter((banner) => banner.image && banner.link !== HOME_LAYOUT_LINK)
         .map((banner) => ({
           id: banner.id,
-          src: banner.image as string,
+          src: optimizedImageSource(banner.image as string),
           alt: banner.title?.trim() || 'Kampanya',
           href: normalizeHref(banner.link, '/tum-urunler'),
           width: 2172,
@@ -260,7 +277,7 @@ async function loadHomeSections(): Promise<HomeSections> {
     promoBanners,
     promoCarouselProducts,
     homeLayout,
-    campaignBanners,
+    campaignBanners: campaignBanners.length ? campaignBanners : DEFAULT_CAMPAIGN_BANNERS.map((banner, index) => ({ ...banner, id: `default-${index}`, src: optimizedImageSource(banner.src) })),
     marqueeBrands,
     editorialCategories,
   }
@@ -369,7 +386,7 @@ async function loadEditorialCategories(
   return rows
 }
 
-export const getHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v7-kurus-v2'], {
+export const getHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v8-fontenay-ids'], {
   tags: [PRODUCTS_CACHE_TAG],
   revalidate: CATALOG_REVALIDATE_SECONDS,
 })

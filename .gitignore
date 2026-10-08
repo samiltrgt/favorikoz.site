@@ -90,6 +90,12 @@ jspm_packages/
 
 # next.js build output
 .next
+.next-seo/
+.next-perf/
+.perf-baseline/
+# Raw local performance recordings; compact acceptance/comparison reports stay tracked.
+docs/perf-lighthouse-*.json
+docs/perf-*.png
 
 # nuxt.js build output
 .nuxt

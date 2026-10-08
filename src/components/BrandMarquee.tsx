@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { gsap } from 'gsap'
 import './BannerBrands.css'
 
 export type BrandLogo = {
@@ -126,10 +125,19 @@ export default function BrandMarquee({
       mq.addListener(applyReduced)
     }
     document.addEventListener('visibilitychange', onVisibility)
-    gsap.ticker.add(tick)
+    let cancelled = false
+    let removeTicker: (() => void) | undefined
+    // The strip is already visible in server HTML; animation need not be in
+    // the initial JavaScript bundle.
+    void import('gsap').then(({ gsap }) => {
+      if (cancelled) return
+      gsap.ticker.add(tick)
+      removeTicker = () => gsap.ticker.remove(tick)
+    }).catch(() => { /* Logos remain visible if the animation chunk fails. */ })
 
     return () => {
-      gsap.ticker.remove(tick)
+      cancelled = true
+      removeTicker?.()
       if (typeof mq.removeEventListener === 'function') {
         mq.removeEventListener('change', applyReduced)
       } else {

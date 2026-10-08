@@ -1,6 +1,7 @@
 import { createSupabaseAnon } from '@/lib/supabase/server'
 import { cache } from 'react'
 import { dbToDisplay } from '@/lib/price'
+import { optimizedImageSource } from '@/lib/responsive-image-server'
 import type { ProductCardProduct } from '@/components/product-card'
 
 export type CategoryListProduct = ProductCardProduct & {
@@ -13,7 +14,7 @@ export type CategoryListProduct = ProductCardProduct & {
 function mapImages(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined
   const urls = value.filter((item): item is string => typeof item === 'string' && item.length > 0)
-  return urls.length > 0 ? urls : undefined
+  return urls.length > 0 ? urls.map(optimizedImageSource) : undefined
 }
 
 function mapProduct(row: Record<string, unknown>): CategoryListProduct {
@@ -24,7 +25,7 @@ function mapProduct(row: Record<string, unknown>): CategoryListProduct {
     brand: row.brand ? String(row.brand) : undefined,
     price: dbToDisplay(Number(row.price)),
     original_price: row.original_price != null ? dbToDisplay(Number(row.original_price)) : null,
-    image: String(row.image || ''),
+    image: optimizedImageSource(String(row.image || '')),
     images: mapImages(row.images),
     rating: typeof row.rating === 'number' ? row.rating : undefined,
     reviews_count: typeof row.reviews_count === 'number' ? row.reviews_count : undefined,

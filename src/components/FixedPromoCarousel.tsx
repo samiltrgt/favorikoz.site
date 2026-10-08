@@ -63,7 +63,11 @@ export default function FixedPromoCarousel({ promo, products }: FixedPromoCarous
   useEffect(() => {
     const element = rail.current;
     if (!element) return;
-    const update = () => setEdges({ start: element.scrollLeft <= 2, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 2 });
+    const update = () => {
+      const start = element.scrollLeft <= 2;
+      const end = element.scrollLeft + element.clientWidth >= element.scrollWidth - 2;
+      setEdges(previous => previous.start === start && previous.end === end ? previous : { start, end });
+    };
     update();
     element.addEventListener('scroll', update, { passive: true });
     const observer = new ResizeObserver(update);
@@ -98,6 +102,7 @@ export default function FixedPromoCarousel({ promo, products }: FixedPromoCarous
           }}>
             {products.map((product, index) => <article className="pc-product" key={product.id} role="group" aria-roledescription="slayt" aria-label={`${index + 1} / ${products.length}: ${product.name}`}>
               <ProductCard
+                index={index}
                 product={{
                   id: product.id,
                   slug: product.slug,

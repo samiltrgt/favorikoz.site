@@ -1,0 +1,805 @@
+{
+  "checkedAt": "2026-10-08T08:30:25.264Z",
+  "origin": "http://localhost:3102",
+  "production": "https://favorikozmetik.com",
+  "checks": [
+    {
+      "label": "public /",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite"
+        ],
+        "htmlBytes": 196659
+      }
+    },
+    {
+      "label": "public /tum-urunler",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/tum-urunler",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite"
+        ],
+        "htmlBytes": 177989
+      }
+    },
+    {
+      "label": "public /tum-urunler?page=2",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/tum-urunler?page=2",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite"
+        ],
+        "htmlBytes": 181377
+      }
+    },
+    {
+      "label": "public /kategori/tirnak",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/tirnak",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 164429
+      }
+    },
+    {
+      "label": "public /kategori/tirnak/kalici-oje",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/tirnak/kalici-oje",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 168258
+      }
+    },
+    {
+      "label": "public /kategori/ipek-kirpik",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/ipek-kirpik",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 161426
+      }
+    },
+    {
+      "label": "public /kategori/kuafor-malzemeleri",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/kuafor-malzemeleri",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 110224
+      }
+    },
+    {
+      "label": "public /kategori/sac-bakimi",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/sac-bakimi",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 172072
+      }
+    },
+    {
+      "label": "public /kategori/tirnak/cihazlar/toz-toplayici",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "canonical": "https://favorikozmetik.com/kategori/tirnak/cihazlar/toz-toplayici",
+        "robots": [
+          {
+            "name": "robots",
+            "value": "index, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "index, follow"
+          }
+        ],
+        "schemaTypes": [
+          "Organization",
+          "WebSite",
+          "BreadcrumbList",
+          "ItemList"
+        ],
+        "htmlBytes": 73717
+      }
+    },
+    {
+      "label": "product microbrush-100lu-4sxx1b3fk",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "75.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/ipek-kirpik",
+          "https://favorikozmetik.com/kategori/ipek-kirpik/diger-ipek-kirpik-urunleri",
+          "https://favorikozmetik.com/urun/microbrush-100lu-4sxx1b3fk"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-ipek-kirpik-cimbizi-no855-727",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "150.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/ipek-kirpik",
+          "https://favorikozmetik.com/kategori/ipek-kirpik/kirpik-cimbizlari",
+          "https://favorikozmetik.com/urun/profesyonel-ipek-kirpik-cimbizi-no855-727"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-ipek-kirpik-cimbizi-no856-716",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "150.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/ipek-kirpik",
+          "https://favorikozmetik.com/kategori/ipek-kirpik/kirpik-cimbizlari",
+          "https://favorikozmetik.com/urun/profesyonel-ipek-kirpik-cimbizi-no856-716"
+        ]
+      }
+    },
+    {
+      "label": "product ibeauty-lb-15-ml-kirpik-primer-kirpik-yag-temizleyici-106",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "275.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/ipek-kirpik",
+          "https://favorikozmetik.com/kategori/ipek-kirpik/kirpik-yapistiricilari",
+          "https://favorikozmetik.com/urun/ibeauty-lb-15-ml-kirpik-primer-kirpik-yag-temizleyici-106"
+        ]
+      }
+    },
+    {
+      "label": "product permania-kalici-makyaj-boyasi-dudak-boyasi-pembe-10ml-533",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "749.90",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kisisel-bakim",
+          "https://favorikozmetik.com/kategori/kisisel-bakim/kisisel-bakim-alt",
+          "https://favorikozmetik.com/urun/permania-kalici-makyaj-boyasi-dudak-boyasi-pembe-10ml-533"
+        ]
+      }
+    },
+    {
+      "label": "product permania-kalici-makyaj-boyasi-kas-boyasi-soluk-kahve-10ml-542",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "749.90",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kisisel-bakim",
+          "https://favorikozmetik.com/kategori/kisisel-bakim/kisisel-bakim-alt",
+          "https://favorikozmetik.com/urun/permania-kalici-makyaj-boyasi-kas-boyasi-soluk-kahve-10ml-542"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-cimbiz-no111-720",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "90.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kisisel-bakim",
+          "https://favorikozmetik.com/kategori/kisisel-bakim/kisisel-bakim-alt",
+          "https://favorikozmetik.com/urun/profesyonel-cimbiz-no111-720"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-yumusak-9lu-makyaj-fircasi-sungerli-siyah-508",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "150.00",
+        "availability": "https://schema.org/OutOfStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kisisel-bakim",
+          "https://favorikozmetik.com/kategori/kisisel-bakim/kisisel-bakim-alt",
+          "https://favorikozmetik.com/urun/profesyonel-yumusak-9lu-makyaj-fircasi-sungerli-siyah-508"
+        ]
+      }
+    },
+    {
+      "label": "product iha-kantasi-kisisel-kullanimlik-kalem-kantasi-12li-set-416",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "150.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri",
+          "https://favorikozmetik.com/urun/iha-kantasi-kisisel-kullanimlik-kalem-kantasi-12li-set-416"
+        ]
+      }
+    },
+    {
+      "label": "product kapakli-jilet-takilabilir-renkli-celik-sakal-usturasi-paslanmaz-mat-beyazkirmizimavi-403",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "250.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri",
+          "https://favorikozmetik.com/urun/kapakli-jilet-takilabilir-renkli-celik-sakal-usturasi-paslanmaz-mat-beyazkirmizimavi-403"
+        ]
+      }
+    },
+    {
+      "label": "product klasik-celik-sakal-usturasi-geleneksel-ustura-paslanmaz-jiletsiz-488",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "190.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri/diger-kuafor-malzemeleri",
+          "https://favorikozmetik.com/urun/klasik-celik-sakal-usturasi-geleneksel-ustura-paslanmaz-jiletsiz-488"
+        ]
+      }
+    },
+    {
+      "label": "product appro-classic-5000-2400-watt-profesyonel-sac-kurutma-fon-makinesi-r9el64a74",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "1750.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri",
+          "https://favorikozmetik.com/kategori/kuafor-malzemeleri/fon-makineleri",
+          "https://favorikozmetik.com/urun/appro-classic-5000-2400-watt-profesyonel-sac-kurutma-fon-makinesi-r9el64a74"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-ahsap-sac-fircasi-no38-195",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "190.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/sac-bakimi",
+          "https://favorikozmetik.com/kategori/sac-bakimi/sac-fircasi-ve-tarak",
+          "https://favorikozmetik.com/urun/profesyonel-ahsap-sac-fircasi-no38-195"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-antistatik-tarak-sekil-tarak-seti-2li-set-769",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "175.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/sac-bakimi",
+          "https://favorikozmetik.com/kategori/sac-bakimi/sac-fircasi-ve-tarak",
+          "https://favorikozmetik.com/urun/profesyonel-antistatik-tarak-sekil-tarak-seti-2li-set-769"
+        ]
+      }
+    },
+    {
+      "label": "product profesyonel-sac-fircasi-1015-412",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "190.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/sac-bakimi",
+          "https://favorikozmetik.com/kategori/sac-bakimi/sac-fircasi-ve-tarak",
+          "https://favorikozmetik.com/urun/profesyonel-sac-fircasi-1015-412"
+        ]
+      }
+    },
+    {
+      "label": "product sac-dolgunlastirici-keratin-fibers-siyah-topik-sac-tozu-50gr-916",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "299.90",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/sac-bakimi",
+          "https://favorikozmetik.com/kategori/sac-bakimi/sac-topik",
+          "https://favorikozmetik.com/urun/sac-dolgunlastirici-keratin-fibers-siyah-topik-sac-tozu-50gr-916"
+        ]
+      }
+    },
+    {
+      "label": "product runail-uv-filtreli-top-coat-18ml-rubber-base-scotch-18ml-non-acid-primer-15ml-1769633477751-0lxkqz",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "1450.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/tirnak",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri/base-coat-top-coat",
+          "https://favorikozmetik.com/urun/runail-uv-filtreli-top-coat-18ml-rubber-base-scotch-18ml-non-acid-primer-15ml-1769633477751-0lxkqz"
+        ]
+      }
+    },
+    {
+      "label": "product renkli-tirnak-tasi-seti-12li-nail-art-susleme-parlak-kristal-boncuk-seti-y4yxfv27p",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "200.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/tirnak",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri/tirnak-susleri",
+          "https://favorikozmetik.com/urun/renkli-tirnak-tasi-seti-12li-nail-art-susleme-parlak-kristal-boncuk-seti-y4yxfv27p"
+        ]
+      }
+    },
+    {
+      "label": "product cift-fanli-toz-toplama-240-watt-zxpy9l3ha",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "2200.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/tirnak",
+          "https://favorikozmetik.com/kategori/tirnak/cihazlar",
+          "https://favorikozmetik.com/kategori/tirnak/cihazlar/toz-toplayici",
+          "https://favorikozmetik.com/urun/cift-fanli-toz-toplama-240-watt-zxpy9l3ha"
+        ]
+      }
+    },
+    {
+      "label": "product pododisk-medium-baslik-ve-yedek-zimpara-100-adet-462",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "price": "350.00",
+        "availability": "https://schema.org/InStock",
+        "aggregateRating": null,
+        "breadcrumbs": [
+          "https://favorikozmetik.com/",
+          "https://favorikozmetik.com/kategori/tirnak",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri",
+          "https://favorikozmetik.com/kategori/tirnak/protez-tirnak-malzemeleri/yardimci-tirnak-urunleri",
+          "https://favorikozmetik.com/urun/pododisk-medium-baslik-ve-yedek-zimpara-100-adet-462"
+        ]
+      }
+    },
+    {
+      "label": "noindex /sepet",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /checkout",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /giris",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /kayit",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /sifremi-unuttum",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /sifre-yenile",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /payment/callback",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": "noindex, follow"
+      }
+    },
+    {
+      "label": "noindex /tum-urunler?search=oje",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": null
+      }
+    },
+    {
+      "label": "noindex /tum-urunler?sort=price-low",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": null
+      }
+    },
+    {
+      "label": "noindex /kategori/tirnak?sort=price-low",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "robots": [
+          {
+            "name": "robots",
+            "value": "noindex, follow"
+          },
+          {
+            "name": "googlebot",
+            "value": "noindex, follow"
+          }
+        ],
+        "xRobotsTag": null
+      }
+    },
+    {
+      "label": "404 /urun/seo-test-does-not-exist",
+      "passed": true,
+      "evidence": {
+        "status": 404
+      }
+    },
+    {
+      "label": "404 /kategori/seo-test-does-not-exist",
+      "passed": true,
+      "evidence": {
+        "status": 404
+      }
+    },
+    {
+      "label": "404 /kategori/sac-bakimi/toz-toplayici",
+      "passed": true,
+      "evidence": {
+        "status": 404
+      }
+    },
+    {
+      "label": "404 /tum-urunler?page=99999",
+      "passed": true,
+      "evidence": {
+        "status": 404
+      }
+    },
+    {
+      "label": "404 /kategori/tirnak?page=99999",
+      "passed": true,
+      "evidence": {
+        "status": 404
+      }
+    },
+    {
+      "label": "legacy category redirect",
+      "passed": true,
+      "evidence": {
+        "status": 308,
+        "location": "/kategori/tirnak/cihazlar/toz-toplayici"
+      }
+    },
+    {
+      "label": "complete sitemap equals current public catalog",
+      "passed": true,
+      "evidence": {
+        "urls": 1235,
+        "products": 1181,
+        "categories": 46,
+        "outOfStockProducts": 98
+      }
+    },
+    {
+      "label": "robots permits noindex pages to be crawled",
+      "passed": true,
+      "evidence": {
+        "robots": "User-Agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n\nSitemap: https://favorikozmetik.com/sitemap.xml\n"
+      }
+    },
+    {
+      "label": "mobile cart to checkout renders without submitting an order",
+      "passed": true,
+      "evidence": {
+        "product": "microbrush-100lu-4sxx1b3fk",
+        "checkoutRendered": true,
+        "shippingStep": true,
+        "paymentForm": true,
+        "orderSubmitted": false,
+        "paymentRequests": 0,
+        "pageErrors": []
+      }
+    }
+  ],
+  "passed": true,
+  "note": "HTTP/browser acceptance, public anonymous catalog. Production is the explicitly expected canonical origin; verifying a legacy origin does not certify domain consistency. No live payment/order submitted. Search Console and external Google Rich Results validation not covered."
+}

@@ -1,307 +1,224 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  Search,
-  Package,
-  Sparkles,
-} from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
+import AdminProductPicker, { type PickerProduct } from '@/components/admin-product-picker'
 
-interface Product {
-  id: string
-  name: string
-  brand: string
-  price: number
-  image: string
-  slug: string
-}
-
-interface OwnProductionItem {
-  id: string
-  product_id: string
-  display_order: number
-  is_active: boolean
-  products: Product
+interface FontenayForm {
+  title: string
+  subtitle: string
+  href: string
+  cta: string
+  products: PickerProduct[]
 }
 
 export default function OwnProductionAdminPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [allProducts, setAllProducts] = useState<Product[]>([])
-  const [ownProducts, setOwnProducts] = useState<OwnProductionItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [section, setSection] = useState({
-    title: 'Fontenay Paris',
-    subtitle: '',
-    href: '/tum-urunler',
-    cta: 'Tümünü Gör',
-  })
-  const [sectionMessage, setSectionMessage] = useState('')
+  const [form, setForm] = useState<FontenayForm | null>(null)
+  const [catalog, setCatalog] = useState<PickerProduct[]>([])
+  const [legacyProducts, setLegacyProducts] = useState<PickerProduct[]>([])
+  const [usingAutomatic, setUsingAutomatic] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
-    loadData()
-    fetch('/api/admin/home-layout', { cache: 'no-store' })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.success && result.data?.fontenay) {
-          const fontenay = result.data.fontenay
-          setSection({
-            title: fontenay.title,
-            subtitle: fontenay.subtitle,
-            href: fontenay.href,
-            cta: fontenay.cta,
+    const load = async () => {
+      const [layoutRes, productsRes, ownRes] = await Promise.all([
+        fetch('/api/admin/home-layout', { cache: 'no-store' }),
+        fetch('/api/products?scope=admin', { cache: 'no-store' }),
+        fetch('/api/own-production', { cache: 'no-store' }),
+      ])
+      const layout = await layoutRes.json()
+      const products = await productsRes.json()
+      const own = await ownRes.json()
+
+      if (products.success) setCatalog(products.data || [])
+
+      const fromLegacy: PickerProduct[] = []
+      if (own.success) {
+        for (const row of own.data || []) {
+          const product = row.products
+          if (!product?.id) continue
+          fromLegacy.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
           })
         }
-      })
-      .catch((error) => console.error(error))
+      }
+      setLegacyProducts(fromLegacy)
+
+      if (layout.success) {
+        const fontenay = layout.data.fontenay
+        const curated = (fontenay.products || []) as PickerProduct[]
+        const hasCurated = Boolean(fontenay.productIds?.length)
+        setUsingAutomatic(!hasCurated)
+        setForm({
+          title: fontenay.title,
+          subtitle: fontenay.subtitle,
+          href: fontenay.href,
+          cta: fontenay.cta,
+          products: hasCurated ? curated : fromLegacy,
+        })
+      }
+    }
+    load().catch((error) => console.error(error))
   }, [])
 
-  const loadData = async () => {
+  const save = async (products: PickerProduct[]) => {
+    if (!form) return
+    setSaving(true)
+    setMessage('')
     try {
-      const [productsRes, ownRes] = await Promise.all([
-        fetch('/api/products?scope=admin'),
-        fetch('/api/own-production'),
-      ])
-      const productsData = await productsRes.json()
-      const ownData = await ownRes.json()
-      if (productsData.success) setAllProducts(productsData.data || [])
-      if (ownData.success) setOwnProducts(ownData.data || [])
-    } catch (e) {
-      console.error('Error loading data:', e)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const filteredProducts = allProducts.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
-  const currentProductIds = ownProducts.map((op) => op.product_id)
-
-  const addToOwn = async (productId: string) => {
-    try {
-      const res = await fetch('/api/own-production', {
-        method: 'POST',
+      const response = await fetch('/api/admin/home-layout', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: productId }),
+        body: JSON.stringify({
+          fontenay: {
+            title: form.title,
+            subtitle: form.subtitle,
+            href: form.href,
+            cta: form.cta,
+            productIds: products.map((product) => product.id),
+          },
+        }),
       })
-      if (res.ok) await loadData()
-    } catch (e) {
-      console.error('Error adding to own production:', e)
+      const result = await response.json()
+      if (!result.success) {
+        setMessage(result.error || 'Kaydedilemedi')
+        return
+      }
+      setUsingAutomatic(!result.data.fontenay.productIds?.length)
+      setForm({
+        title: result.data.fontenay.title,
+        subtitle: result.data.fontenay.subtitle,
+        href: result.data.fontenay.href,
+        cta: result.data.fontenay.cta,
+        products: result.data.fontenay.products || [],
+      })
+      setMessage('Ana sayfadaki Fontenay Paris bölümü güncellendi.')
+    } catch (error) {
+      console.error(error)
+      setMessage('Kaydedilemedi')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const removeFromOwn = async (itemId: string) => {
-    try {
-      const res = await fetch(`/api/own-production/${itemId}`, { method: 'DELETE' })
-      if (res.ok) await loadData()
-    } catch (e) {
-      console.error('Error removing:', e)
-    }
-  }
-
-  if (isLoading) {
+  if (!form) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto" />
-          <p className="mt-4 text-gray-600">Yükleniyor...</p>
-        </div>
+      <div className="flex items-center justify-center py-24">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center">
-            <Link href="/admin" className="mr-4 p-2 text-gray-400 hover:text-gray-600">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                Fontenay Paris
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Ana sayfanın altındaki Fontenay Paris şeridinde görünen ürünler
-              </p>
-            </div>
-          </div>
-        </div>
+      <div>
+        <Link href="/admin" className="mb-3 inline-flex items-center text-sm text-gray-500 hover:text-gray-900">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Admin Paneli
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Fontenay Paris</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Ana sayfanın en altındaki “ürettiğimiz ürünler” şeridi — Öne Çıkanlar ve kategori satırlarıyla aynı kontrol.
+        </p>
       </div>
 
-      <form
-        className="grid grid-cols-1 gap-4 rounded-lg bg-white p-6 shadow md:grid-cols-2"
-        onSubmit={async (event) => {
-          event.preventDefault()
-          setSectionMessage('')
-          const response = await fetch('/api/admin/home-layout', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fontenay: section }),
-          })
-          const result = await response.json()
-          setSectionMessage(result.success ? 'Bölüm metni güncellendi.' : result.error || 'Kaydedilemedi')
-        }}
-      >
-        <label className="text-sm text-gray-700">
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-5 md:grid-cols-2">
+        <label className="block text-sm text-gray-700">
           Başlık
           <input
-            value={section.title}
-            onChange={(event) => setSection({ ...section, title: event.target.value })}
+            value={form.title}
+            onChange={(event) => setForm({ ...form, title: event.target.value })}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </label>
-        <label className="text-sm text-gray-700">
+        <label className="block text-sm text-gray-700">
           Buton yazısı
           <input
-            value={section.cta}
-            onChange={(event) => setSection({ ...section, cta: event.target.value })}
+            value={form.cta}
+            onChange={(event) => setForm({ ...form, cta: event.target.value })}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </label>
-        <label className="text-sm text-gray-700 md:col-span-2">
+        <label className="block text-sm text-gray-700 md:col-span-2">
           Alt başlık
           <input
-            value={section.subtitle}
-            onChange={(event) => setSection({ ...section, subtitle: event.target.value })}
+            value={form.subtitle}
+            onChange={(event) => setForm({ ...form, subtitle: event.target.value })}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </label>
-        <label className="text-sm text-gray-700 md:col-span-2">
+        <label className="block text-sm text-gray-700 md:col-span-2">
           Buton linki
           <input
-            value={section.href}
-            onChange={(event) => setSection({ ...section, href: event.target.value })}
+            value={form.href}
+            onChange={(event) => setForm({ ...form, href: event.target.value })}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            placeholder="/tum-urunler"
           />
         </label>
-        <div className="flex items-center gap-3 md:col-span-2">
-          <button type="submit" className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white">
-            Metni kaydet
+      </div>
+
+      {usingAutomatic && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p>
+            Özel ürün listesi yok. Ana sayfa şu an{' '}
+            {legacyProducts.length > 0
+              ? 'eski Fontenay listesindeki ürünleri'
+              : 'Fontenay markalı ürünleri (yoksa son ürünleri)'}{' '}
+            gösteriyor.
+          </p>
+          {legacyProducts.length > 0 && (
+            <button
+              type="button"
+              className="mt-2 font-medium underline"
+              onClick={() => {
+                setForm({ ...form, products: legacyProducts })
+                setUsingAutomatic(false)
+              }}
+            >
+              Bu ürünleri listeye al ve düzenle
+            </button>
+          )}
+        </div>
+      )}
+
+      <AdminProductPicker
+        title="Ürünler"
+        description="Kaydettikten sonra ana sayfa yalnızca bu listedeki ürünleri gösterir."
+        selected={form.products}
+        catalog={catalog}
+        onChange={(products) => {
+          setUsingAutomatic(false)
+          setForm({ ...form, products })
+        }}
+      />
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => save(form.products)}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+        >
+          <Save className="h-4 w-4" />
+          Kaydet
+        </button>
+        {!usingAutomatic && (
+          <button
+            type="button"
+            onClick={() => save([])}
+            disabled={saving}
+            className="text-sm text-gray-600 underline"
+          >
+            Özel listeyi kaldır
           </button>
-          {sectionMessage && <p className="text-sm text-gray-600">{sectionMessage}</p>}
-        </div>
-      </form>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">
-              Seçili Ürünler ({ownProducts.length})
-            </h3>
-          </div>
-          <div className="p-6">
-            {ownProducts.length === 0 ? (
-              <div className="text-center py-12">
-                <Package className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Henüz ürün eklenmemiş</h3>
-                <p className="mt-1 text-sm text-gray-500">Sağ taraftan ürün seçerek ekleyebilirsiniz</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {ownProducts
-                  .sort((a, b) => a.display_order - b.display_order)
-                  .map((item) => {
-                    const product = item.products
-                    if (!product) return null
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="flex-shrink-0">
-                          <Image
-                            src={product.image || '/placeholder.png'}
-                            alt={product.name}
-                            width={64}
-                            height={64}
-                            className="rounded-lg object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                          <p className="text-sm text-gray-500">{product.brand}</p>
-                          <p className="text-sm text-gray-900 font-medium">
-                            ₺{typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeFromOwn(item.id)}
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
-                          title="Listeden çıkar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )
-                  })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Tüm Ürünler</h3>
-            <div className="mt-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Ürün ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="p-6 max-h-96 overflow-y-auto">
-            <div className="space-y-2">
-              {filteredProducts.map((product) => {
-                const isSelected = currentProductIds.includes(product.id)
-                return (
-                  <div
-                    key={product.id}
-                    className={`flex items-center space-x-4 p-3 rounded-lg border ${
-                      isSelected
-                        ? 'bg-gray-50 border-gray-200 opacity-50'
-                        : 'border-gray-200 hover:bg-gray-50 cursor-pointer'
-                    }`}
-                    onClick={() => !isSelected && addToOwn(product.id)}
-                  >
-                    <div className="flex-shrink-0">
-                      <Image
-                        src={product.image || '/placeholder.png'}
-                        alt={product.name}
-                        width={48}
-                        height={48}
-                        className="rounded object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                      <p className="text-xs text-gray-500">{product.brand}</p>
-                    </div>
-                    {isSelected ? (
-                      <Sparkles className="h-5 w-5 text-amber-500 fill-amber-500" />
-                    ) : (
-                      <Plus className="h-5 w-5 text-gray-400" />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
+        )}
+        {message && <p className="text-sm text-gray-600">{message}</p>}
       </div>
     </div>
   )
