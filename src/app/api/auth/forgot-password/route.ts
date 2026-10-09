@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'E-posta gerekli' }, { status: 400 })
     }
     const supabase = await createSupabaseServer()
-    const redirectTo = `${getSiteUrl()}/sifre-yenile`
+    const redirectTo = `${getSiteUrl()}/auth/callback`
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo })
 

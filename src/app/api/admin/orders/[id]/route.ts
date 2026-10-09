@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin, createSupabaseServer } from '@/lib/supabase/server'
 import { retractGoogleConversion } from '@/lib/analytics/google-retract'
 import { noteMetaCancelUnverified } from '@/lib/analytics/meta-cancel'
+import { tryProcessOrderNotifications } from '@/lib/email-notifications'
 
 // GET /api/admin/orders/[id] - Get single order (Admin only)
 export async function GET(
@@ -134,6 +135,9 @@ export async function PUT(
         { status: 500 }
       )
     }
+
+    // Queued mail failures retry through the email cron without failing the admin update.
+    await tryProcessOrderNotifications(ordersDb, order.id)
 
     // İptal: Google RETRACT; Meta negatif Purchase yok (doğrulanamadı)
     const becameCancelled = body.status === 'cancelled' && before?.status !== 'cancelled'
