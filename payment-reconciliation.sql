@@ -7,7 +7,10 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS invoice_requested_at timestamptz,
   ADD COLUMN IF NOT EXISTS payment_check_attempts integer NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS payment_next_check_at timestamptz NOT NULL DEFAULT now(),
-  ADD COLUMN IF NOT EXISTS payment_check_lease_until timestamptz;
+  ADD COLUMN IF NOT EXISTS payment_check_lease_until timestamptz,
+  ADD COLUMN IF NOT EXISTS payment_reconciliation_enabled boolean NOT NULL DEFAULT false;
+-- Existing orders stay outside the new background process. Only new inserts opt in.
+ALTER TABLE public.orders ALTER COLUMN payment_reconciliation_enabled SET DEFAULT true;
 CREATE UNIQUE INDEX IF NOT EXISTS orders_iyzico_payment_id_unique ON public.orders(iyzico_payment_id) WHERE iyzico_payment_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS orders_payment_check_due ON public.orders(payment_next_check_at);
 
@@ -45,6 +48,7 @@ RETURNS SETOF public.orders LANGUAGE plpgsql SECURITY INVOKER SET search_path = 
 BEGIN
   RETURN QUERY WITH candidates AS (
     SELECT id FROM public.orders WHERE payment_status::text IN ('pending','failed') AND status::text <> 'refunded'
+      AND payment_reconciliation_enabled = true
       AND payment_token IS NOT NULL AND iyzico_basket_id IS NOT NULL
       AND created_at > now() - interval '90 days' AND payment_next_check_at <= now()
       AND (payment_check_lease_until IS NULL OR payment_check_lease_until < now())

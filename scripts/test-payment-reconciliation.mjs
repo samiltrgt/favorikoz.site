@@ -22,10 +22,14 @@ try {
     );
     GRANT ALL ON public.orders TO anon, authenticated, service_role;
   `)
+  // An order created before activation must never be claimed by the new cron.
+  await db.exec(`INSERT INTO public.orders(order_number,customer_name,customer_email,shipping_address,items,subtotal,shipping_cost,total,payment_method,payment_token)
+    VALUES ('historical','Fixture','fixture@example.invalid','{}','[]',10000,0,10000,'iyzico','historical')`)
   for (const file of ['orders-analytics-tracking-migration.sql', 'tracking-measurement-v4.sql', 'orders-iyzico-basket-id-migration.sql', 'payment-reconciliation.sql']) {
     await db.exec(await readFile(new URL(`../${file}`, import.meta.url), 'utf8'))
   }
   await db.exec(await readFile(new URL('../payment-reconciliation.sql', import.meta.url), 'utf8'))
+  await db.exec("UPDATE public.orders SET iyzico_basket_id='historical' WHERE order_number='historical'")
   const insert = async (number, status = 'pending', payment = 'pending') => {
     const { rows } = await db.query(`INSERT INTO public.orders(order_number,customer_name,customer_email,shipping_address,items,subtotal,shipping_cost,total,payment_method,status,payment_status,payment_token,iyzico_basket_id,tracking)
       VALUES ($1,'Fixture','fixture@example.invalid','{}','[]',10000,0,10000,'credit_card',$2,$3,$1,$1,'{"consent":{"analytics":true,"marketing":false}}') RETURNING id`, [number,status,payment])
@@ -55,6 +59,8 @@ try {
   assert(!permissions.anon && !permissions.authenticated && permissions.service,'RPCs restricted to service role')
   const claimed = (await db.query('SELECT * FROM claim_payment_checks(100)')).rows
   assert(claimed.length <= 5 && claimed.every(x=>x.payment_check_attempts === 1),'bounded claims increment attempts')
+  assert(claimed.every(x=>x.order_number !== 'historical'),'historical orders excluded from background processing')
+  assert(claimed.some(x=>x.order_number === 'other'),'new orders automatically eligible for background processing')
   assert((await db.query('SELECT * FROM claim_payment_checks(5)')).rows.length === 0,'leased checks cannot overlap')
 } catch (error) {
   console.error('FAIL payment PostgreSQL regression:', error instanceof Error ? error.message : 'unknown')
