@@ -90,7 +90,7 @@ export default function OneCikanlarPage() {
         href: result.data.featured.href,
         products: result.data.featured.products || [],
       })
-      setMessage('Ana sayfadaki Öne Çıkanlar güncellendi.')
+      setMessage('Ana sayfadaki Protez Tırnak Setleri güncellendi.')
     } catch (error) {
       console.error(error)
       setMessage('Kaydedilemedi')
@@ -114,9 +114,9 @@ export default function OneCikanlarPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Admin Paneli
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Öne Çıkanlar</h1>
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Protez Tırnak Setleri</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Kampanya sliderının altındaki renkli panel ve yanındaki ürünler.
+          Ana sayfada kampanya sliderının altındaki Protez Tırnak Setleri bölümünü düzenleyin.
         </p>
       </div>
 
@@ -152,7 +152,7 @@ export default function OneCikanlarPage() {
             value={form.href}
             onChange={(event) => setForm({ ...form, href: event.target.value })}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
-            placeholder="/tum-urunler"
+            placeholder="/kategori/tirnak/protez-tirnak-setleri"
           />
         </label>
       </div>

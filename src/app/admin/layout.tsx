@@ -47,7 +47,7 @@ export default function AdminLayout({
     { name: 'Ürün Yönetimi', href: '/admin/products', icon: Package },
     { name: 'Kategori Yönetimi', href: '/admin/categories', icon: FolderTree },
     { name: 'Kampanya Bannerları', href: '/admin/banners', icon: Image },
-    { name: 'Öne Çıkanlar', href: '/admin/one-cikanlar', icon: Sparkles },
+    { name: 'Protez Tırnak Setleri', href: '/admin/one-cikanlar', icon: Sparkles },
     { name: 'Kategori Satırları', href: '/admin/kategori-satirlari', icon: ImageIcon },
     { name: 'Fontenay Paris', href: '/admin/own-production', icon: Gem },
     { name: 'Kuponlar', href: '/admin/coupons', icon: Ticket },

@@ -73,10 +73,10 @@ export interface HomeLayoutConfig {
 
 export const DEFAULT_HOME_LAYOUT: HomeLayoutConfig = {
   featured: {
-    title: 'Öne Çıkanlar',
-    description: 'Sizin için seçtiğimiz ürünleri keşfedin.',
+    title: 'Protez Tırnak Setleri',
+    description: 'Sizin için hazırladığımız setleri keşfedin',
     ctaLabel: 'Ürünleri Gör',
-    href: '/tum-urunler',
+    href: '/kategori/tirnak/protez-tirnak-setleri',
     productIds: [],
   },
   rows: EDITORIAL_ROWS.map((row) => ({
