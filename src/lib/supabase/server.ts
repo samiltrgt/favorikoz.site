@@ -96,6 +96,9 @@ export function createSupabaseAdmin() {
     supabaseUrl,
     supabaseServiceKey,
     {
+      // Queue claims and payment state must reach Postgres on every request.
+      // Next.js can otherwise reuse fetch responses, including POST RPC results.
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
       cookies: {
         get() { return undefined },
         set() {},

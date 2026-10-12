@@ -18,7 +18,7 @@ test('admin and customer messages use separate recipients',async()=>{
 })
 test('success uses a stable idempotency key and stores the provider ID',async()=>{
   expect(await processEmailNotifications(db)).toEqual({sent:1,failed:0})
-  expect(fetch).toHaveBeenCalledWith('https://api.resend.com/emails',expect.objectContaining({headers:expect.objectContaining({'Idempotency-Key':'notification/event'})}))
+  expect(fetch).toHaveBeenCalledWith('https://api.resend.com/emails',expect.objectContaining({cache:'no-store',headers:expect.objectContaining({'Idempotency-Key':'notification/event'})}))
   expect(db.rpc).toHaveBeenLastCalledWith('finish_email_notification',expect.objectContaining({p_provider_id:'provider',p_lease_token:'lease'}))
 })
 test('timeout retries without marking sent',async()=>{

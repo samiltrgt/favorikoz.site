@@ -108,6 +108,7 @@ export async function processEmailNotifications(db: Db, orderId?: string): Promi
       if (!suppressed) {
         const email = await buildNotificationEmail(event)
         const response = await fetch('https://api.resend.com/emails', {
+          cache: 'no-store',
           method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'Idempotency-Key': `notification/${event.id}` },
           body: JSON.stringify({ from, ...email }), signal: AbortSignal.timeout(10000),
         })
