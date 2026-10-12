@@ -8,7 +8,7 @@ jest.mock('@/components/footer', () => () => null)
 jest.mock('@/components/product-image', () => () => null)
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('@/lib/analytics/use-consented-tracking', () => ({ useConsentedTracking: jest.fn() }))
-jest.mock('@/lib/cart', () => ({ refreshCartPrices: jest.fn(), setCart: jest.fn() }))
+jest.mock('@/lib/cart', () => ({ getCart: () => cart, refreshCartPrices: jest.fn(), setCart: jest.fn() }))
 
 const cart = [{ id: 'p1', slug: 'product', name: 'Ürün', image: '', price: 210000, qty: 1 }]
 
@@ -21,7 +21,7 @@ beforeEach(() => {
     json: async () => String(url).includes('coupons')
       ? { success: true, data: { subtotalKurus: 210000, discountAmountKurus: 21000 } }
       : String(url).includes('products')
-        ? { success: true, data: [{ slug: 'product', original_price: 2500 }] }
+        ? { success: true, data: [{ id: 'p1', slug: 'product', original_price: 2500 }] }
         : { success: false },
   })) as jest.Mock
 })

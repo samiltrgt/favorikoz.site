@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import ProductImage from '@/components/product-image'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import { refreshCartPrices, setCart } from '@/lib/cart'
+import { getCart, refreshCartPrices, setCart, type CartItem } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
-import { formatTRY, toCartPrice, toDisplayPrice } from '@/lib/price'
+import { formatTRY, toDisplayPrice } from '@/lib/price'
 import { calculateCheckoutTotals, FREE_SHIPPING_THRESHOLD_KURUS } from '@/lib/checkout-pricing'
 
 // UI tipinde sepet öğesi
@@ -36,46 +36,61 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState<string | null>(null)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
   const [priceError, setPriceError] = useState<string | null>(null)
+  const [pricesVerified, setPricesVerified] = useState(false)
+  const loadVersion = useRef(0)
 
-  // LocalStorage'dan sepet yükle ve API'den ürün bilgilerini al
-  useEffect(() => {
-    const loadCartItems = async () => {
-      try {
-        const local = await refreshCartPrices()
-        const response = await fetch('/api/products')
-        const result = await response.json()
-        if (!response.ok || !result.success) throw new Error('Product details unavailable')
-        {
-          const products = result.data || []
-          const ui: UIItem[] = local.map(l => {
-            const p = products.find((x: any) => x.slug === l.slug) || {}
-            return {
-              id: l.id,
-              slug: l.slug,
-              name: l.name,
-              brand: (p as any).brand,
-              price: l.price,
-              originalPrice: p.original_price ? toCartPrice(Number(p.original_price)) : undefined,
-              image: l.image,
-              quantity: l.qty,
+  const toUIItems = (items: CartItem[]): UIItem[] => items.map(item => ({
+    ...item, quantity: item.qty,
+  }))
+
+  // Stored items exist independently of the quote's availability.
+  const loadCartItems = async () => {
+    const version = ++loadVersion.current
+    setIsLoading(true)
+    setPricesVerified(false)
+    setPriceError(null)
+    setCartItems(toUIItems(getCart()))
+    try {
+      const local = await refreshCartPrices()
+      if (version !== loadVersion.current) return
+      setCartItems(toUIItems(local))
+      setPricesVerified(true)
+      if (!local.length) return
+      // Optional metadata must not delay or invalidate a verified basket.
+      void fetch(`/api/products?ids=${encodeURIComponent(local.map(item => item.id).join(','))}`)
+        .then(async response => {
+          const result = await response.json()
+          return response.ok && result.success && Array.isArray(result.data) ? result.data : []
+        }).then(products => {
+          if (version !== loadVersion.current) return
+          setCartItems(items => items.map(item => {
+            const product = products.find((entry: any) => entry?.id === item.id)
+            const originalKurus = Math.round(Number(product?.original_price) * 100)
+            return { ...item,
+              brand: typeof product?.brand === 'string' ? product.brand : undefined,
+              originalPrice: Number.isSafeInteger(originalKurus) && originalKurus > 0 ? originalKurus : undefined,
             }
-          })
-          setCartItems(ui)
-          const storedCoupon = getAppliedCouponCode()
-          if (storedCoupon) {
-            setCouponCode(storedCoupon)
-            await applyCoupon(storedCoupon)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading cart items:', error)
-        setPriceError('Güncel ürün fiyatları doğrulanamadı. Lütfen sayfayı yenileyin veya tekrar deneyin.')
-      } finally {
-        setIsLoading(false)
+          }))
+        }).catch(() => { /* Keep the authoritative quote if metadata is unavailable. */ })
+      const storedCoupon = getAppliedCouponCode()
+      if (storedCoupon) {
+        setCouponCode(storedCoupon)
+        await applyCoupon(storedCoupon)
       }
+    } catch (error) {
+      if (version !== loadVersion.current) return
+      console.error('Error loading cart items:', error)
+      setCartItems(toUIItems(getCart()))
+      setPricesVerified(false)
+      setPriceError('Güncel ürün fiyatları doğrulanamadı. Lütfen sayfayı yenileyin veya tekrar deneyin.')
+    } finally {
+      if (version === loadVersion.current) setIsLoading(false)
     }
-    
-    loadCartItems()
+  }
+
+  useEffect(() => {
+    void loadCartItems()
+    return () => { loadVersion.current++ }
   }, [])
 
   // LocalStorage'a yaz (UI -> local format)
@@ -105,6 +120,7 @@ export default function CartPage() {
       setCouponError(null)
       const refreshed = await refreshCartPrices()
       setPriceError(null)
+      setPricesVerified(true)
       setCartItems(items => items.map(item => {
         const current = refreshed.find(entry => entry.id === item.id)
         return current ? { ...item, price: current.price } : item
@@ -133,6 +149,7 @@ export default function CartPage() {
       setValidatedCouponCode(codeToApply)
       setAppliedCouponCode(codeToApply)
     } catch {
+      setPricesVerified(false)
       setCouponDiscount(0)
       setValidatedCouponCode('')
       setCouponError('Kupon doğrulanırken hata oluştu')
@@ -152,11 +169,10 @@ export default function CartPage() {
     clearAppliedCouponCode()
     
     setIsUpdating(true)
-    setCartItems(items => {
-      const next = items.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
-      persist(next)
-      return next
-    })
+    const next = cartItems.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
+    persist(next)
+    setCartItems(next)
+    void loadCartItems()
     
     // Simüle edilmiş güncelleme gecikmesi
     setTimeout(() => setIsUpdating(false), 300)
@@ -171,11 +187,10 @@ export default function CartPage() {
     clearAppliedCouponCode()
     setRemovingItem(id)
     setTimeout(() => {
-      setCartItems(items => {
-        const next = items.filter(item => item.id !== id)
-        persist(next)
-        return next
-      })
+      const next = cartItems.filter(item => item.id !== id)
+      persist(next)
+      setCartItems(next)
+      void loadCartItems()
       setRemovingItem(null)
     }, 300)
   }
@@ -213,7 +228,6 @@ export default function CartPage() {
 
           {/* Empty Cart */}
           <div className="text-center py-20 animate-fade-in-up">
-            {priceError && <p className="mb-4 text-red-600">{priceError}</p>}
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8 animate-float">
               <ShoppingBag className="w-12 h-12 text-gray-400" />
             </div>
@@ -254,6 +268,14 @@ export default function CartPage() {
           </p>
         </div>
 
+        {priceError && (
+          <div role="alert" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <h2 className="font-semibold text-amber-900">Sepetiniz korundu, fiyat ve stok doğrulaması bekleniyor</h2>
+            <p className="mt-2 text-sm text-amber-900">{priceError}</p>
+            <p className="mt-2 text-sm text-amber-900">Gösterilen tutarlar son kaydedilen fiyatlardır. Güncel fiyat ve stok doğrulanana kadar ödeme yapılamaz.</p>
+            <button type="button" onClick={() => void loadCartItems()} className="mt-3 rounded-lg bg-black px-4 py-2 text-white">Tekrar Dene</button>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4 lg:space-y-6">
@@ -376,7 +398,6 @@ export default function CartPage() {
                       {isApplyingCoupon ? '...' : 'Uygula'}
                     </button>
                   </div>
-              {priceError && <p className="mb-3 text-sm text-red-600">{priceError}</p>}
               {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
                   {couponDiscount > 0 && <p className="mt-2 text-xs text-green-600">Kupon indirimi uygulandı</p>}
                 </div>
@@ -439,8 +460,8 @@ export default function CartPage() {
               {/* Checkout Button */}
               <Link
                 href="/checkout"
-                aria-disabled={!!priceError || cartItems.length === 0}
-                onClick={(event) => { if (priceError) event.preventDefault() }}
+                aria-disabled={!pricesVerified || isApplyingCoupon || isUpdating || !!removingItem || cartItems.length === 0}
+                onClick={(event) => { if (!pricesVerified || isApplyingCoupon || isUpdating || removingItem) event.preventDefault() }}
                 className="w-full bg-black hover:bg-gray-800 hover:scale-105 active:scale-95 text-white font-light text-lg py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mb-4 group"
               >
                 <CreditCard className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />

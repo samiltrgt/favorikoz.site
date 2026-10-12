@@ -43,4 +43,19 @@ describe('cart quote', () => {
     expect(response.status).toBe(400)
     expect(createSupabaseAdmin).not.toHaveBeenCalled()
   })
+
+  it('rejects a quantity exceeding the actual stock', async () => {
+    const response = await POST(request([{ id: 'p1', quantity: 11 }]))
+    expect(response.status).toBe(400)
+    expect((await response.json()).success).toBe(false)
+  })
+
+  it('reports database outages as failed verification without a canonical basket', async () => {
+    jest.mocked(createSupabaseAdmin).mockReturnValue({
+      from: () => ({ select: () => ({ in: () => ({ is: async () => ({ data: null, error: { message: 'timeout' } }) }) }) }),
+    } as any)
+    const response = await POST(request([{ id: 'p1', quantity: 2 }]))
+    expect(response.status).toBe(500)
+    expect(await response.json()).toEqual({ success: false, error: 'Ürünler doğrulanamadı' })
+  })
 })

@@ -263,5 +263,38 @@ describe('Cart utilities', () => {
       await expect(refreshCartPrices()).rejects.toThrow('offline')
       expect(localStorageMock.setItem).not.toHaveBeenCalled()
     })
+
+    it.each([
+      [],
+      [{ id: 'wrong-id', unitPriceKurus: 12500, quantity: 2 }],
+      [{ id: '1', unitPriceKurus: 12500, quantity: 2 }, { id: '1', unitPriceKurus: 100, quantity: 2 }],
+      [null],
+    ].map(canonicalItems => ({ canonicalItems })))('rejects incomplete or invalid identities without overwriting the basket: %j', async ({ canonicalItems }) => {
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(stored))
+      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ success: true, data: { canonicalItems } }) } as Response)
+      await expect(refreshCartPrices()).rejects.toThrow('Sepet fiyatları doğrulanamadı')
+      expect(localStorageMock.setItem).not.toHaveBeenCalled()
+    })
+
+    it('does not overwrite a quantity change made while the quote was in flight', async () => {
+      localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(stored)).mockReturnValue(JSON.stringify([{ ...stored[0], qty: 3 }]))
+      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ success: true, data: { canonicalItems: [{ id: '1', unitPriceKurus: 12500, quantity: 2 }] } }) } as Response)
+      await expect(refreshCartPrices()).rejects.toThrow('Sepetiniz değişti')
+      expect(localStorageMock.setItem).not.toHaveBeenCalled()
+    })
+
+    it('aborts a hanging quote without deleting stored items', async () => {
+      jest.useFakeTimers()
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(stored))
+      jest.spyOn(global, 'fetch').mockImplementation((_url, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('timeout')))
+      }))
+      try {
+        const pending = expect(refreshCartPrices()).rejects.toThrow('timeout')
+        await jest.advanceTimersByTimeAsync(15000)
+        await pending
+        expect(localStorageMock.setItem).not.toHaveBeenCalled()
+      } finally { jest.useRealTimers() }
+    })
   })
 })

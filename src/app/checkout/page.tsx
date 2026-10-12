@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import { refreshCartPrices } from '@/lib/cart'
+import { getCart, refreshCartPrices } from '@/lib/cart'
 import { clearAppliedCouponCode, getAppliedCouponCode, setAppliedCouponCode } from '@/lib/coupon-storage'
 import { formatTRY, toDisplayPrice } from '@/lib/price'
 import { calculateCheckoutTotals, FREE_SHIPPING_THRESHOLD_KURUS } from '@/lib/checkout-pricing'
@@ -103,6 +103,7 @@ export default function CheckoutPage() {
   // Load cart and user profile
   useEffect(() => {
     const loadData = async () => {
+      setCartItems(getCart())
       try {
         // Load cart
         const cart = await refreshCartPrices()
@@ -130,6 +131,7 @@ export default function CheckoutPage() {
         }
         if (storedCoupon) await applyCoupon(storedCoupon, result?.user?.email || '')
       } catch (error) {
+        setPricesVerified(false)
         console.error('Error loading data:', error)
         setError('Güncel ürün fiyatları doğrulanamadı. Ödeme için lütfen sepeti yenileyin.')
       } finally {
@@ -394,6 +396,23 @@ export default function CheckoutPage() {
             >
               Alışverişe Başla
             </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!pricesVerified) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container py-20">
+          <div role="alert" className="mx-auto max-w-md rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+            <h1 className="text-2xl font-bold mb-3">Sepetinizin fiyat ve stok doğrulaması gerekiyor</h1>
+            <p className="mb-3">Sepetinizdeki {cartItems.length} ürün korundu. Güncel fiyatlar doğrulanana kadar ödeme yapılamaz.</p>
+            <p className="mb-6">{error}</p>
+            <Link href="/sepet" className="inline-block rounded-lg bg-black px-6 py-3 text-white">Sepete Dön</Link>
           </div>
         </div>
         <Footer />

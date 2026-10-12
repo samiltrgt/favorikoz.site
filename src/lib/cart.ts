@@ -89,15 +89,29 @@ export function clearCart() {
 export async function refreshCartPrices(): Promise<CartItem[]> {
   const items = getCart()
   if (!items.length) return []
-  const response = await fetch('/api/cart/quote', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    cache: 'no-store',
-    body: JSON.stringify({ items: items.map(item => ({ id: item.id, quantity: item.qty })) }),
-  })
-  const result = await response.json()
-  if (!response.ok || !result.success || !Array.isArray(result.data?.canonicalItems)) {
-    throw new Error(result.error || 'Sepet fiyatları güncellenemedi. Lütfen tekrar deneyin.')
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  let response: Response
+  let result: any
+  try {
+    response = await fetch('/api/cart/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      signal: controller.signal,
+      body: JSON.stringify({ items: items.map(item => ({ id: item.id, quantity: item.qty })) }),
+    })
+    result = await response.json()
+  } finally {
+    clearTimeout(timeout)
+  }
+  if (!response.ok || !result?.success || !Array.isArray(result.data?.canonicalItems)) {
+    throw new Error(result?.error || 'Sepet fiyatları güncellenemedi. Lütfen tekrar deneyin.')
+  }
+  const quotedItems = result.data.canonicalItems
+  if (quotedItems.length !== items.length || quotedItems.some((item: any) => !item || typeof item.id !== 'string') ||
+      new Set(quotedItems.map((item: any) => item.id)).size !== items.length) {
+    throw new Error('Sepet fiyatları doğrulanamadı. Lütfen tekrar deneyin.')
   }
   const canonical = new Map<string, { unitPriceKurus: number; quantity: number }>(
     result.data.canonicalItems.map((item: any) => [item.id, item])
