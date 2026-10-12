@@ -123,7 +123,7 @@ function normalizeProductPrice<T extends { price: number; original_price?: numbe
  * (BULGU-4: client no-store fetch'lerini ortadan kaldırmak için)
  * Cached 60s; product writes call revalidateTag('products').
  */
-async function loadHomeSections(): Promise<HomeSections> {
+async function loadHomeSections(homeLayout: HomeLayoutConfig): Promise<HomeSections> {
   const supabase = createSupabaseAnon()
 
   const [
@@ -132,7 +132,6 @@ async function loadHomeSections(): Promise<HomeSections> {
     promoBannersRes,
     promoBannerProductsRes,
     bannersRes,
-    homeLayout,
   ] = await Promise.all([
     supabase
       .from('products')
@@ -170,7 +169,6 @@ async function loadHomeSections(): Promise<HomeSections> {
       .eq('is_active', true)
       .order('display_order', { ascending: true })
       .order('id', { ascending: true }),
-    loadHomeLayoutConfig(),
   ])
 
   if (productsRes.error) {
@@ -296,7 +294,7 @@ async function fetchProductsByIds(
 
   if (error) {
     console.error('❌ fetchProductsByIds error:', error)
-    return []
+    throw new Error('Selected homepage products unavailable')
   }
 
   const byId = new Map(
@@ -386,7 +384,13 @@ async function loadEditorialCategories(
   return rows
 }
 
-export const getHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v8-fontenay-ids'], {
+const getCachedHomeSections = unstable_cache(loadHomeSections, ['home-sections-editorial-v9-layout-key'], {
   tags: [PRODUCTS_CACHE_TAG],
   revalidate: CATALOG_REVALIDATE_SECONDS,
 })
+
+/** Read saved selections before the cache; configuration changes create a new key. */
+export async function getHomeSections(): Promise<HomeSections> {
+  const layout = await loadHomeLayoutConfig()
+  return getCachedHomeSections(layout)
+}

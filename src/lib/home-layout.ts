@@ -185,11 +185,12 @@ export async function loadHomeLayoutConfig(): Promise<HomeLayoutConfig> {
       .limit(1)
       .maybeSingle()
 
-    if (error || !data?.subtitle) return DEFAULT_HOME_LAYOUT
+    if (error) throw error
+    if (!data?.subtitle) return DEFAULT_HOME_LAYOUT
     return parseHomeLayout(data.subtitle)
   } catch (error) {
     console.error('loadHomeLayoutConfig error:', error)
-    return DEFAULT_HOME_LAYOUT
+    throw error
   }
 }
 

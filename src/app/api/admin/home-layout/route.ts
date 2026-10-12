@@ -31,11 +31,13 @@ async function withProducts(config: HomeLayoutConfig) {
 
   if (uniqueIds.length > 0) {
     const supabase = await createSupabaseServer()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('products')
       .select('id, name, brand, image')
       .in('id', uniqueIds)
       .is('deleted_at', null)
+
+    if (error) throw error
 
     for (const product of data || []) {
       byId.set(product.id, product)
@@ -82,7 +84,7 @@ export async function GET() {
     }
 
     const config = await loadHomeLayoutConfig()
-    return NextResponse.json({ success: true, data: await withProducts(config) })
+    return NextResponse.json({ success: true, data: await withProducts(config) }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     console.error('home-layout GET error:', error)
     return NextResponse.json({ success: false, error: 'Ayarlar okunamadı' }, { status: 500 })
@@ -107,7 +109,7 @@ export async function PUT(request: NextRequest) {
     await saveHomeLayoutConfig(next)
     revalidateProductCatalog()
 
-    return NextResponse.json({ success: true, data: await withProducts(next) })
+    return NextResponse.json({ success: true, data: await withProducts(next) }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     console.error('home-layout PUT error:', error)
     return NextResponse.json({ success: false, error: 'Ayarlar kaydedilemedi' }, { status: 500 })

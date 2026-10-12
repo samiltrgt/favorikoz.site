@@ -74,7 +74,8 @@ export const metadata: Metadata = {
   },
 }
 
-export const revalidate = 60
+// Saved admin selections are read without caching; product data stays cached in home-data.
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const {
