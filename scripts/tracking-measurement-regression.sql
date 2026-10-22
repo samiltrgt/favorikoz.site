@@ -132,5 +132,24 @@ BEGIN
   PERFORM public.update_tracking_consent(owner,1005,false,false);
   SELECT status,payload INTO current_status,fixture_payload FROM public.tracking_outbox WHERE event_id = fixture_number || '-anon';
   IF current_status <> 'suppressed' OR fixture_payload <> '{}'::jsonb THEN RAISE EXCEPTION 'Anonymous owner withdrawal did not suppress Meta'; END IF;
+  -- A permanent Meta value failure settles GA4 independently, never marks the
+  -- purchase sent, and never changes the customer's paid order state.
+  fixture_id := gen_random_uuid();
+  fixture_number := 'invalid-value-regression-' || fixture_id::text;
+  INSERT INTO public.orders(id,order_number,customer_name,customer_email,shipping_address,items,subtotal,shipping_cost,total,status,payment_method,payment_status,tracking)
+    VALUES(fixture_id,fixture_number,'Isolated Test','isolated@example.invalid','{}','[]',10000,0,10000,'paid','credit_card','completed','{}');
+  INSERT INTO public.tracking_outbox(order_id,event_name,event_id,payload)
+    VALUES(fixture_id,'Purchase',fixture_number,'{}');
+  SELECT * INTO claimed FROM public.claim_tracking_outbox(1,fixture_number);
+  IF claimed.id IS NULL THEN RAISE EXCEPTION 'Invalid-value fixture was not claimed'; END IF;
+  PERFORM public.finish_tracking_outbox(claimed.id,claimed.lease_token,'failed','{"meta":"failed","ga4":"sent"}','invalid_purchase_value',30);
+  SELECT count(*) INTO result_count FROM public.tracking_outbox WHERE id=claimed.id
+    AND status='failed' AND sent_at IS NULL AND delivery->>'meta'='failed' AND delivery->>'ga4'='sent';
+  IF result_count <> 1 THEN RAISE EXCEPTION 'Invalid Meta value was falsely marked sent'; END IF;
+  SELECT count(*) INTO result_count FROM public.orders WHERE id=fixture_id AND payment_status::text='completed'
+    AND status::text='paid' AND meta_purchase_sent_at IS NULL AND tracking_outbox_status='failed';
+  IF result_count <> 1 THEN RAISE EXCEPTION 'Tracking failure modified payment state or marked Meta sent'; END IF;
+  SELECT count(*) INTO result_count FROM public.claim_tracking_outbox(1,fixture_number);
+  IF result_count <> 0 THEN RAISE EXCEPTION 'Permanent Meta value failure was reclaimed'; END IF;
 END $$;
 ROLLBACK;

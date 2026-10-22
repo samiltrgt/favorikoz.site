@@ -1,5 +1,6 @@
 import 'server-only'
 import { hashNormalized } from './hash'
+import { assertPurchaseValue } from '@/lib/analytics/purchase-value'
 
 export type MetaEvent = { event_name: string; event_id: string; event_time: number; action_source: 'website'; event_source_url: string; user_data: Record<string, unknown>; custom_data: Record<string, unknown> }
 export function buildMetaUserData(tracking: Record<string, unknown>, customer?: Record<string, any>): Record<string, unknown> {
@@ -12,6 +13,7 @@ export function buildMetaUserData(tracking: Record<string, unknown>, customer?: 
   return result
 }
 export async function deliverMeta(event: MetaEvent): Promise<void> {
+  if (event.event_name === 'Purchase') assertPurchaseValue(event.custom_data?.value)
   const pixel = process.env.META_PIXEL_ID?.trim()
   const token = process.env.META_CAPI_ACCESS_TOKEN?.trim()
   if (!pixel || !token) throw new Error('meta_configuration_missing')

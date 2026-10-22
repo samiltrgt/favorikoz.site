@@ -61,7 +61,7 @@ describe('Server tracking trust boundaries', () => {
 describe('Durable outbox retry and delivery isolation', () => {
   beforeEach(() => { jest.clearAllMocks() })
   const purchase = { id: 'outbox', order_id: 'order', event_name: 'Purchase', event_id: 'FK-1', event_time: 1700000000, attempts: 1, lease_token: 'lease', delivery: { meta: 'pending', ga4: 'pending' }, payload: { tracking: { consent: approved, client_id: '123.456' }, order: { total: 10000, shipping_cost: 1000, discount_amount: 0, items: [{ product_id: 'a', price: 9000, quantity: 1 }] } } }
-  function database(row = purchase, current: any = { payment_status: 'completed', status: 'paid', tracking: { consent: approved } }) {
+  function database(row: any = purchase, current: any = { payment_status: 'completed', status: 'paid', tracking: { consent: approved } }) {
     const rpc = jest.fn().mockImplementation((name) => Promise.resolve({ data: name === 'claim_tracking_outbox' ? [row] : null, error: null }))
     const chain: any = { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), update: jest.fn().mockReturnThis(), maybeSingle: jest.fn(() => Promise.resolve({ data: current, error: null })), then: (resolve: (value: any) => unknown) => Promise.resolve({ error: null }).then(resolve) }
     const from = jest.fn(() => chain)
@@ -97,6 +97,66 @@ describe('Durable outbox retry and delivery isolation', () => {
     expect(await drainTrackingOutbox()).toEqual({ claimed: 1, sent: 0, failed: 1 })
     expect(db.rpc).toHaveBeenLastCalledWith('finish_tracking_outbox', expect.objectContaining({ p_status: 'failed' }))
     expect(retryDelaySeconds(20)).toBe(21600)
+  })
+  test.each([0, Infinity, NaN])('invalid computed Purchase value (%s) is terminal without a successful Meta marker', async (total) => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const db = database({ ...purchase, payload: { ...purchase.payload,
+      order: { total, shipping_cost: 0, items: [] } }, delivery: { meta: 'pending', ga4: 'skipped' } })
+    expect(await drainTrackingOutbox()).toEqual({ claimed: 1, sent: 0, failed: 1 })
+    expect(deliverMeta).not.toHaveBeenCalled()
+    expect(getPredictedLtv).not.toHaveBeenCalled()
+    expect(db.rpc).toHaveBeenLastCalledWith('finish_tracking_outbox', expect.objectContaining({
+      p_status: 'failed', p_delivery: { meta: 'failed', ga4: 'skipped' }, p_error: 'invalid_purchase_value',
+    }))
+    expect(warning).toHaveBeenCalledWith('[tracking] Purchase blocked: invalid_purchase_value')
+    warning.mockRestore()
+  })
+  test('permanent Meta failure is preserved while another channel retries', async () => {
+    const db = database({ ...purchase, delivery: { meta: 'failed', ga4: 'pending' } })
+    ;(deliverGooglePurchase as jest.Mock).mockResolvedValue(undefined)
+    expect(await drainTrackingOutbox()).toEqual({ claimed: 1, sent: 0, failed: 1 })
+    expect(deliverMeta).not.toHaveBeenCalled()
+    expect(deliverGooglePurchase).toHaveBeenCalledTimes(1)
+    expect(db.rpc).toHaveBeenLastCalledWith('finish_tracking_outbox', expect.objectContaining({
+      p_status: 'failed', p_delivery: { meta: 'failed', ga4: 'sent' }, p_error: 'invalid_purchase_value',
+    }))
+  })
+  test('invalid fallback data is not sent and Meta stays failed while GA4 is pending', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const db = database({ ...purchase, payload: { ...purchase.payload,
+      order: { total: null, shipping_cost: 0, items: [{ product_id: 'a', price: '125,50', quantity: 1 }] } } })
+    ;(deliverGooglePurchase as jest.Mock).mockRejectedValue(new Error('ga4_http_503'))
+    expect(await drainTrackingOutbox()).toEqual({ claimed: 1, sent: 0, failed: 0 })
+    expect(deliverMeta).not.toHaveBeenCalled()
+    expect(db.rpc).toHaveBeenLastCalledWith('finish_tracking_outbox', expect.objectContaining({
+      p_status: 'pending', p_delivery: { meta: 'failed', ga4: 'pending' },
+    }))
+    warning.mockRestore()
+  })
+  test('consent changes do not turn an invalid Meta delivery into a successful row', async () => {
+    const db = database({ ...purchase, delivery: { meta: 'failed', ga4: 'sent' } },
+      { payment_status: 'completed', status: 'paid', tracking: { consent: { marketing: false, analytics: true } } })
+    expect(await drainTrackingOutbox()).toEqual({ claimed: 1, sent: 0, failed: 1 })
+    expect(db.rpc).toHaveBeenLastCalledWith('finish_tracking_outbox', expect.objectContaining({
+      p_status: 'failed', p_delivery: { meta: 'failed', ga4: 'sent' },
+    }))
+  })
+  test('a permanently invalid Meta event does not block GA4 or other rows in the same batch', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const invalid = { ...purchase, id: 'invalid', event_id: 'INVALID', payload: { ...purchase.payload,
+      order: { total: 0, shipping_cost: 0, items: [] } } }
+    const valid = { ...purchase, id: 'valid', event_id: 'VALID' }
+    const db = database()
+    db.rpc.mockImplementation((name) => Promise.resolve({ data: name === 'claim_tracking_outbox' ? [invalid, valid] : null, error: null }))
+    ;(deliverMeta as jest.Mock).mockResolvedValue(undefined)
+    ;(deliverGooglePurchase as jest.Mock).mockResolvedValue(undefined)
+    expect(await drainTrackingOutbox()).toEqual({ claimed: 2, sent: 1, failed: 1 })
+    expect(deliverMeta).toHaveBeenCalledTimes(1)
+    expect(deliverMeta).toHaveBeenCalledWith(expect.objectContaining({ event_id: 'VALID', custom_data: expect.objectContaining({ value: 100, currency: 'TRY' }) }))
+    expect(deliverGooglePurchase).toHaveBeenCalledTimes(2)
+    expect(db.rpc).toHaveBeenCalledWith('finish_tracking_outbox', expect.objectContaining({ p_id: 'invalid', p_status: 'failed', p_delivery: { meta: 'failed', ga4: 'sent' } }))
+    expect(db.rpc).toHaveBeenCalledWith('finish_tracking_outbox', expect.objectContaining({ p_id: 'valid', p_status: 'sent', p_delivery: { meta: 'sent', ga4: 'sent' } }))
+    warning.mockRestore()
   })
   function ownerDatabase(row: any, owner: any) {
     const rpc = jest.fn().mockImplementation((name) => Promise.resolve({ data: name === 'claim_tracking_outbox' ? [row] : null, error: null }))

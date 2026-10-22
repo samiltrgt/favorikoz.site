@@ -7,6 +7,7 @@ import { AD_CURRENCY, type AdContentItem } from '@/lib/analytics/value'
 import { readConsentSignals, type ConsentSignals } from '@/lib/analytics/consent'
 import { getCheckoutTrackingPayload, consumePageEventId } from '@/lib/analytics/tracking'
 import { sendDirectBrowserEvent } from '@/lib/analytics/browser-tags'
+import { isValidPurchaseValue } from '@/lib/analytics/purchase-value'
 
 declare global {
   interface Window {
@@ -219,6 +220,10 @@ export function trackPurchaseBrowser(opts: {
   consent?: ConsentSignals
 } & AllowedBrowserChannels) {
   const eventID = opts.eventId || opts.orderNumber
+  if (!isValidPurchaseValue(opts.value)) {
+    console.warn('[tracking] Browser Purchase blocked: invalid_purchase_value')
+    return false
+  }
   const ecom = ecommercePayload({
     value: opts.value,
     content_ids: opts.contents.map((c) => c.id),

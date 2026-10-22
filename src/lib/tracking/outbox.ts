@@ -1,6 +1,7 @@
 import 'server-only'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 import { adItemsFromOrder, adValueFromOrder } from '@/lib/analytics/value'
+import { assertPurchaseValue, InvalidPurchaseValueError } from '@/lib/analytics/purchase-value'
 import { getSiteUrl } from '@/lib/site-url'
 import { buildMetaUserData, deliverMeta, type MetaEvent } from './meta'
 import { deliverGooglePurchase } from './google'
@@ -41,13 +42,13 @@ export async function drainTrackingOutbox(options: { orderNumber?: string; limit
       if (orderError) lastError = 'order_state_unavailable'
       else if (!current || current.payment_status !== 'completed' || ['cancelled', 'refunded'].includes(current.status)) suppressed = true
       else {
-        if (current.tracking?.consent?.marketing !== true && delivery.meta !== 'sent') delivery.meta = 'skipped'
+        if (current.tracking?.consent?.marketing !== true && !['sent', 'failed'].includes(delivery.meta)) delivery.meta = 'skipped'
         if (current.tracking?.consent?.analytics !== true && delivery.ga4 !== 'sent') delivery.ga4 = 'skipped'
       }
     }
     if (!suppressed && !lastError) {
       for (const platform of ['meta', 'ga4']) {
-        if (['sent', 'skipped'].includes(delivery[platform])) continue
+        if (['sent', 'skipped', 'failed'].includes(delivery[platform])) continue
         try {
           if (!await channelAllowed(platform)) { delivery[platform] = 'skipped'; continue }
           if (platform === 'meta') {
@@ -57,10 +58,12 @@ export async function drainTrackingOutbox(options: { orderNumber?: string; limit
               const tracking = row.payload.tracking || {}
               if (tracking.consent?.marketing !== true) { delivery.meta = 'skipped'; continue }
               const value = adValueFromOrder(order)
+              assertPurchaseValue(value)
               const contents = adItemsFromOrder(order)
               event = { event_name: 'Purchase', event_id: row.event_id, event_time: row.event_time, action_source: 'website', event_source_url: tracking.source_url || `${getSiteUrl()}/checkout`, user_data: buildMetaUserData(tracking, order), custom_data: { value, currency: 'TRY', order_id: row.event_id, contents, content_ids: contents.map((item) => item.id), content_type: 'product', high_value: value > 1000, predicted_ltv: await getPredictedLtv(db, order.customer_email, value, row.order_id) } }
             }
             if (!event || !Object.keys(event.user_data).length) { delivery.meta = 'skipped'; continue }
+            if (event.event_name === 'Purchase') assertPurchaseValue(event.custom_data?.value)
             // LTV lookup awaits SQL. Recheck immediately after construction so a
             // withdrawal committed during that lookup cannot send stale PII.
             if (!await channelAllowed('meta')) { delivery.meta = 'skipped'; continue }
@@ -75,15 +78,20 @@ export async function drainTrackingOutbox(options: { orderNumber?: string; limit
           if (checkpointError) throw new Error('tracking_checkpoint_failed')
           if (!checkpoint) throw new Error('tracking_lease_lost')
         } catch (failure) {
+          if (platform === 'meta' && failure instanceof InvalidPurchaseValueError) {
+            delivery.meta = 'failed'
+            lastError = 'invalid_purchase_value'
+            continue
+          }
           const message = failure instanceof Error ? failure.message : 'delivery_failed'
           if (message === 'tracking_lease_lost') throw failure
           lastError = /^[a-z0-9_]+$/.test(message) ? message : 'delivery_network_failed'
         }
       }
     }
-    const done = ['meta', 'ga4'].every((platform) => ['sent', 'skipped'].includes(delivery[platform]))
-    const status = suppressed ? 'suppressed' : done ? 'sent' : row.attempts >= 12 ? 'failed' : 'pending'
-    const { error: finishError } = await db.rpc('finish_tracking_outbox', { p_id: row.id, p_lease_token: row.lease_token, p_status: status, p_delivery: delivery, p_error: lastError || null, p_retry_seconds: retryDelaySeconds(row.attempts) })
+    const done = ['meta', 'ga4'].every((platform) => ['sent', 'skipped', 'failed'].includes(delivery[platform]))
+    const status = suppressed ? 'suppressed' : done ? (delivery.meta === 'failed' ? 'failed' : 'sent') : row.attempts >= 12 ? 'failed' : 'pending'
+    const { error: finishError } = await db.rpc('finish_tracking_outbox', { p_id: row.id, p_lease_token: row.lease_token, p_status: status, p_delivery: delivery, p_error: lastError || (delivery.meta === 'failed' ? 'invalid_purchase_value' : null), p_retry_seconds: retryDelaySeconds(row.attempts) })
     if (finishError) throw new Error('tracking_finish_failed')
     if (status === 'sent') result.sent++
     else if (status === 'failed') result.failed++
