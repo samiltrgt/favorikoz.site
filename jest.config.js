@@ -8,7 +8,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jsdom',
   testMatch: ['**/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)'],
-  modulePathIgnorePatterns: ['<rootDir>/.perf-baseline/'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.pricing-backups/'],
+  modulePathIgnorePatterns: ['<rootDir>/.perf-baseline/', '<rootDir>/.pricing-backups/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
