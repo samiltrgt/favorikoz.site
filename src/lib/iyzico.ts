@@ -227,6 +227,8 @@ export async function complete3DSPaymentV2(payload: {
 
 export type IyzicoPaymentResult = {
   status: string
+  // Optional original transaction token; do not alias request conversationId.
+  paymentConversationId?: string
   paymentStatus?: string
   errorMessage?: string
   paymentId?: string
@@ -262,6 +264,7 @@ export async function retrievePayment(conversationId: string): Promise<IyzicoPay
           errorMessage: result?.errorMessage,
           paymentId: result?.paymentId,
           basketId: result?.basketId,
+          paymentConversationId: typeof result?.paymentConversationId === 'string' ? result.paymentConversationId : undefined,
           paidPrice: result?.paidPrice,
           currency: result?.currency,
         })
@@ -298,6 +301,7 @@ export async function retrievePaymentByPaymentId(
           errorMessage: result?.errorMessage,
           paymentId: result?.paymentId,
           basketId: result?.basketId,
+          paymentConversationId: typeof result?.paymentConversationId === 'string' ? result.paymentConversationId : undefined,
           paidPrice: result?.paidPrice,
           currency: result?.currency,
         })

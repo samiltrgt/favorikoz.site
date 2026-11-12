@@ -26,3 +26,15 @@ test('successful SDK callback clears timer', async () => {
   await expect(retrievePayment('token')).resolves.toMatchObject({ status: 'success', paymentId: '123' })
   expect(jest.getTimerCount()).toBe(0)
 })
+
+test.each(['token', 'id'])('retrieve by %s preserves a supplied original provider token without fabricating one', async (mode) => {
+  const read = () => mode === 'token' ? retrievePayment('token') : retrievePaymentByPaymentId('123')
+  for (const originalToken of [undefined, 'token', 'foreign-token', 123]) {
+    mockRetrieve.mockImplementationOnce((_request, callback) => callback(null, {
+      status: 'success', paymentId: '123', conversationId: 'token', paymentConversationId: originalToken,
+    }))
+    const result = await read()
+    expect(result.paymentConversationId).toBe(typeof originalToken === 'string' ? originalToken : undefined)
+    expect(jest.getTimerCount()).toBe(0)
+  }
+})

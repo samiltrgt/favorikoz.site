@@ -107,32 +107,64 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Geçersiz sipariş veya ödeme durumu' }, { status: 400 })
     }
 
-    const { data: before } = await ordersDb
+    const { data: before, error: lookupError } = await ordersDb
       .from('orders')
-      .select('status, order_number, payment_status')
+      .select('*')
       .eq('id', id)
       .maybeSingle()
 
-    const updatePayload: Record<string, unknown> = {
-      updated_at: new Date().toISOString()
+    if (lookupError) {
+      console.error('Order lookup error:', lookupError)
+      return NextResponse.json({ success: false, error: 'Failed to update order' }, { status: 500 })
     }
-    if (body.status !== undefined) updatePayload.status = body.status
-    if (body.payment_status !== undefined) updatePayload.payment_status = body.payment_status
-    if (body.tracking_number !== undefined) updatePayload.tracking_number = body.tracking_number || null
-    if (body.carrier !== undefined) updatePayload.carrier = body.carrier || null
+    if (!before) {
+      return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 })
+    }
+    if (body.payment_status === 'completed' && before.payment_status !== 'completed') {
+      return NextResponse.json(
+        { success: false, error: 'Ödeme yalnızca ödeme sağlayıcısı doğrulamasıyla tamamlanabilir' },
+        { status: 400 }
+      )
+    }
+
+    const updatePayload: Record<string, unknown> = {}
+    if (body.status !== undefined && body.status !== before.status) updatePayload.status = body.status
+    // Never write completed here, including when the admin form echoes an already paid order.
+    if (body.payment_status !== undefined && body.payment_status !== 'completed' && body.payment_status !== before.payment_status) {
+      updatePayload.payment_status = body.payment_status
+    }
+    if (body.tracking_number !== undefined && (body.tracking_number || null) !== before.tracking_number) {
+      updatePayload.tracking_number = body.tracking_number || null
+    }
+    if (body.carrier !== undefined && (body.carrier || null) !== before.carrier) {
+      updatePayload.carrier = body.carrier || null
+    }
+    if (Object.keys(updatePayload).length === 0) {
+      return NextResponse.json({ success: true, data: before })
+    }
+    updatePayload.updated_at = new Date().toISOString()
 
     const { data: order, error } = await ordersDb
       .from('orders')
       .update(updatePayload)
       .eq('id', id)
+      // Do not overwrite a payment confirmation, refund or status change since the read.
+      .eq('payment_status', before.payment_status)
+      .eq('status', before.status)
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error('Database error:', error)
       return NextResponse.json(
         { success: false, error: 'Failed to update order' },
         { status: 500 }
+      )
+    }
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: 'Sipariş durumu değişti. Lütfen yenileyip tekrar deneyin.' },
+        { status: 409 }
       )
     }
 

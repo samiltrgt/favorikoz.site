@@ -7,6 +7,7 @@ import type { AdContentItem } from '@/lib/analytics/value'
 import { CONSENT_CHANGED_EVENT, readConsentSignals, type ConsentSignals } from '@/lib/analytics/consent'
 
 type AnalyticsPayload = {
+  purchase_eligible?: boolean
   order_number: string
   value: number
   contents: AdContentItem[]
@@ -18,6 +19,7 @@ type AnalyticsPayload = {
 }
 
 function fireBrowserPurchase(analytics: AnalyticsPayload) {
+  if (analytics.purchase_eligible !== true) return
   const key = `purchase_sent_${analytics.order_number}`
   const currentConsent = readConsentSignals()
   let analyticsAllowed = analytics.consent?.analytics_storage === 'granted' && currentConsent.analytics_storage === 'granted'
@@ -31,6 +33,7 @@ function fireBrowserPurchase(analytics: AnalyticsPayload) {
   }
   if (!analyticsAllowed && !marketingAllowed) return
   const sent = trackPurchaseBrowser({
+    purchase_eligible: analytics.purchase_eligible,
     orderNumber: analytics.order_number,
     value: analytics.value,
     contents: analytics.contents || [],
@@ -124,6 +127,7 @@ export default function PaymentCallbackPage() {
           }
           let json: {
             status?: string
+            purchase_eligible?: boolean
             error?: string
             analytics?: AnalyticsPayload
           }
@@ -137,8 +141,8 @@ export default function PaymentCallbackPage() {
           console.log('[Ödeme callback] API yanıtı:', { ok: res.ok, status: json.status, error: json.error, try: i + 1 })
 
           if (json.status === 'success') {
-            if (json.analytics?.order_number) {
-              setOrderNumber(json.analytics.order_number)
+            if (json.analytics?.order_number) setOrderNumber(json.analytics.order_number)
+            if (json.purchase_eligible === true && json.analytics?.purchase_eligible === true && json.analytics.order_number) {
               purchaseRef.current = json.analytics
               fireBrowserPurchase(json.analytics)
             }

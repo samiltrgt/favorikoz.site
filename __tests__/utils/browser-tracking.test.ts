@@ -6,6 +6,34 @@ const contents = [{ id: 'product-1', quantity: 2, item_price: 150 }]
 const events = () => (window.dataLayer || []).filter((row: any) => row.event) as Array<Record<string, any>>
 const capiCalls = () => jest.mocked(fetch).mock.calls.filter((call) => call[0] === '/api/e')
 
+it.each([undefined, null, false, 'true', 1, [], {}].map(eligible => ({ eligible })))('blocks direct Purchase for eligibility $eligible before emitting matching data or events', async ({ eligible }) => {
+  await applyConsentChoice('granted')
+  window.dataLayer = []
+  window.fkTagConfig = { mode: 'direct', metaPixelId: '123456789' }
+  window.fbq = jest.fn()
+  jest.mocked(fetch).mockClear()
+  expect(trackPurchaseBrowser({ purchase_eligible: eligible as boolean, orderNumber: 'SYNTHETIC-DIRECT', value: 125, contents,
+    email: 'synthetic@example.invalid', consent: signalsFromState('granted'),
+  })).toBe(false)
+  expect(window.dataLayer).toEqual([])
+  expect(window.fbq).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+it('direct eligible Purchase remains blocked after current consent withdrawal', async () => {
+  await applyConsentChoice('granted')
+  await applyConsentChoice('denied')
+  window.dataLayer = []
+  window.fbq = jest.fn()
+  jest.mocked(fetch).mockClear()
+  expect(trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'SYNTHETIC-WITHDRAWN', value: 125, contents,
+    consent: signalsFromState('granted'),
+  })).toBe(false)
+  expect(window.dataLayer).toEqual([])
+  expect(window.fbq).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
+
 beforeEach(() => {
   for (const cookie of document.cookie.split(';')) document.cookie = `${cookie.trim().split('=')[0]}=; Path=/; Max-Age=0`
   window.dataLayer = []
@@ -95,14 +123,14 @@ it('revocation removes measurement cookies, clears matching data, and pauses Met
 it('fails closed for historical purchases without recorded consent even after a later acceptance', async () => {
   await applyConsentChoice('granted')
   window.dataLayer = []
-  expect(trackPurchaseBrowser({ orderNumber: 'ORD-1', value: 300, contents, email: 'private@example.com' })).toBe(false)
+  expect(trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'ORD-1', value: 300, contents, email: 'private@example.com' })).toBe(false)
   expect(events()).toEqual([])
 })
 
 it('provides enhanced matching data before conversion and clears it afterward', async () => {
   await applyConsentChoice('granted')
   window.dataLayer = []
-  trackPurchaseBrowser({ orderNumber: 'ORD-1', value: 300, contents, email: ' Test@Example.com ', phone: '0532 123 45 67', consent: signalsFromState('granted') })
+  trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'ORD-1', value: 300, contents, email: ' Test@Example.com ', phone: '0532 123 45 67', consent: signalsFromState('granted') })
   expect(events().map((row) => row.event)).toEqual(['enhanced_conversion_data', 'Purchase', 'purchase'])
   expect(events()[0].user_data).toEqual({ email: 'test@example.com', phone_number: '+905321234567' })
   expect(events()[1].eventID).toBe('ORD-1')
@@ -116,7 +144,7 @@ it('direct mode sends Ads matching before its conversion, excludes PII from GA4,
   window.dataLayer = []
   window.fkTagConfig = { mode: 'direct', ga4MeasurementId: 'G-UNITTEST', googleAdsId: 'AW-UNITTEST', googleAdsConversionLabel: 'label' }
   window.gtag = jest.fn()
-  trackPurchaseBrowser({ orderNumber: 'ORD-2', value: 300, contents, email: 'test@example.com', consent: signalsFromState('granted') })
+  trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'ORD-2', value: 300, contents, email: 'test@example.com', consent: signalsFromState('granted') })
   expect(window.gtag).toHaveBeenCalledWith('config', 'G-UNITTEST', expect.objectContaining({ send_page_view: false }))
   const calls = jest.mocked(window.gtag!).mock.calls
   const matching = calls.findIndex((call) => call[0] === 'set' && call[1] === 'user_data' && call[2] !== null)
@@ -168,8 +196,8 @@ it('direct Pixel uses the same eventID as CAPI and resumes after consent is gran
 it('marks HighValue purchases only above 1000 TRY', async () => {
   await applyConsentChoice('granted')
   window.dataLayer = []
-  trackPurchaseBrowser({ orderNumber: 'ORD-THRESHOLD', value: 1000, contents, consent: signalsFromState('granted') })
-  trackPurchaseBrowser({ orderNumber: 'ORD-HIGH', value: 1000.01, contents, consent: signalsFromState('granted') })
+  trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'ORD-THRESHOLD', value: 1000, contents, consent: signalsFromState('granted') })
+  trackPurchaseBrowser({ purchase_eligible: true, orderNumber: 'ORD-HIGH', value: 1000.01, contents, consent: signalsFromState('granted') })
   expect(events().filter((row) => row.event === 'Purchase').map((row) => row.high_value)).toEqual([false, true])
 })
 

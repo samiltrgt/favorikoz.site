@@ -1,10 +1,9 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { complete3DSPayment, complete3DSPaymentV2 } from '@/lib/iyzico'
-import { buildIyzicoPaidPriceFromOrder, markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
+import { markOrderPaymentFailed } from '@/lib/iyzico-payment-amount'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
-import { confirmOrderPayment } from '@/lib/tracking/payment'
+import { reconcileVerifiedPayment } from '@/lib/payment-reconciliation'
 import { processVerifiedPaymentOrder } from '@/lib/payment-postprocessing'
 import { resolveVerifiedOrderPayment } from '@/lib/payment-verification'
 
@@ -98,14 +97,15 @@ export async function POST(request: NextRequest) {
     callbackToken = conversationId
     callbackPaymentId = paymentId
 
-    const { data: order } = await supabase
+    const { data: order, error: lookupError } = await supabase
       .from('orders')
-      .select('payment_token, order_number, iyzico_basket_id, items, shipping_cost, total, discount_amount, status, payment_status')
+      .select('id, payment_token, order_number, iyzico_basket_id, iyzico_payment_id, payment_verified_at, items, shipping_cost, total, discount_amount, status, payment_status')
       .eq('payment_token', conversationId)
       .maybeSingle()
+    if (lookupError) throw new Error('order_lookup_failed')
 
     const orderNumber = order?.order_number || ''
-    if (!order || order.status === 'cancelled' || order.payment_status === 'refunded') {
+    if (!order || ['cancelled', 'refunded'].includes(order.status) || order.payment_status === 'refunded') {
       return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=order_not_payable`, { status: 302 })
     }
     if (order.payment_status === 'completed') {
@@ -113,38 +113,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/payment/callback?${qs}`, { status: 302 })
     }
 
-    let result: any = null
-    // A browser POST cannot establish failure. Skip auth on negative mdStatus, then retrieve.
-    try {
-      if (!mdStatus || ['1', '2', '3', '4'].includes(mdStatus)) {
-        if (paymentId && conversationData) {
-          result = await complete3DSPayment({ conversationId, paymentId, conversationData })
-        } else if (paymentId && conversationId && order.iyzico_basket_id) {
-          result = await complete3DSPaymentV2({
-            conversationId,
-            paymentId,
-            paidPrice: buildIyzicoPaidPriceFromOrder(order),
-            basketId: order.iyzico_basket_id,
-          })
-        }
-      }
-    } catch (error) {
-      console.error('[3ds-callback] Completion unavailable; retrieving authoritative payment result', error)
-    }
-
     const verification = await resolveVerifiedOrderPayment(order, {
       conversationId,
-      paymentId: result?.paymentId || paymentId,
+      conversationData,
+      // mdStatus can withhold permission, but cannot establish payment success.
+      allowCompletion: !mdStatus || ['1', '2', '3', '4'].includes(mdStatus),
     })
     const qs = new URLSearchParams({ token: conversationId, orderNumber })
     if (paymentId) qs.set('paymentId', paymentId)
-    if (verification.status === 'verified') {
-      await confirmOrderPayment(supabase, { paymentToken: conversationId, orderNumber })
-      await processVerifiedPaymentOrder(supabase, { paymentToken: conversationId, orderNumber })
+    if (verification.status === 'verified' && verification.result) {
+      const paidOrder = await reconcileVerifiedPayment(supabase, order, verification.result)
+      if (['cancelled', 'refunded'].includes(paidOrder.status) || paidOrder.payment_status === 'refunded') {
+        return NextResponse.redirect(`${baseUrl}/payment/callback?status=failed&error=order_not_payable`, { status: 302 })
+      }
+      if (typeof paidOrder.iyzico_payment_id !== 'string' || !/^\d{1,32}$/.test(paidOrder.iyzico_payment_id) ||
+          typeof paidOrder.payment_verified_at !== 'string' || !Number.isFinite(Date.parse(paidOrder.payment_verified_at))) {
+        throw new Error('payment_verification_record_missing')
+      }
+      await processVerifiedPaymentOrder(supabase, { paymentToken: paidOrder.payment_token, orderNumber: paidOrder.order_number })
+      qs.set('orderNumber', paidOrder.order_number)
       qs.set('status', 'success')
     } else if (verification.status === 'failed') {
       await markOrderPaymentFailed(supabase, { paymentToken: conversationId, orderNumber })
-      qs.set('status', 'failed')
+      // A webhook/cron may have confirmed payment since the initial read.
+      const { data: current, error } = await supabase.from('orders').select('payment_status, status')
+        .eq('payment_token', conversationId).eq('order_number', orderNumber).maybeSingle()
+      if (error || !current) qs.set('status', 'pending')
+      else if (current.payment_status === 'completed' && !['cancelled', 'refunded'].includes(current.status)) qs.set('status', 'success')
+      else if (current.payment_status === 'failed' || current.payment_status === 'refunded' || ['cancelled', 'refunded'].includes(current.status)) qs.set('status', 'failed')
+      else qs.set('status', 'pending')
     } else {
       qs.set('status', 'pending')
     }
